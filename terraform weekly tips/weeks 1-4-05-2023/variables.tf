@@ -4,3 +4,21 @@ variable "client_secret" {
   sensitive = true
   default = null
 }
+
+variable "subscription_id" {
+  description = "the id of the subscription of which to interract with azure"
+  type = string
+  default = "<insert your subscription id>"
+}
+
+variable "tenant_id" {
+  description = "the id of the tenant of which to interract with azure"
+  type = string
+  default = "<insert your tenant id>"
+}
+
+variable "client_id" {
+  description = "the app id of the spn"
+  type = string
+  default = "<insert your client id>"
+}
