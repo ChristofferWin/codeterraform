@@ -441,32 +441,5 @@ function Get-RequiredModules {
 Export-ModuleMember Get-AzAdvancedContext, Get-AzVMSizes
 
 #>
-$Test = Get-AzVMSizes -Location "westeurope" -OperatingSystem "Server2012R2" -ContinueOnError -Verbose
-
-$VMLocalAdminUser = "LocalAdminUser"
-$VMLocalAdminSecurePassword = ConvertTo-SecureString "Tester1234!" -AsPlainText -Force -ContinueOnError
-$ResourceGroupName = "test-rg"
-$ComputerName = "MyVM1"
-$VMName = "MyVM2"
-$VMSize = "Standard_D2s_v3"
-$LocationName = "westeurope"
-
-$NetworkName = "MyNet"
-$NICName = "MyNIC"
-$SubnetName = "MySubnet"
-$SubnetAddressPrefix = "10.0.0.0/24"
-$VnetAddressPrefix = "10.0.0.0/16"
-
-$SingleSubnet = New-AzVirtualNetworkSubnetConfig -Name $SubnetName -AddressPrefix $SubnetAddressPrefix
-$Vnet = New-AzVirtualNetwork -Name $NetworkName -ResourceGroupName $ResourceGroupName -Location $LocationName -AddressPrefix $VnetAddressPrefix -Subnet $SingleSubnet
-$NIC = New-AzNetworkInterface -Name $NICName -ResourceGroupName $ResourceGroupName -Location $LocationName -SubnetId $Vnet.Subnets[0].Id
-
-$Credential = New-Object System.Management.Automation.PSCredential ($VMLocalAdminUser, $VMLocalAdminSecurePassword);
-
-$VirtualMachine = New-AzVMConfig -VMName $VMName -VMSize $VMSize
-$VirtualMachine = Set-AzVMOperatingSystem -VM $VirtualMachine -Windows -ComputerName $ComputerName -Credential $Credential -ProvisionVMAgent -EnableAutoUpdate
-$VirtualMachine = Add-AzVMNetworkInterface -VM $VirtualMachine -Id $NIC.Id
-$VirtualMachine = Set-AzVMSourceImage -VM $VirtualMachine -PublisherName $Test.Publisher -Offer $Test.Offer -Skus $Test.Versions[0].SKU -Version latest
-
-$Test2 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $VirtualMachine -Verbose
+Get-AzVMSizes -Location "westeurope" -OperatingSystem "Server2012R2" -ContinueOnError -Verbose
 
