@@ -4,10 +4,12 @@ function Get-AzVMSizes {
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$Location,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$ContinueOnError,
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$OperatingSystem,
-        [Parameter(ParameterSetName = "ManualSettings")][string]$OSVersion,
+        [Parameter(ParameterSetName = "ManualSettings")][string]$OSVersions,
         [Parameter(ParameterSetName = "ManualSettings")][string]$VMPattern,
         [Parameter(ParameterSetName = "ManualSettings")][string]$OSPattern,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NoInteractive,
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$NewestSKUs,
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$NewestSKUsVersions,
         [Parameter(ParameterSetName = "ShowCommandLocations")][switch]$ShowLocations,
         [Parameter(ParameterSetName = "ShowCommandVMs")][switch]$ShowVMCategories,
         [Parameter(ParameterSetName = "ShowCommandVMsOS")][switch]$ShowVMOperatingSystems
@@ -18,66 +20,77 @@ function Get-AzVMSizes {
     $LocationObjects = @()
     $TotalObjects = @()
 
-    $PredefinedImageDefinitions = @(
+    $FinalReturnObject = @(
         [pscustomobject]@{
             Publisher = "MicrosoftWindowsServer"
             Offer = "WindowsServer"
-            SKU = "" #All WindowsServer SKU's share the same offer and publisher
+            SKUs = "" #All WindowsServer SKUs's share the same offer and publisher
             Alias = "Server2008, Server2012, Server2012R2, Server2016, Server2019, Server2022"
         },
         [PSCustomObject]@{
             Publisher = "MicrosoftWindowsDesktop"
             Offer = "Windows-7"
-            SKU = "win7*$OSPattern*"
+            SKUs = "win7*$OSPattern*"
             Alias = "Windows7"
         },
         [pscustomobject]@{
             Publisher = "MicrosoftWindowsDesktop"
             Offer = "Windows-10"
-            SKU = "win10*$OSPattern*"
+            SKUs = "win10*$OSPattern*"
             Alias = "Windows10"
         },
         [pscustomobject]@{
             Publisher = "MicrosoftWindowsDesktop"
             Offer = "Windows-11"
-            SKU = "win11*$OSPattern*"
+            SKUs = "win11*$OSPattern*"
             Alias = "Windows11"
         },
         [pscustomobject]@{
             Publisher = "OpenLogic"
             Offer = "CentOS"
-            SKU = "*$OSPattern*"
+            SKUs = "*$OSPattern*"
             Alias = "CentOS"
         },
         [pscustomobject]@{
             Publisher = "Canonical"
             Offer = "UbuntuServer"
-            SKU = "*$OSPattern*"
+            SKUs = "*$OSPattern*"
             Alias = "Ubuntu"
         },
         [pscustomobject]@{
             Publisher = "Debian"
             Offer = "Debian-10"
-            SKU = "*$OSPattern*"
+            SKUs = "*$OSPattern*"
             Alias = "Debian10"
         },
         [pscustomobject]@{
             Publisher = "Debian"
             Offer = "Debian-11"
-            SKU = "*$OSPattern*"
+            SKUs = "*$OSPattern*"
             Alias = "Debian11"
         },
         [pscustomobject]@{
             Publisher = "Redhat"
             Offer = "rhel"
-            SKU = "*$OSPattern*"
+            SKUs = "*$OSPattern*"
             Alias = "Redhat"
         }
     )
 
+    $FinalOutput = [PSCustomObject]@{
+        Publisher = ""
+        Offer = ""
+        SKUs = "*$OSPattern*"
+        Alias = ""
+        Versions = [System.Collections.ArrayList]@()
+        VMSizes = @()
+        CoresAvailable = 0
+        CoresLimit = 0
+    }
+
     $AliasArray = @()
-    $AliasArray += $PredefinedImageDefinitions[0].Alias.Split(",")
-    $AliasArray += $PredefinedImageDefinitions[1..8].Alias
+    $AliasArray += $FinalReturnObject[0].Alias.Split(",")
+    $AliasArray += $FinalReturnObject[1..8].Alias
     $AliasArray = $AliasArray | % {$_.Trim().ToLower()}
 
     $SubscriptionID = (Get-AzContext).Subscription
@@ -178,13 +191,23 @@ function Get-AzVMSizes {
 
     do{
         try{
-            $CoresAvailable = Get-AzVMUsage -Location $Location -ErrorAction Stop
+            $Usage = (Get-AzVMUsage -Location $Location -ErrorAction Stop | ? {$_.Name.LocalizedValue -eq "Total Regional vCPUs"})
+            $FinalOutput.CoresAvailable = $Usage.Limit - $Usage.CurrentValue
+            $FinalOutput.CoresLimit = $Usage.Limit
         }
         catch{
-            if(!$ContinueOnError){}
+            if($_.Exception.Message -like "*Microsoft.Azure.Management.Compute.Models.VirtualMachine', on 'T MaxInteger*"){
+                $Usage = $true
+                Write-Verbose "Powershell7 detected, cannot retrieve the quota for VM cores on subscription: $SubscriptionID"
+                continue
+            }
+            if(!$ContinueOnError){
+                Write-Error "An error occured while trying to retrieve the current quotas from the subscription: $SubscriptionID`n$_"
+                return
+            }
         }
     }
-    while(!$CoresAvailable)
+    while(!$Usage)
 
     do{
         try{
@@ -205,59 +228,76 @@ function Get-AzVMSizes {
                 $VMSizes = Get-AzVmSize -Location $Location -ErrorAction Stop
             }
             Write-Verbose "VM sizes successfully retrieved..."
-            Break
         }
         catch{
             Write-Error "The following error occured while trying to retrieve vm sizes...:`n$_"
             return
         }
+        $FinalOutput.VMSizes = $VMsizes
     }
     while(!$VMsizes)
 
     switch($OperatingSystem){
-        "Server2008" {$PredefinedImageDefinitions[0].Sku = "2008-*$OSPattern*"; $ImageDefinition = $PredefinedImageDefinitions[0]}
-        "Server2012" {$PredefinedImageDefinitions[0].Sku = "2012-data*$OSPattern*"; $ImageDefinition = $PredefinedImageDefinitions[0]}
-        "Server2012R2" {$PredefinedImageDefinitions[0].Sku = "2012-r2*$OSPattern*"; $ImageDefinition = $PredefinedImageDefinitions[0]}
-        "Server2016" {$PredefinedImageDefinitions[0].Sku = "2016*$OSPattern*"; $ImageDefinition = $PredefinedImageDefinitions[0]}
-        "Server2019" {$PredefinedImageDefinitions[0].Sku = "2019*$OSPattern*"; $ImageDefinition = $PredefinedImageDefinitions[0]}
-        "Server2022" {$PredefinedImageDefinitions[0].Sku = "2022*$OSPattern*"; $ImageDefinition = $PredefinedImageDefinitions[0]}
-        "Windows7" {$ImageDefinition = $PredefinedImageDefinitions[1]}
-        "Windows10" {$ImageDefinition = $PredefinedImageDefinitions[2]}
-        "Windows11" {$ImageDefinition = $PredefinedImageDefinitions[3]}
-        "CentOS" {$ImageDefinition = $PredefinedImageDefinitions[4]}
-        "Ubuntu" {$ImageDefinition = $PredefinedImageDefinitions[5]}
-        "Debian10" {$ImageDefinition = $PredefinedImageDefinitions[6]}
-        "Debian11" {$ImageDefinition = $PredefinedImageDefinitions[7]}
-        "Redhat" {$ImageDefinition = $PredefinedImageDefinitions[8]}
+        "Server2008" {$FinalOutput.SKUs = "2008-*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Server2012" {$FinalOutput.SKUs = = "2012-data*$OSPattern*";$FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Server2012R2" {$FinalOutput.SKUs = "2012-r2*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Server2016" {$FinalOutput.SKUs = "2016*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Server2019" {$FinalOutput.SKUs = "2019*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Server2022" {$FinalOutput.SKUs = "2022*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Windows7" {$FinalOutput.Offer = $FinalReturnObject[1].Offer; $FinalOutput.Publisher = $FinalReturnObject[1].Publisher}
+        "Windows10" {$FinalOutput.Offer = $FinalReturnObject[2].Offer; $FinalOutput.Publisher = $FinalReturnObject[2].Publisher}
+        "Windows11" {$FinalOutput.Offer = $FinalReturnObject[3].Offer; $FinalOutput.Publisher = $FinalReturnObject[3].Publisher}
+        "CentOS" {$FinalOutput.Offer = $FinalReturnObject[4].Offer; $FinalOutput.Publisher = $FinalReturnObject[4].Publisher}
+        "Ubuntu" {$FinalOutput.Offer = $FinalReturnObject[5].Offer; $FinalOutput.Publisher = $FinalReturnObject[5].Publisher}
+        "Debian10" {$FinalOutput.Offer = $FinalReturnObject[6].Offer; $FinalOutput.Publisher = $FinalReturnObject[6].Publisher}
+        "Debian11" {$FinalOutput.Offer = $FinalReturnObject[7].Offer; $FinalOutput.Publisher = $FinalReturnObject[7].Publisher}
+        "Redhat" {$FinalOutput.Offer = $FinalReturnObject[8].Offer; $FinalOutput.Publisher = $FinalReturnObject[8].Publisher}
     }
  
     try{
-        $ImageDefinition.SKU = (Get-AzVMImageSku -Location $Location -PublisherName $ImageDefinition.Publisher -Offer $ImageDefinition.Offer -ErrorAction Stop | ? {$_.SKUs -like $ImageDefinition.SKU}).Skus
+        $FinalOutput.SKUs = (Get-AzVMImageSku -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -ErrorAction Stop | ? {$_.SKUs -like $FinalOutput.SKUs}).Skus
+        if($NewestSKUs){
+            $FinalOutput.SKUs = $FinalOutput.SKUs[-1]
+        }
     }
     catch{
         Write-Error "The following error occured while trying to retrieve the current SKUs for OS: $OperatingSystem`n$_"
         return
     }
 
-    #Please check whether a pattern of null results in 0 skus being found or simply that every single possible SKU for a given OS is found
-    if($ImageDefinition.SKU.Count -eq 0){
-        Write-Error "No SKUs were found for Operating system: $OperatingSystem and using OSPattern: $OSPattern`nTry to change the pattern or simply ommit it..."
-        return
-    }
-
-    foreach($SKU in $ImageDefinition.SKU){
-        $Temp = @()
+    for($i = 0; $i -le $FinalOutput.SKUs.Count -1; $i++){
         try{
-           $Temp += [pscustomobject]@{
-            SKU = $SKU 
-            Versions = (Get-AzVMImage -Location $Location -PublisherName $ImageDefinition.Publisher -Offer $ImageDefinition.Offer -Sku $SKU).Version
+            $Versions = (Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Skus[$i] -ErrorAction Stop).Version
+            $Agreement = Get-AzMarketplaceterms -Publisher $FinalOutput.Publisher -Product $FinalOutput.Offer -Name $FinalOutput.SKUs[$i] -ErrorAction Stop
+            if($NewestSKUsVersions){
+                $Versions = $Versions[-1]   
             }
+            $FinalOutput.Versions.Add([PSCustomObject]@{
+                SKU = $FinalOutput.SKUs[$i]
+                Versions = $Versions
+                Agreement = $Agreement
+            }) | Out-Null
         }
         catch{
-
+            if($_.Exception.Message -like "*VMImage was not found*"){
+                Write-Warning "The SKU: $($FinalOutput.SKUs[$i]) was not found in Azure"
+                $FinalOutput.Versions.Remove($FinalOutput.Versions[$i])
+            }
+            else{
+                if(!$ContinueOnError){
+                    Write-Error "The following error occured while trying to information about the SKU: $($FinalOutput.SKUs[$i])`n$_"
+                    return
+                }
+            }
         }
-}
-    return $VMsizes
+    }
+
+    #Please check whether a pattern of null results in 0 skus being found or simply that every single possible SKUs for a given OS is found
+    if($FinalOutput.Versions.SKU.Count -eq 0){
+        Write-Error "No SKUs were found for Operating system: $OperatingSystem $(if($OSPattern){'and using OSPattern: $($OSPattern)'})`nTry to change the pattern or simply ommit it..."
+        return
+    }
+    return $FinalOutput
 }
 
 function Set-AzAdvancedContext {
@@ -401,5 +441,32 @@ function Get-RequiredModules {
 Export-ModuleMember Get-AzAdvancedContext, Get-AzVMSizes
 
 #>
+$Test = Get-AzVMSizes -Location "westeurope" -OperatingSystem "Server2012R2" -ContinueOnError -Verbose
 
+$VMLocalAdminUser = "LocalAdminUser"
+$VMLocalAdminSecurePassword = ConvertTo-SecureString "Tester1234!" -AsPlainText -Force -ContinueOnError
+$ResourceGroupName = "test-rg"
+$ComputerName = "MyVM1"
+$VMName = "MyVM2"
+$VMSize = "Standard_D2s_v3"
+$LocationName = "westeurope"
+
+$NetworkName = "MyNet"
+$NICName = "MyNIC"
+$SubnetName = "MySubnet"
+$SubnetAddressPrefix = "10.0.0.0/24"
+$VnetAddressPrefix = "10.0.0.0/16"
+
+$SingleSubnet = New-AzVirtualNetworkSubnetConfig -Name $SubnetName -AddressPrefix $SubnetAddressPrefix
+$Vnet = New-AzVirtualNetwork -Name $NetworkName -ResourceGroupName $ResourceGroupName -Location $LocationName -AddressPrefix $VnetAddressPrefix -Subnet $SingleSubnet
+$NIC = New-AzNetworkInterface -Name $NICName -ResourceGroupName $ResourceGroupName -Location $LocationName -SubnetId $Vnet.Subnets[0].Id
+
+$Credential = New-Object System.Management.Automation.PSCredential ($VMLocalAdminUser, $VMLocalAdminSecurePassword);
+
+$VirtualMachine = New-AzVMConfig -VMName $VMName -VMSize $VMSize
+$VirtualMachine = Set-AzVMOperatingSystem -VM $VirtualMachine -Windows -ComputerName $ComputerName -Credential $Credential -ProvisionVMAgent -EnableAutoUpdate
+$VirtualMachine = Add-AzVMNetworkInterface -VM $VirtualMachine -Id $NIC.Id
+$VirtualMachine = Set-AzVMSourceImage -VM $VirtualMachine -PublisherName $Test.Publisher -Offer $Test.Offer -Skus $Test.Versions[0].SKU -Version latest
+
+$Test2 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $LocationName -VM $VirtualMachine -Verbose
 
