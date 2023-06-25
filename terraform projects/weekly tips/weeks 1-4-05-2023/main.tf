@@ -82,7 +82,7 @@ resource "azurerm_network_security_group" "demo_client_nsg_object" {
     protocol = "Tcp"
     source_port_range = "*"
     destination_port_range = "3389" //RDP
-    source_address_prefix = "<your public IP>" //Define your own public IP
+    source_address_prefix = "85.83.136.22/32" //Define your own public IP
     destination_address_prefix = "*"
   }
 }
