@@ -3,6 +3,10 @@ variable "client_secret" {
   type = string
   sensitive = true
   default = null
+
+  validation {
+    
+  }
 }
 
 variable "subscription_id" {
