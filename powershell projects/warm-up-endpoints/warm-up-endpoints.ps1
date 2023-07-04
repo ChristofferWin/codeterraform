@@ -140,3 +140,16 @@ function Main {
 }
 
 Main -Verbose -URLS @("test.dk", "https://test.dk", "https://google.dk", "https://codeterraform.com", "https://codeterraform.com/blog", "www.dr.dk") -Path "C:\Users\Christoffer Windahl\Desktop\for blog posts\codeterraform\powershell projects\warm-up-endpoints" -Aggressive -CreateReport
+
+<#
+
+LOOK INTO THIS AS MEMORY CONSUMPTION ONLY INCREASES FOR JOBS OVER TIME:
+When you create a remote job, two jobs are created - one for the host and a child job (also on the host) for the remote job. When I used receive-job on the parent, I expected this to clear out all output streams (parent and child). It turned out that the child job still had a fully populated field $childJob.output.
+
+I ended up using receive-job on the child job, and then immediately cleared its output using $childJob.output.clear().
+
+In my tests, this didn't have any adverse affects - but, I wouldn't completely trust this method for more critical tasks without better testing.
+
+After I did this, the memory consumption problem was resolved.
+
+#>
