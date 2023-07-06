@@ -13,7 +13,7 @@ provider "azurerm" {
 
 locals {
   name_prefix = "${var.environment_type}-${var.name_prefix}"
-  rg_name = length(azurerm_resource_group.rg_object) > 1 ? azurerm_resource_group.rg_object.*.name : [azurerm_resource_group.rg_object[0].name]
+  rg_name = azurerm_resource_group.rg_object.*.name
   calculate_ip_address_space_prod = var.environment_type == "prod" ? [cidrsubnet(var.ip_address_space[0], 8, 1), cidrsubnet(var.ip_address_space[0], 8, 99)]: null
   calculate_ip_address_space_nonprod = var.environment_type == "test" ? [var.ip_address_space[1]] : [var.ip_address_space[2]]
   ip_address_space = local.calculate_ip_address_space_prod != null ? local.calculate_ip_address_space_prod : local.calculate_ip_address_space_nonprod
@@ -21,7 +21,7 @@ locals {
 
 resource "azurerm_resource_group" "rg_object" {
   count = var.environment_type == "prod" ? 2 : 1
-  name = count.index == 1 ? "${local.name_prefix}-mgmt-rg" : "${local.name_prefix}-${var.environment_type}-rg"
+  name = count.index == 1 ? "${local.name_prefix}-mgmt-rg" : "${local.name_prefix}-rg"
   location = var.location
 
   tags = {
@@ -45,8 +45,8 @@ resource "azurerm_log_analytics_workspace" "logspace_object" {
 
 resource "azurerm_virtual_network" "vn_objects" {
   count = var.environment_type == "prod" ? 2 : 1
-  name = count.index == 1 ? "${local.name_prefix}-mgmt-vnet" : "${local.name_prefix}-${var.environment_type}-vnet"
-  resource_group_name = local.rg_name[count.index]
+  name = count.index == 1 ? "${local.name_prefix}-mgmt-vnet" : "${local.name_prefix}-vnet"
+  resource_group_name = count.index == 1 ? local.rg_name[1] : local.rg_name[0]
   location = var.location
   address_space = [local.ip_address_space[count.index]]
 
@@ -67,7 +67,7 @@ resource "azurerm_public_ip" "pip_object" {
   count = var.environment_type == "prod" ? 1 : 0
   name = "${local.name_prefix}-gw-pip"
   location = var.location
-  resource_group_name = local.rg_name[count.index]
+  resource_group_name = local.rg_name[1]
   sku = "Standard"
   allocation_method = "Static"
 
@@ -80,7 +80,7 @@ resource "azurerm_virtual_network_gateway" "gw_object" {
   count = var.environment_type == "prod" ? 1 : 0
   name = "${local.name_prefix}-gw"
   location = var.location
-  resource_group_name = local.rg_name[0]
+  resource_group_name = local.rg_name[1]
   sku = "Basic"
   type = "Vpn"
   private_ip_address_enabled = true
