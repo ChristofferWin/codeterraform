@@ -3,15 +3,6 @@ terraform {
     azurerm = {
         source = "hashicorp/azurerm"
     }
-    azuread = {
-        source = "hashicorp/azuread"
-    }
-    local = {
-        source = "hashicorp/local"
-    }
-    random = {
-        source = "hashicorp/random"
-    }
   }
 }
 
@@ -22,14 +13,20 @@ provider "azurerm" {
 
 locals {
   name_prefix = "${var.environment_type}-${var.name_prefix}"
-  #rg_name = length(azurerm_resource_group.rg_object) > 1 ? [azurerm_resource_group.rg_object[0].name] : azurerm_resource_group.rg_object.*.name
-  split = replace(var.ip_address_space[0], "^[0-9]+(?=\\.[0-9]+\\/)$", "99")
+  rg_name = length(azurerm_resource_group.rg_object) > 1 ? azurerm_resource_group.rg_object.*.name : [azurerm_resource_group.rg_object[0].name]
+  calculate_ip_address_space_prod = var.environment_type == "prod" ? [cidrsubnet(var.ip_address_space[0], 8, 1), cidrsubnet(var.ip_address_space[0], 8, 99)]: null
+  calculate_ip_address_space_nonprod = var.environment_type == "test" ? [var.ip_address_space[1]] : [var.ip_address_space[2]]
+  ip_address_space = local.calculate_ip_address_space_prod != null ? local.calculate_ip_address_space_prod : local.calculate_ip_address_space_nonprod
 }
-/*
+
 resource "azurerm_resource_group" "rg_object" {
   count = var.environment_type == "prod" ? 2 : 1
   name = count.index == 1 ? "${local.name_prefix}-mgmt-rg" : "${local.name_prefix}-${var.environment_type}-rg"
   location = var.location
+
+  tags = {
+    environment = var.environment_type
+  }
 }
 
 resource "azurerm_log_analytics_workspace" "logspace_object" {
@@ -45,15 +42,40 @@ resource "azurerm_log_analytics_workspace" "logspace_object" {
     environment = var.environment_type
   }
 }
-/*
+
 resource "azurerm_virtual_network" "vn_objects" {
   count = var.environment_type == "prod" ? 2 : 1
-  name = count.index == 1 ? "${local.name_prefix}-mgmt-rg" : "${local.name_prefix}-${var.environment_type}-vnet"
+  name = count.index == 1 ? "${local.name_prefix}-mgmt-vnet" : "${local.name_prefix}-${var.environment_type}-vnet"
   resource_group_name = local.rg_name[count.index]
-  address_space = count.index == 1 ? s
+  location = var.location
+  address_space = [local.ip_address_space[count.index]]
+
+  dynamic "subnet" {
+    for_each = var.environment_type == "prod" ? {for ip in [local.ip_address_space[count.index]] : ip => ip} : {}
+    content {
+      name = count.index == 0 ? "DMZ" : "GatewaySubnet"
+      address_prefix = "${cidrsubnet(subnet.key, 1, 0)}"
+    }
+  }
+
+  tags = {
+    environment = var.environment_type
+  }
 }
 
-/*
+resource "azurerm_public_ip" "pip_object" {
+  count = var.environment_type == "prod" ? 1 : 0
+  name = "${local.name_prefix}-gw-pip"
+  location = var.location
+  resource_group_name = local.rg_name[count.index]
+  sku = "Standard"
+  allocation_method = "Static"
+
+  tags = {
+    environment = var.environment_type
+  }
+}
+
 resource "azurerm_virtual_network_gateway" "gw_object" {
   count = var.environment_type == "prod" ? 1 : 0
   name = "${local.name_prefix}-gw"
@@ -66,10 +88,11 @@ resource "azurerm_virtual_network_gateway" "gw_object" {
   ip_configuration {
     name = "ip_config"
     private_ip_address_allocation = "Static"
-    subnet_id = 
+    subnet_id = flatten([for each in flatten(azurerm_virtual_network.vn_objects.*.subnet) : each if each.name == "GatewaySubnet"])[count.index].id
+    public_ip_address_id = azurerm_public_ip.pip_object[count.index].id
   }
-}
-*/
-output "test" {
- value = local.split
+
+  tags = {
+    environment = var.environment_type
+  }
 }

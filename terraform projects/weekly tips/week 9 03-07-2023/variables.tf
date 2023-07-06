@@ -23,5 +23,5 @@ variable "environment_type" {
 variable "ip_address_space" {
   description = "a list of string defining the address space(s) of the environment"
   type = list(string)
-  default = [ "10.0.0.0/24" ]
+  default = ["10.0.0.0/16", "172.16.0.0/24", "192.168.0.0/24"]
 }
