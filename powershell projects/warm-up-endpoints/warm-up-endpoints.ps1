@@ -56,7 +56,7 @@ function Run-URLWarmUp {
                 if($args[3]){
                     cd $args[3]
                 }
-                $ReturnObject = @()
+                $ReturnObjects = @()
                 while($true){
                     try{
                         $WebCall = Invoke-WebRequest -UseBasicParsing -Uri $URL -ErrorAction Stop
@@ -65,13 +65,13 @@ function Run-URLWarmUp {
                     catch{
                         $_
                     }
-                    $ReturnObject = [PSCustomObject]@{
+                   <# $ReturnObject += [PSCustomObject]@{
                         Time = '{0:hh\:mm\:ss}' -f $timer.Elapsed
                         URL = $args[0]
                         ThreadNumber = $args[1]
                         HTTPStatus = $WebCall.StatusCode
                         ResponseTimeInMS = $ResponseTime
-                    }
+                    } #>
                     if($args[2]){
                         Start-Sleep -Seconds 1
                     }
@@ -79,6 +79,7 @@ function Run-URLWarmUp {
                         Start-Sleep -Seconds 30
                     }
                     try{
+                        <#
                         if($args[5]){
                             switch($args[4]){
                                 "json" {$ReturnObject, "," | ConvertTo-Json -Depth 100 | ForEach-Object { $_ | Add-Content -Path $Path}}
@@ -86,23 +87,38 @@ function Run-URLWarmUp {
                                 "csv" {$ReturnObject | ConvertTo-Csv -Delimiter "," -NoTypeInformation | Out-File -Force -Append -FilePath $Path -ErrorAction Stop}
                             }
                         }
+                        #>
+
                     }
                     catch{
                         $_
                     }
+                    $Error.Clear()
                 }
             } `
-             -ErrorAction Stop -PSVersion 5.1 -ArgumentList $URLObjects[$i].URL, $i, $Aggressive, $Path, $ReportExtension, $CreateReport
+             -ErrorAction Stop -ArgumentList $URLObjects[$i].URL, $i, $Aggressive, $Path, $ReportExtension, $CreateReport
         }
         catch{
             Write-Warning "The following error occured inside of job $($Jobs[$i].Name)...`n$_"
         }
     }
-    return $Jobs
+    return 
 }
 
 function Show-Threads {
+    
+    [System.Collections.ArrayList]$JobObjects = @()
 
+    try{
+        $Jobs += Get-Job -ErrorAction Stop | ? {$_.Command.ToString() -like '*$ResponseTime = $((Measure-Command*'}
+    }
+    catch{
+        Write-Error "Something happened while trying to retrieve the running background jobs...`n$_"
+    }
+
+
+
+    return $JobObjects
 }
 
 function Main {
@@ -140,7 +156,7 @@ function Main {
 }
 
 Main -Verbose -URLS @("test.dk", "https://test.dk", "https://google.dk", "https://codeterraform.com", "https://codeterraform.com/blog", "www.dr.dk") -Path "C:\Users\Christoffer Windahl\Desktop\for blog posts\codeterraform\powershell projects\warm-up-endpoints" -Aggressive -CreateReport
-
+Show-Threads
 <#
 
 LOOK INTO THIS AS MEMORY CONSUMPTION ONLY INCREASES FOR JOBS OVER TIME:
