@@ -1,15 +1,72 @@
-function Get-AzVMSizes {
+<#
+.SYNOPSIS
+    Retrieves Azure Virtual Machine SKUs information based on specified criteria.
+
+.DESCRIPTION
+    The Get-AzVMSKU function retrieves Azure Virtual Machine SKUs information based on specified criteria such as location, operating system, and other parameters. It can filter VM SKUs based on different settings and provide detailed information about available SKUs.
+
+.PARAMETER Location
+    Specifies the Azure region where you want to retrieve VM SKUs. Mandatory parameter when using ManualSettings parameter set.
+
+.PARAMETER ContinueOnError
+    Specifies whether the function should continue processing in case of errors. By default, it stops on errors.
+
+.PARAMETER OperatingSystem
+    Specifies the target operating system for which you want to retrieve VM SKUs. Mandatory parameter when using ManualSettings parameter set.
+
+.PARAMETER OSPattern
+    Specifies a pattern to filter operating system SKUs. It can be a partial match pattern.
+
+.PARAMETER VMPattern
+    Specifies a pattern to filter VM SKUs. It can be a partial match pattern.
+
+.PARAMETER RawFormat
+    Specifies whether to return the VM sizes in raw format without formatting.
+
+.PARAMETER NoInteractive
+    Specifies whether to suppress interactive prompts.
+
+.PARAMETER NewestSKUs
+    Specifies whether to retrieve only the newest available SKUs.
+
+.PARAMETER NewestSKUsVersions
+    Specifies whether to retrieve only the newest available versions of SKUs.
+
+.PARAMETER CheckAgreement
+    Specifies whether to check for legal agreements for SKUs.
+
+.PARAMETER ShowLocations
+    Specifies whether to retrieve and display available Azure locations.
+
+.PARAMETER ShowVMCategories
+    Specifies whether to retrieve and display available VM categories.
+
+.PARAMETER ShowVMOperatingSystems
+    Specifies whether to retrieve and display available VM operating systems.
+
+.NOTES
+    File Name      : Get-AzSku.psm1
+    Author         : Christoffer Windahl Madsen
+    Prerequisite    : This function requires the Az PowerShell modules: .
+
+.LINK
+    https://github.com/ChristofferWin/codeterraform
+#>
+
+function Get-AzVMSKU {
     [cmdletBinding(DefaultParameterSetName = 'ManualSettings')]
     param(
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$Location,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$ContinueOnError,
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$OperatingSystem,
         [Parameter(ParameterSetName = "ManualSettings")][string]$OSVersions,
-        [Parameter(ParameterSetName = "ManualSettings")][string]$VMPattern,
+        [Parameter(ParameterSetName = "ManualSettings")][String]$VMPattern,
         [Parameter(ParameterSetName = "ManualSettings")][string]$OSPattern,
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$RawFormat,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NoInteractive,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NewestSKUs,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NewestSKUsVersions,
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$CheckAgreement,
         [Parameter(ParameterSetName = "ShowCommandLocations")][switch]$ShowLocations,
         [Parameter(ParameterSetName = "ShowCommandVMs")][switch]$ShowVMCategories,
         [Parameter(ParameterSetName = "ShowCommandVMsOS")][switch]$ShowVMOperatingSystems
@@ -83,7 +140,7 @@ function Get-AzVMSizes {
         SKUs = "*$OSPattern*"
         Alias = ""
         Versions = [System.Collections.ArrayList]@()
-        VMSizes = @()
+        VMSizes = [System.Collections.ArrayList]@()
         CoresAvailable = 0
         CoresLimit = 0
     }
@@ -198,7 +255,7 @@ function Get-AzVMSizes {
         catch{
             if($_.Exception.Message -like "*Microsoft.Azure.Management.Compute.Models.VirtualMachine', on 'T MaxInteger*"){
                 $Usage = $true
-                Write-Verbose "Powershell7 detected, cannot retrieve the quota for VM cores on subscription: $SubscriptionID"
+                Write-Verbose "Powershell_5 detected, cannot retrieve the quota for VM cores on subscription: $SubscriptionID"
                 continue
             }
             if(!$ContinueOnError){
@@ -212,7 +269,7 @@ function Get-AzVMSizes {
     do{
         try{
             if($VMPattern){
-               $VMsizes = Get-AzVMSize -Location $Location -ErrorAction Stop | ? {$_.Name -like "Standard_*$VMPattern*" -or $_.Name -like "Basic_*$VMPattern*"}
+               $VMsizes = Get-AzVMSize -Location $Location -ErrorAction Stop | ? {$_.Name -like "Standard_$VMPattern*" -or $_.Name -like "Basic_$VMPattern*"}
                if($VMsizes.Count -eq 0){
                    if($ContinueOnError -and !$NoInteractive){
                        Write-Warning "0 Virtual machine sizes found using pattern '$VMPattern'..."
@@ -233,13 +290,27 @@ function Get-AzVMSizes {
             Write-Error "The following error occured while trying to retrieve vm sizes...:`n$_"
             return
         }
-        $FinalOutput.VMSizes = $VMsizes
+        if($RawFormat){
+            $FinalOutput.VMSizes = $VMsizes
+        }
+        else{
+            foreach($VM in $VMsizes){
+                $FinalOutput.VMSizes.Add([PSCustomObject]@{
+                    Name = $VM.Name
+                    CoresAvailable = $VM.NumberOfCores
+                    MemoryInGB = if($VM.MemoryInMB -gt 0){$VM.MemoryInMB / 1024} else{0} 
+                    MaxDataDiskCount = $VM.MaxDataDiskCount
+                    OSDiskSizeInGB = if($VM.OSDiskSizeInMB -gt 0){$VM.OSDiskSizeInMB / 1024} else{0}
+                    TempDriveSizeInGB = if($VM.ResourceDiskSizeInMB -gt 0){$VM.ResourceDiskSizeInMB / 1024} else{0}
+                }) | Out-Null
+            }
+        }
     }
     while(!$VMsizes)
 
     switch($OperatingSystem){
         "Server2008" {$FinalOutput.SKUs = "2008-*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Server2012" {$FinalOutput.SKUs = = "2012-data*$OSPattern*";$FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
+        "Server2012" {$FinalOutput.SKUs = "2012-data*$OSPattern*";$FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
         "Server2012R2" {$FinalOutput.SKUs = "2012-r2*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
         "Server2016" {$FinalOutput.SKUs = "2016*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
         "Server2019" {$FinalOutput.SKUs = "2019*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
@@ -264,34 +335,58 @@ function Get-AzVMSizes {
         Write-Error "The following error occured while trying to retrieve the current SKUs for OS: $OperatingSystem`n$_"
         return
     }
-
-    for($i = 0; $i -le $FinalOutput.SKUs.Count -1; $i++){
+    $i = 0
+    do {
         try{
-            $Versions = (Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Skus[$i] -ErrorAction Stop).Version
-            $Agreement = Get-AzMarketplaceterms -Publisher $FinalOutput.Publisher -Product $FinalOutput.Offer -Name $FinalOutput.SKUs[$i] -ErrorAction Stop
-            if($NewestSKUsVersions){
-                $Versions = $Versions[-1]   
+            $SKUPlaceholder = if($FinalOutput.SKUs.count -eq 1){$FinalOutput.Skus}else{$FinalOutput.Skus[$i]}
+            $Versions = (Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $SKUPlaceholder -ErrorAction Stop).Version
+            try{
+               if($CheckAgreement) {
+                  $Agreement = Get-AzMarketplaceterms -Publisher $FinalOutput.Publisher -Product $FinalOutput.Offer -Name '$($SKUPlaceholder)' -ErrorAction Stop
+               }
             }
-            $FinalOutput.Versions.Add([PSCustomObject]@{
-                SKU = $FinalOutput.SKUs[$i]
-                Versions = $Versions
-                Agreement = $Agreement
-            }) | Out-Null
+            catch{
+                if($_.Exception.Message -like "*Unable to find legal terms for this offer*" -or $_.Exception.Message -like "*The offer with Offer ID*"){
+                    Write-Verbose "No legal terms to sign for sku: $SKUPlaceholder"
+                }
+                else{
+                    Write-Warning "Legal terms to sign for sku: $SKUPlaceholder"
+                }
+            }
+            if($NewestSKUsVersions -and $Versions.Count -gt 0){
+                $Versions = $Versions[-1]           
+            }
+            if($CheckAgreement){
+                $FinalOutput.Versions.Add([PSCustomObject]@{
+                    SKU = $SKUPlaceholder
+                    Versions = $Versions
+                    Agreement = $Agreement
+                }) | Out-Null
+            }
+            else {
+                $FinalOutput.Versions.Add([PSCustomObject]@{
+                    SKU = $SKUPlaceholder
+                    Versions = $Versions
+                }) | Out-Null
+            }
         }
         catch{
             if($_.Exception.Message -like "*VMImage was not found*"){
-                Write-Warning "The SKU: $($FinalOutput.SKUs[$i]) was not found in Azure"
-                $FinalOutput.Versions.Remove($FinalOutput.Versions[$i])
+                Write-Warning "The SKU: $SKUPlaceholder was not found in Azure"
+                if($SKUPlaceholder.Count -gt 1) {
+                    $FinalOutput.Versions.Remove($SKUPlaceholder)
+                }
             }
             else{
                 if(!$ContinueOnError){
-                    Write-Error "The following error occured while trying to information about the SKU: $($FinalOutput.SKUs[$i])`n$_"
+                    Write-Error "The following error occured while trying to information about the SKU: $SKUPlaceholder`n$_"
                     return
                 }
             }
         }
+        $i++ #Need to use a do-while instead of for, as we want to run at least 1 time.
     }
-
+    while($i -le $FinalOutput.SKUs.Count -1)
     #Please check whether a pattern of null results in 0 skus being found or simply that every single possible SKUs for a given OS is found
     if($FinalOutput.Versions.SKU.Count -eq 0){
         Write-Error "No SKUs were found for Operating system: $OperatingSystem $(if($OSPattern){'and using OSPattern: $($OSPattern)'})`nTry to change the pattern or simply ommit it..."
@@ -299,147 +394,4 @@ function Get-AzVMSizes {
     }
     return $FinalOutput
 }
-
-function Set-AzAdvancedContext {
-    [cmdletBinding(DefaultParameterSetName = 'ManualSettings')]
-    param(
-        [Parameter(ParameterSetName = "ManualSettings")][switch]$ContinueOnError,
-        [Parameter(ParameterSetName = "ManualSettings")][switch]$NoInteractive,
-        [Parameter(ParameterSetName = "AzureEnvironment", Mandatory = $true)][pscredential]$Credential,
-        [Parameter(ParameterSetName = "AzureEnvironment", Mandatory = $true)][ValidatePattern('(\{|\()?[A-Za-z0-9]{4}([A-Za-z0-9]{4}\-?){4}[A-Za-z0-9]{12}(\}|\()?')][string]$TenantID,
-        [Parameter(ParameterSetName = "AzureEnvironment", Mandatory = $true)][ValidatePattern('(\{|\()?[A-Za-z0-9]{4}([A-Za-z0-9]{4}\-?){4}[A-Za-z0-9]{12}(\}|\()?')][string]$SubscriptionID
-    )
-    $AlreadyLoggedIn = (Get-AzContext) -notin $null
-    if($Credential.Count -eq 0 -and !$NoInteractive -and !$AlreadyLoggedIn){
-        Write-Warning "No context could be found. Please provide a credential object... "
-        Write-Output "Either username/password or app id/secret"
-        $Credential = Get-Credential
-    }
-    elseif($AlreadyLoggedIn){
-        #Simply continue
-    }
-    elseif($Credential.Count -gt 0 -and !$NoInteractive){
-        #Simply continue
-    }
-    else{
-        Write-Verbose "No Azure context found and no credential is provided..."
-        Write-Error "Cannot ask for credential due to flag 'NoInteractive'"
-        break
-    }
-    do{
-        if(!$TenantID -and !$AlreadyLoggedIn -and !$NoInteractive){
-            try{
-                Login-AzAccount -ErrorAction Stop
-                $AlreadyLoggedIn = $true
-                Continue
-            }
-            catch{
-                if(!$ContinueOnError){
-                    Write-Error "Threw an error: $_"
-                    break
-                }
-                Write-Warning "The interactive login failed... retrying..."
-            }
-        }
-        elseif($TenantID -and $SubscriptionID -and !$AlreadyLoggedIn){
-            try{
-                Login-AzAccount -Tenant $TenantID -Subscription $SubscriptionID -Credential $Credential -ErrorAction Stop
-                $AlreadyLoggedIn = $true
-                Continue
-            }
-            catch{
-                if($NoInteractive -or !$ContinueOnError){
-                    if($_.Exception.Message -like "*ROPC does not support MSA accounts*" -and $NoInteractive){
-                        Write-Error "The account: $($Credential.Username) must use interactive authentication..."
-                    }
-                    elseif($_.Exception.Message -like "*validating credentials due to invalid username or password*" -or $_.Message -like "*password is expired*" -or $_.Message -like "*user account is disabled*" -or $_.Message -like "*does not have access to subscription*" -or $_.Message -like "*must use multi-factor authentication*"){
-                        Write-Error "Username or password is incorrect for tenant: $TenantID"
-                    }
-                    else{
-                        Write-Error "An error occured while trying to login using the provided credential:`n$_"
-                    }
-                }
-                else{
-                    if($_.Exception.Message -like "*Tenant* not found*"){
-                        Write-Warning "The Azure Tenant provided: $TenantID was not found..."
-                        do{
-                            try{
-                                $TenantID = Read-Host "Please provide a valid TenantID..." -ErrorAction Stop
-                                $OK = $true
-                            }
-                            catch{
-                                Write-Warning "The TenantID provided is not a valid GUID..."
-                            }
-                        }
-                       while(!$OK)
-                    }
-                    $OK = $false
-                    $CredentialOK = $false
-                    if($_.Exception.Message -like "*validating credentials due to invalid username or password*" -or $_.Exception.Message -like "*password is expired*" -or $_.Exception.Message -like "*user account is disabled*" -or $_.Exception.Message -like "*must use multi-factor authentication*" -or $_.Exception.Message -like "* Unsupported User Type*" -and !$CredentialOK){
-                        Write-Warning "The following error occured while trying to login:`n$_"
-                        $Credential = Get-Credential
-                    }
-                    else{
-                        $CredentialOK = $true
-                    }
-                    try{
-                        Login-AzAccount -Tenant $TenantID -Subscription $SubscriptionID -Credential $Credential -ErrorAction Stop -WarningVariable Warnings 3>$null
-                    }
-                    catch{
-                        if($Warnings.Message -like "*The subscription*could not be found*"){
-                            Write-Warning "The subscription: $SubscriptionID could not be found in Azure..."
-                        }
-                        do{
-                            try{
-                                $SubscriptionID = Read-Host "Please provide a valid SubscriptionID..." -ErrorAction Stop
-                                $OK = $true
-                            }
-                            catch{
-                                Write-Warning "The SubscriptionID provided is not a valid GUID..."
-                            }
-                        }
-                        while(!$OK)
-                        if($Warnings.Message -like "*does not have authorization to perform action 'Microsoft.Resources/subscriptions/read'*"){
-                            if(!$ContinueOnError){
-                                Write-Error "The user does not have read access to the subscription: $SubscriptionID..."
-                                break
-                            }
-                            $Warnings = ""
-                            Write-Verbose "Running through 10 cycels of 30 seconds each for a total of 5minutes..."
-                            for($i = 1; $i -le 10; $i++){
-                                Write-Warning "Go to the Azure subscription: $SubscriptionID and provide a minimum of reader for the user: $($Credential.Username)"
-                                Start-Sleep -Seconds 30
-                                try{
-                                    Login-AzAccount -Tenant $TenantID -Subscription $SubscriptionID -Credential $Credential -ErrorAction Stop -WarningVariable Warnings 3>$null
-                                }
-                                catch{
-                                    if($Warnings.Message -like "*does not have authorization to perform action 'Microsoft.Resources/subscriptions/read'*" -and $i -ne 10){
-                                        Write-Verbose "Cycle: $i / 10 - $(($i * 30)/60) minutes gone..."
-                                        Write-Warning "The user: $($Credential.Username) does still not have the minimum role on the subscription: $SubscriptionID"
-                                    }
-                                    else{
-                                        Write-Error "The following error occured while trying to verify whether the user: $($Credential.Username) has access to subscription: $SubcriptionID, error:`n$_"
-                                        break
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }   
-            }    
-        } 
-    }
-    while(!$AlreadyLoggedIn)
-    $Context = Get-AzContext
-    Write-Verbose "User: $($Context.Account) successfully logged in to Azure tenant: $($Context.Tenant.ID)"
-    return
-}
-<#
-function Get-RequiredModules {
-
-}
-Export-ModuleMember Get-AzAdvancedContext, Get-AzVMSizes
-
-#>
-Get-AzVMSizes -Location "westeurope" -OperatingSystem "Server2012R2" -ContinueOnError -Verbose
-
+Export-ModuleMember Get-AzVMSKU
