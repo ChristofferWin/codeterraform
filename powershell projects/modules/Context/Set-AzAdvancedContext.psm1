@@ -1,3 +1,53 @@
+<#
+.SYNOPSIS
+    Sets the Azure context using advanced authentication methods.
+
+.DESCRIPTION
+    The Set-AzAdvancedContext function allows users to set the Azure context using advanced authentication methods, including specifying credentials and tenant/subscription IDs. It provides interactive prompts and error handling for a seamless authentication experience.
+
+.PARAMETER Credential
+    Specifies a PSCredential object containing Azure authentication details. Mandatory parameter when using AzureEnvironment parameter set.
+
+.PARAMETER TenantID
+    Specifies the Azure Active Directory tenant ID. Mandatory parameter when using AzureEnvironment parameter set.
+
+.PARAMETER SubscriptionID
+    Specifies the Azure subscription ID. Mandatory parameter when using AzureEnvironment parameter set.
+
+.PARAMETER ContinueOnError
+    Specifies whether the function should continue processing in case of errors. By default, it stops on errors.
+
+.PARAMETER NoInteractive
+    Specifies whether to suppress interactive prompts.
+
+.OUTPUTS
+    None - Using the -Verbose switch will cause information to be sent to the standard output
+
+.NOTES
+    File Name      : Set-AzAdvancedContext.psm1
+    Author         : Christoffer Windahl Madsen
+    Prerequisite    : This function requires the Az PowerShell module.
+
+.LINK
+    https://github.com/ChristofferWin/codeterraform
+
+.EXAMPLE
+    //Simply log in using all information => The credential object can either contain SPN ID + secret or username + password
+    //If a user account is provided and it requires MFA, a pop-up will show
+    Set-AzAdvancedContext -Credential (Get-Credential) -TenantID "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" -SubscriptionID "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
+.EXAMPLE
+    //Using a SPN ID + secret to login and also making sure the call is non-interractive as it must be used in an automatic proces
+    Set-AzAdvancedContext -Credential (Get-Credential) -TenantID "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" -SubscriptionID "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" -NoInteractive
+
+.EXAMPLE
+    //Calling the function without any input causing it to automically search for an active session, if none is found a credential is requested
+    Set-AzAdvancedContext
+
+.EXAMPLE
+    //Calling the function without any input and also forcing it to be non-interractive causing it to throw an error if no context can be automically found
+    Set-AzAdvancedContext -NoInteractive
+#>
 function Set-AzAdvancedContext {
     [cmdletBinding(DefaultParameterSetName = 'ManualSettings')]
     param(
@@ -11,7 +61,13 @@ function Set-AzAdvancedContext {
     if($Credential.Count -eq 0 -and !$NoInteractive -and !$AlreadyLoggedIn){
         Write-Warning "No context could be found. Please provide a credential object... "
         Write-Output "Either username/password or app id/secret"
-        $Credential = Get-Credential
+        try{
+            $Credential = Get-Credential -ErrorAction Stop
+        }
+        catch{
+            Write-Warning "Information for the credential object is lacking, function stopping..."
+            return
+        }
     }
     elseif($AlreadyLoggedIn){
         #Simply continue
@@ -129,7 +185,7 @@ function Set-AzAdvancedContext {
     }
     while(!$AlreadyLoggedIn)
     $Context = Get-AzContext
-    Write-Verbose "User: $($Context.Account) successfully logged in to Azure tenant: $($Context.Tenant.ID)"
+    Write-Verbose "User: $($Context.Account) successfully logged in to Azure tenant: $($Context.Tenant.ID) and subscription: $($Context.Subscription.Id)"
     return
 }
 Export-ModuleMember Set-AzAdvancedContext

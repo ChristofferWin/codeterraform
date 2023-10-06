@@ -59,7 +59,6 @@ function Get-AzVMSKU {
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$Location,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$ContinueOnError,
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$OperatingSystem,
-        [Parameter(ParameterSetName = "ManualSettings")][string]$OSVersions,
         [Parameter(ParameterSetName = "ManualSettings")][String]$VMPattern,
         [Parameter(ParameterSetName = "ManualSettings")][string]$OSPattern,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$RawFormat,
@@ -75,9 +74,8 @@ function Get-AzVMSKU {
     $MSVMURL = "https://azure.microsoft.com/en-us/pricing/details/virtual-machines/series/"
     $CategoryObjects = @()
     $LocationObjects = @()
-    $TotalObjects = @()
 
-    $FinalReturnObject = @(
+    $HelperObjects = @(
         [pscustomobject]@{
             Publisher = "MicrosoftWindowsServer"
             Offer = "WindowsServer"
@@ -135,6 +133,10 @@ function Get-AzVMSKU {
     )
 
     $FinalOutput = [PSCustomObject]@{
+        SubscriptionID = ""
+        SubscriptionName = ""
+        TenantID = ""
+        TenantName = ""
         Publisher = ""
         Offer = ""
         SKUs = "*$OSPattern*"
@@ -146,15 +148,25 @@ function Get-AzVMSKU {
     }
 
     $AliasArray = @()
-    $AliasArray += $FinalReturnObject[0].Alias.Split(",")
-    $AliasArray += $FinalReturnObject[1..8].Alias
+    $AliasArray += $HelperObjects[0].Alias.Split(",")
+    $AliasArray += $HelperObjects[1..8].Alias
     $AliasArray = $AliasArray | % {$_.Trim().ToLower()}
 
-    $SubscriptionID = (Get-AzContext).Subscription
-    if(!$SubscriptionID){
+    $Context = Get-AzContext
+    $FinalOutput.SubscriptionID = $Context.Subscription
+    if(!$FinalOutput.SubscriptionID){
         Write-Error "No Azure context found. Please use either Login-AzAccount or Set-AzAdvancedContext to get one..."
         return
     }
+    $FinalOutput.SubscriptionName = $Context.Subscription.Name
+    $FinalOutput.TenantID = $Context.Tenant.id
+    try {
+        $FinalOutput.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.TenantID}).Name
+    }
+    catch {
+        Write-Verbose "Was not possible to retrieve the Tenant name, continuing..."
+    }
+
     if(!$ShowVMCategories -and !$ShowVMOperatingSystems){
         try{
             $Locations = Get-AzLocation -ErrorAction Stop
@@ -309,20 +321,20 @@ function Get-AzVMSKU {
     while(!$VMsizes)
 
     switch($OperatingSystem){
-        "Server2008" {$FinalOutput.SKUs = "2008-*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Server2012" {$FinalOutput.SKUs = "2012-data*$OSPattern*";$FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Server2012R2" {$FinalOutput.SKUs = "2012-r2*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Server2016" {$FinalOutput.SKUs = "2016*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Server2019" {$FinalOutput.SKUs = "2019*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Server2022" {$FinalOutput.SKUs = "2022*$OSPattern*"; $FinalOutput.Offer = $FinalReturnObject[0].Offer; $FinalOutput.Publisher = $FinalReturnObject[0].Publisher}
-        "Windows7" {$FinalOutput.Offer = $FinalReturnObject[1].Offer; $FinalOutput.Publisher = $FinalReturnObject[1].Publisher}
-        "Windows10" {$FinalOutput.Offer = $FinalReturnObject[2].Offer; $FinalOutput.Publisher = $FinalReturnObject[2].Publisher}
-        "Windows11" {$FinalOutput.Offer = $FinalReturnObject[3].Offer; $FinalOutput.Publisher = $FinalReturnObject[3].Publisher}
-        "CentOS" {$FinalOutput.Offer = $FinalReturnObject[4].Offer; $FinalOutput.Publisher = $FinalReturnObject[4].Publisher}
-        "Ubuntu" {$FinalOutput.Offer = $FinalReturnObject[5].Offer; $FinalOutput.Publisher = $FinalReturnObject[5].Publisher}
-        "Debian10" {$FinalOutput.Offer = $FinalReturnObject[6].Offer; $FinalOutput.Publisher = $FinalReturnObject[6].Publisher}
-        "Debian11" {$FinalOutput.Offer = $FinalReturnObject[7].Offer; $FinalOutput.Publisher = $FinalReturnObject[7].Publisher}
-        "Redhat" {$FinalOutput.Offer = $FinalReturnObject[8].Offer; $FinalOutput.Publisher = $FinalReturnObject[8].Publisher}
+        "Server2008" {$FinalOutput.SKUs = "2008-*$OSPattern*"; $FinalOutput.Offer = $HelperObjects[0].Offer; $FinalOutput.Publisher = $HelperObjects[0].Publisher}
+        "Server2012" {$FinalOutput.SKUs = "2012-data*$OSPattern*";$FinalOutput.Offer = $HelperObjects[0].Offer; $FinalOutput.Publisher = $HelperObjects[0].Publisher}
+        "Server2012R2" {$FinalOutput.SKUs = "2012-r2*$OSPattern*"; $FinalOutput.Offer = $HelperObjects[0].Offer; $FinalOutput.Publisher = $HelperObjects[0].Publisher}
+        "Server2016" {$FinalOutput.SKUs = "2016*$OSPattern*"; $FinalOutput.Offer = $HelperObjects[0].Offer; $FinalOutput.Publisher = $HelperObjects[0].Publisher}
+        "Server2019" {$FinalOutput.SKUs = "2019*$OSPattern*"; $FinalOutput.Offer = $HelperObjects[0].Offer; $FinalOutput.Publisher = $HelperObjects[0].Publisher}
+        "Server2022" {$FinalOutput.SKUs = "2022*$OSPattern*"; $FinalOutput.Offer = $HelperObjects[0].Offer; $FinalOutput.Publisher = $HelperObjects[0].Publisher}
+        "Windows7" {$FinalOutput.Offer = $HelperObjects[1].Offer; $FinalOutput.Publisher = $HelperObjects[1].Publisher}
+        "Windows10" {$FinalOutput.Offer = $HelperObjects[2].Offer; $FinalOutput.Publisher = $HelperObjects[2].Publisher}
+        "Windows11" {$FinalOutput.Offer = $HelperObjects[3].Offer; $FinalOutput.Publisher = $HelperObjects[3].Publisher}
+        "CentOS" {$FinalOutput.Offer = $HelperObjects[4].Offer; $FinalOutput.Publisher = $HelperObjects[4].Publisher}
+        "Ubuntu" {$FinalOutput.Offer = $HelperObjects[5].Offer; $FinalOutput.Publisher = $HelperObjects[5].Publisher}
+        "Debian10" {$FinalOutput.Offer = $HelperObjects[6].Offer; $FinalOutput.Publisher = $HelperObjects[6].Publisher}
+        "Debian11" {$FinalOutput.Offer = $HelperObjects[7].Offer; $FinalOutput.Publisher = $HelperObjects[7].Publisher}
+        "Redhat" {$FinalOutput.Offer = $HelperObjects[8].Offer; $FinalOutput.Publisher = $HelperObjects[8].Publisher}
     }
  
     try{
@@ -330,9 +342,13 @@ function Get-AzVMSKU {
         if($NewestSKUs){
             $FinalOutput.SKUs = $FinalOutput.SKUs[-1]
         }
+        if($FinalOutput.SKUs.count -eq 0) {
+            Write-Warning "No SKUs found using the operating system: '$OperatingSystem' and OS pattern: '$OSPattern'"
+            return
+        }
     }
     catch{
-        Write-Error "The following error occured while trying to retrieve the current SKUs for OS: $OperatingSystem`n$_"
+        Write-Error "The following error occured while trying to retrieve the current SKUs for OS: '$OperatingSystem'`n$_"
         return
     }
     $i = 0
