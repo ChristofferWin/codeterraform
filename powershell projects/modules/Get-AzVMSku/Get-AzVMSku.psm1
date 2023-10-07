@@ -153,7 +153,7 @@ function Get-AzVMSKU {
     $AliasArray = $AliasArray | % {$_.Trim().ToLower()}
 
     $Context = Get-AzContext
-    $FinalOutput.SubscriptionID = $Context.Subscription
+    $FinalOutput.SubscriptionID = $Context.Subscription.Id
     if(!$FinalOutput.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
         Write-Error "No Azure context found. Please use either Login-AzAccount or Set-AzAdvancedContext to get one..."
         return
@@ -358,26 +358,24 @@ function Get-AzVMSKU {
             $Versions = (Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $SKUPlaceholder -ErrorAction Stop).Version
             try{
                if($CheckAgreement) {
-                  $Agreement = Get-AzMarketplaceterms -Publisher $FinalOutput.Publisher -Product $FinalOutput.Offer -Name '$($SKUPlaceholder)' -ErrorAction Stop
+                  $Agreement = Get-AzMarketplaceterms -Publisher $FinalOutput.Publisher -Product $FinalOutput.Offer -Name $SKUPlaceholder -ErrorAction Stop
+                  $FinalOutput.Versions.Add([PSCustomObject]@{
+                    SKU = $SKUPlaceholder
+                    Versions = $Versions
+                    Agreement = $Agreement
+                  }) | Out-Null
                }
             }
             catch{
                 if($_.Exception.Message -like "*Unable to find legal terms for this offer*" -or $_.Exception.Message -like "*The offer with Offer ID*"){
                     Write-Verbose "No legal terms to sign for sku: $SKUPlaceholder"
                 }
-                else{
-                    Write-Warning "Legal terms to sign for sku: $SKUPlaceholder"
-                }
+            }
+            if($Agreement.count -gt 0){
+                Write-Warning "Legal agreement found for SKU: $SKUPlaceholder"
             }
             if($NewestSKUsVersions -and $Versions.Count -gt 0){
                 $Versions = $Versions[-1]           
-            }
-            if($CheckAgreement){
-                $FinalOutput.Versions.Add([PSCustomObject]@{
-                    SKU = $SKUPlaceholder
-                    Versions = $Versions
-                    Agreement = $Agreement
-                }) | Out-Null
             }
             else {
                 $FinalOutput.Versions.Add([PSCustomObject]@{
