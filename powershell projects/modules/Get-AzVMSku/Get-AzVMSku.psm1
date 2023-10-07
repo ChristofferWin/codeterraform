@@ -154,7 +154,7 @@ function Get-AzVMSKU {
 
     $Context = Get-AzContext
     $FinalOutput.SubscriptionID = $Context.Subscription
-    if(!$FinalOutput.SubscriptionID){
+    if(!$FinalOutput.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
         Write-Error "No Azure context found. Please use either Login-AzAccount or Set-AzAdvancedContext to get one..."
         return
     }

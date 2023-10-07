@@ -9,10 +9,10 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-# RootModule = ''
+RootModule = 'Set-AzAdvancedContext.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0'
+ModuleVersion = '1.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = 'Codeterraform'
 Copyright = '(c) Christoffer Windahl Madsen. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'Advanced version of the normal Set-AzContext and can always make sure a user or service account is logged in with a valid context to Azure'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''
@@ -51,7 +51,7 @@ Copyright = '(c) Christoffer Windahl Madsen. All rights reserved.'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-# RequiredModules = @()
+RequiredModules = @("Az.Accounts")
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -95,16 +95,16 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @("Azure", "Authentication", "Automation")
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/ChristofferWin/codeterraform/blob/main/LICENSE'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://codeterraform.com'
 
         # A URL to an icon representing this module.
-        # IconUri = ''
+        IconUri = 'https://static.wixstatic.com/media/12b015_965de78de7c74fbda9620030b81f8a1e~mv2.png/v1/fill/w_1057,h_400,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/12b015_965de78de7c74fbda9620030b81f8a1e~mv2.png'
 
         # ReleaseNotes of this module
         # ReleaseNotes = ''
