@@ -1,0 +1,1 @@
+Get-AzVMSKu -Location westeurope -OperatingSystem CentOS -Verbose -NewestSKUs -VMPattern "DC" | ConvertTo-Json -Depth 3| Out-File -Encoding UTF8 .\SKUs.json
