@@ -411,4 +411,4 @@ function Get-AzVMSKU {
     }
     return $FinalOutput
 }
-Export-ModuleMember Get-AzVMSKU
+$Test = Get-AzVMSku -Location "westeurope" -OperatingSystem windows11 -NewestSKUs -NewestSKUsVersions

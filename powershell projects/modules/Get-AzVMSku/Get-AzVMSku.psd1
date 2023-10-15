@@ -12,7 +12,7 @@
 RootModule = 'Get-AzVMSku.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1'
+ModuleVersion = '1.9'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -106,8 +106,8 @@ PrivateData = @{
         # A URL to an icon representing this module.
         IconUri = 'https://static.wixstatic.com/media/12b015_965de78de7c74fbda9620030b81f8a1e~mv2.png/v1/fill/w_1057,h_400,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/12b015_965de78de7c74fbda9620030b81f8a1e~mv2.png'
 
-        # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        #ReleaseNotes of this module
+        ReleaseNotes = 'As of version 1.8 fixed a bug, where the switch "-NewestSKusVersions" threw an exception saying no SKUs were found.'
 
         # Prerelease string of this module
         # Prerelease = ''
