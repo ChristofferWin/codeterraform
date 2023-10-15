@@ -11,7 +11,13 @@ variable "VM_Objects" {
         OS = "CentOS"
         VM_Pattern = "DC4s"
         File_name = "Centos6-Newest-SKUs.json"
-        Note = "information required to deploy Centos 6 servers with then newest SKU"
+        Note = "information required to deploy Centos 6 servers with the newest SKU"
+    },
+    {
+        OS = "Windows11"
+        VM_Pattern = "B2ms"
+        File_name = "Windows11-Newest-SKUs.json"
+        Note = "information required to deploy Windows 11 Clients with the newest SKU"
     }
   ]
 }
