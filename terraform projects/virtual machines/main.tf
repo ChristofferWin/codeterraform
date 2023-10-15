@@ -33,7 +33,6 @@ resource "null_resource" "invoking_pwsh" {
 
 locals {
   content = jsondecode("[${join(",", (values(data.local_file.SKU_objects)).*.content)}]")
-
 }
 
 data "local_file" "SKU_objects" {
