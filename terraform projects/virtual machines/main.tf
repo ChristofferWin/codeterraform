@@ -27,7 +27,7 @@ resource "null_resource" "invoking_pwsh" {
     }
     provisioner "local-exec" {
         command = "${var.Script_path} -OS ${each.key} -VMPattern ${each.value.VM_Pattern} -OutputFileName ${each.value.File_name}"
-        interpreter = ["pwsh.exe", "-Command"] //Use Powershell core to enforce UTF8 encodibg of the output file
+        interpreter = ["pwsh.exe", "-Command"] //Use Powershell core to enforce UTF8 encoding of the output file
     }
 }
 
