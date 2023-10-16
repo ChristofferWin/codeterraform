@@ -25,7 +25,7 @@ Please see below for a visiual description of how these scripting tools work tog
 
 </br>
 
-![Blueprint](https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/virtual%20machines/Automated-VM-Deployment.drawio.png?raw=true)
+![Blueprint](https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/virtual%20machines/Automated-VM-Deployment.png?raw=true)
 
 ## Getting started using provided code
 1. Create an empty folder anywhere on the local system
