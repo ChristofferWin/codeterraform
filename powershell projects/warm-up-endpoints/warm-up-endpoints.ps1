@@ -51,7 +51,7 @@ function Run-URLWarmUp {
                 $URL = $args[0]
                 $Date = (Get-Date).ToString("dd-MM-yyyy")
                 $Name = if($args[0] -like "www.*"){$URL.Split(".")[1]}else{($URL.Substring(7).Replace("/", "").Split(".")[0])}
-                $Path = "Log-$Name-at-$Date.$($args[4])"
+                $Path  "Log-$Name-at-$Date.$($args[4])"
                 
                 if($args[3]){
                     cd $args[3]
