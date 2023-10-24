@@ -19,7 +19,7 @@ variable "location" {
 variable "env_name" {
   description = "the name of the environment. can be any string value, will be used as a prefix in every resource name that does not have an explicit name defined"
   type = string
-  default = "prod"
+  default = "t"
 }
 /*
 variable "env_regex_filter" {
@@ -35,7 +35,7 @@ variable "create_bastion" {
 variable "create_public_ip" {
   description = "switch to determine whether the module shall deploy a public ip for the vm"
   type = bool
-  default = false
+  default = true
 }
 
 variable "vnet_object" {
@@ -44,7 +44,7 @@ variable "vnet_object" {
     name = string
     address_space = list(string)
   })
-  default =  null
+  default = null
 }
 
 variable "vnet_resource_id" {
@@ -56,7 +56,7 @@ variable "vnet_resource_id" {
 variable "subnet_objects" {
   description = "define up to 2 subnets. 1 for the vm(s), another for bastion. index 0 will always be the vm subnet. name is not required and will be 'vm-subnet' by default. note, the bastion subnet name cannot be changed"
   type = list(object({
-    name = optional(string)
+    name = string
     address_prefixes = list(string)
   }))
   default = null
@@ -66,6 +66,24 @@ variable "subnet_resource_id" {
   description = "in case the module is not to create a new subnet, specify the id of the subnet of which to use. if this is specified, the vnet id must also be specified"
   type = string
   default = null
+}
+
+variable "pip_objects" {
+  description = "a list of objects representing public ips to create. must have the same length as the total length of 'vm_windows_objects & 'vm_linux_objects'"
+  type = list(object({
+    name = string
+    allocation_method = string
+    sku = string
+  }))
+  default = null
+}
+
+variable "bastion_object" {
+  description = "define a custom bastion configuration"
+  type = object({
+    name = string
+    
+  })
 }
 
 variable "vm_windows_objects" {
