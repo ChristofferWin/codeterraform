@@ -29,13 +29,13 @@ variable "env_regex_filter" {
 variable "create_bastion" {
   description = "switch to determine whether the module shall deploy bastion"
   type = bool
-  default = true
+  default = false
 }
 
 variable "create_public_ip" {
   description = "switch to determine whether the module shall deploy a public ip for the vm"
   type = bool
-  default = true
+  default = false
 }
 
 variable "vnet_object" {
@@ -43,6 +43,7 @@ variable "vnet_object" {
   type = object({
     name = string
     address_space = list(string)
+    tags = optional(map(string))
   })
   default = null
 }
@@ -72,8 +73,9 @@ variable "pip_objects" {
   description = "a list of objects representing public ips to create. must have the same length as the total length of 'vm_windows_objects & 'vm_linux_objects'"
   type = list(object({
     name = string
-    allocation_method = string
-    sku = string
+    allocation_method = optional(string)
+    sku = optional(string)
+    tags = optional(map(string))
   }))
   default = null
 }
@@ -82,14 +84,19 @@ variable "bastion_object" {
   description = "define a custom bastion configuration"
   type = object({
     name = string
-    
+    copy_paste_enabled = optional(bool)
+    file_copy_enabled = optional(bool)
+    sku = optional(string)
+    scale_units = optional(number)
+    tags = optional(map(string))
   })
+  default = null
 }
 
 variable "vm_windows_objects" {
   description = "a list of objects representing a windows vm configuration"
   type = list(object({
-    name = optional(string)
+    name = string
     admin_username = optional(string)
     admin_password = optional(string)
     size = optional(string)
@@ -109,6 +116,8 @@ variable "vm_windows_objects" {
     hotpatching_enabled = optional(bool)
     license_type = optional(string)
     max_bid_price = optional(number)
+    os_name = string
+    os_sku = optional(string)
     patch_assessment_mode = optional(string)
     patch_mode = optional(string)
     platform_fault_domain = optional(number)
@@ -165,12 +174,6 @@ variable "vm_windows_objects" {
       }))
     }))
 
-    plan = optional(object({
-      name = string
-      product = string
-      publisher = string
-    }))
-
     secret = optional(object({
       key_vault_id = string
 
@@ -196,8 +199,57 @@ variable "vm_windows_objects" {
       protocol = string
       certificate_url = optional(string)
     }))
+
+    public_ip = optional(object({
+      name = string
+      allocation_method = optional(string)
+      sku = optional(string)
+      tags = optional(map(string))
+    }))
+
+    nic = optional(object({
+      name = string
+      dns_servers = optional(list(string))
+      enable_ip_forwarding = optional(bool)
+      edge_zone = optional(string)
+      tags = optional(map(string))
+      ip_configuration = optional(object({
+        name = string
+        private_ip_address_version = optional(string)
+        private_ip_address = string
+        private_ip_address_allocation = optional(string)
+      }))
+    }))
   }))
-  default = null
+  default = [
+    {
+      name = "dynamic-vm"
+      os_name = "windows10"
+      public_ip = {
+        allocation_method = "Dynamic"
+        name = "my-public-ip"
+      }
+    },
+    {
+      name = "test2"
+      os_name = "windows10"
+
+      source_image_reference = {
+        offer = "test"
+        sku = "test"
+        publisher = "test"
+        version = "test"
+      }
+    },
+    {
+      name = "test3"
+      os_name = "windows11"
+    },
+    {
+      name = "test4"
+      os_name = "server2012"
+    }
+  ]
 }
 
 variable "vm_linux_objects" {
@@ -224,6 +276,8 @@ variable "vm_linux_objects" {
     patch_assessment_mode = optional(string)
     patch_mode = optional(string)
     max_bid_price = optional(number)
+    os_name = string
+    os_sku = optional(string)
     platform_fault_domain = optional(number)
     priority = optional(string)
     provisioning_vm_agent = optional(bool)
@@ -303,6 +357,43 @@ variable "vm_linux_objects" {
       enabled = bool
       timeout = optional(string)
     }))
+
+    public_ip = optional(object({
+      name = string
+      allocation_method = optional(string)
+      sku = optional(string)
+      tags = optional(map(string))
+    }))
+
+    nic = optional(object({
+      name = string
+      dns_servers = optional(list(string))
+      enable_ip_forwarding = optional(bool)
+      edge_zone = optional(string)
+      tags = optional(map(string))
+    }))
   }))
+  default = [
+    {
+      name = "test5"
+      os_name = "ubuntu"
+    },
+    {
+      name = "test6"
+      os_name = "redhat"
+    },
+    {
+      name = "test7"
+      os_name = "redhat"
+      public_ip = {
+        name = "test"
+      }
+    }
+  ]
+}
+
+variable "script_name" {
+  description = "define a custom path for the powershell script that will retrieve sku information"
+  type = string
   default = null
 }
