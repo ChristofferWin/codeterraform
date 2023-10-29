@@ -21,11 +21,7 @@ variable "env_name" {
   type = string
   default = "t"
 }
-/*
-variable "env_regex_filter" {
-  description = "a list of regexes "
-}
-*/
+
 variable "create_bastion" {
   description = "switch to determine whether the module shall deploy bastion"
   type = bool
@@ -202,7 +198,7 @@ variable "vm_windows_objects" {
 
     public_ip = optional(object({
       name = string
-      allocation_method = optional(string)
+      allocation_method = string
       sku = optional(string)
       tags = optional(map(string))
     }))
@@ -226,20 +222,13 @@ variable "vm_windows_objects" {
       name = "dynamic-vm"
       os_name = "windows10"
       public_ip = {
-        allocation_method = "Dynamic"
-        name = "my-public-ip"
+        allocation_method = "Static"
+        name = "test-pipper"
       }
     },
     {
       name = "test2"
       os_name = "windows10"
-
-      source_image_reference = {
-        offer = "test"
-        sku = "test"
-        publisher = "test"
-        version = "test"
-      }
     },
     {
       name = "test3"
@@ -360,7 +349,7 @@ variable "vm_linux_objects" {
 
     public_ip = optional(object({
       name = string
-      allocation_method = optional(string)
+      allocation_method = string
       sku = optional(string)
       tags = optional(map(string))
     }))
@@ -377,6 +366,10 @@ variable "vm_linux_objects" {
     {
       name = "test5"
       os_name = "ubuntu"
+      public_ip = {
+        name = "test"
+        allocation_method = "Static"
+      }
     },
     {
       name = "test6"
@@ -385,9 +378,6 @@ variable "vm_linux_objects" {
     {
       name = "test7"
       os_name = "redhat"
-      public_ip = {
-        name = "test"
-      }
     }
   ]
 }

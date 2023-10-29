@@ -42,35 +42,26 @@ locals {
     }
   ]) : each.name => each} : null
 
-  subnet_objects = local.subnet_objects_pre == null && var.create_bastion ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]},{name = "AzureBastionSubnet", address_prefixes = ["${split("/", local.vnet_object_helper.address_space[0])[0]}/${split("/", local.vnet_object_helper.address_space[0])[1] - (6 - (32 - split("/", local.vnet_object_helper.address_space[0])[1]))}]}])"]}]) : each.name => each} : {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]}] : each.name => each}
+  subnet_objects = local.subnet_objects_pre == null && var.create_bastion ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]},{name = "AzureBastionSubnet", address_prefixes = [local.vnet_object_helper.address_space[1]]}]) : each.name => each} : {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]}] : each.name => each}
 
-  pip_objects = var.create_public_ip ? {for each in [for x, y in range(local.vm_counter) : {
-    name = x == local.vm_counter && var.env_name != null && var.create_bastion ? "${var.env_name}-bastion-pip" : x == local.vm_counter && var.create_bastion ? "bastion-pip" : can(local.merge_objects[x].public_ip.name) ?  local.merge_objects[x].public_ip.name : "${local.merge_objects[x].name}-pip"
+  pip_objects = local.vm_counter > 0 ? {for each in [for x, y in range(local.vm_counter) : {
+    name = (x == local.vm_counter || local.vm_counter == 1) && var.env_name != null && var.create_bastion ? "${var.env_name}-bastion-pip" : x == local.vm_counter && var.create_bastion ? "bastion-pip" : "test${x}"
     allocation_method = can(local.merge_objects[x].public_ip.allocation_method) ? local.merge_objects[x].public_ip.allocation_method : "Static"
     sku = can(local.merge_objects[x].public_ip.sku) ? local.merge_objects[x].public_ip.sku : "Standard"
     tags = can(local.merge_objects[x].nic.tags) ? local.merge_objects[x].nic.tags : null
-    vm_name = local.merge_objects[x].name
+    vm_name = can(local.merge_objects[x].name) ? local.merge_objects[x].name : null
   }] : each.name => each} : {}
 
-  pip_helper_objects = var.create_bastion ? {for each in (flatten([{name = "bastion-pip"},[for each in local.merge_objects : each if each.public_ip != null]])) : each.name => each} : {for each in ([for each in local.merge_objects : each if each.public_ip != null]) : each.name => each}
-/*
-  pip_objects = local.pip_objects_pre == null ? {for each in [for x, y in range(length(local.merge_objects) - length(local.vm_counter) + sum([for each in local.merge_objects : 1 if each.public_ip != null])) : {
-    name = x == 0 && var.env_name != null && var.create_bastion ? "${var.env_name}-bastion-pip" : x == 0 && var.create_bastion ? "bastion-pip" : can(local.merge_objects[x].public_ip.name) ? local.merge_objects[x].public_ip.name : null
-    allocation_method = can(local.merge_objects[x].public_ip.allocation_method)
-
-  }] : each.name => each} : local.pip_objects_pre
-*/
   bastion_object = var.create_bastion && var.bastion_object == null ? {for each in [for x, y in range(1) : {
       name = var.env_name != null ? "${var.env_name}-bastion-host" : "bastion-host"
       copy_paste_enabled = true
       file_copy_enabled = true
       sku = "Standard" //Otherwise file_copy cannot be enabled
       scale_units = 2
+      public_ip = local.pip_resource_id
   }] : each.name => each} : var.create_bastion && var.bastion_object != null ? {for each in var.bastion_object : each.name => each} : null
 
-  vm_counter_windows = can(length(var.vm_windows_objects)) ? length(var.vm_windows_objects) : 0
-  vm_counter_linux = can(length(var.vm_windows_objects)) ? length(var.vm_windows_objects) : 0
-  vm_counter = var.create_bastion ? length((local.vm_objects)) + 1 : length((local.vm_objects))
+  vm_counter = var.create_public_ip && var.create_bastion ? length(local.merge_objects) + 1 : var.create_bastion == false && var.create_public_ip == false ? length([for each in local.merge_objects : each if each.public_ip != null]) : var.create_bastion ? length([for each in local.merge_objects : each if each.public_ip != null]) + 1 : 0
   vm_os_names = var.vm_windows_objects != null && var.vm_linux_objects != null ? distinct(flatten([[for each in var.vm_windows_objects : each.os_name if each.source_image_reference == null], [for each in var.vm_linux_objects : each.os_name if each.source_image_reference == null]])) : null
   
   vm_objects_pre = [for x, y in range(length(data.local_file.vmskus_objects)) : {
@@ -84,6 +75,10 @@ locals {
   ]
 
   merge_objects = flatten([var.vm_windows_objects, var.vm_linux_objects])
+  test = [{name = "bastion", placeholder = "lol"}]
+  test2 = var.create_bastion ? flatten([local.merge_objects, local.test]) : null
+  test3 = local.test2 == null ? local.merge_objects : local.test2
+  #merge_objects_public_ip = var.create_bastion ? {for each in  : each.name => each} : {for each in local.merge_objects : each.name => each}
 
   vm_objects = {for each in [for x, y in local.merge_objects : {
     name = local.merge_objects[x].name
@@ -103,7 +98,8 @@ locals {
     private_ip_address = can(local.merge_objects[x].nic.ip_configuration.private_ip_address) ? local.merge_objects[x].nic.ip_configuration.private_ip_address : null
     private_ip_address_allocation = can(local.merge_objects[x].nic.ip_configuration.private_ip_address_allocation) ? local.merge_objects[x].nic.ip_configuration.private_ip_address_allocation : "Dynamic"
     tags = can(local.merge_objects[x].nic.tags) ? local.merge_objects[x].nic.tags : null
-    vm_name = local.merge_objects[x].name
+    pip_resource_id = can([for a in local.pip_resource_id : a if length([for b in local.pip_objects : b.name if (length(regexall(a, "test5")) > 0)]) > 0][0]) ? [for a in local.pip_resource_id : a if length([for b in local.pip_objects : b.name if (length(regexall(a, "test5")) > 0)]) > 0][0] : null
+     vm_name = can(local.merge_objects[x].name) ? local.merge_objects[x].name : null
   }] : each.name => each}
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "${path.module}/Get-AzVMSku.ps1" : null
@@ -111,7 +107,7 @@ locals {
   rg_resource_id = azurerm_resource_group.rg_object != null || azurerm_resource_group.rg_object != [] ? azurerm_resource_group.rg_object[0].id : var.rg_id
   vnet_resource_id = azurerm_virtual_network.vnet_object != null || azurerm_virtual_network.vnet_object != [] ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
   subnet_resource_id = azurerm_subnet.subnet_object != null || azurerm_subnet.subnet_object != [] ? flatten(values(azurerm_subnet.subnet_object).*.id) : [var.subnet_resource_id]
-  pip_resource_id = azurerm_public_ip.pip_object != null || azurerm_public_ip.pip_object != [] ? flatten(values(azurerm_public_ip.pip_object).*.id) : null
+  pip_resource_id = azurerm_public_ip.pip_object != null || azurerm_public_ip.pip_object != [] ? flatten(values(azurerm_public_ip.pip_object).*.id) : []
 
   //Return objects
   rg_return_object = can(azurerm_resource_group.rg_object[0]) ? azurerm_resource_group.rg_object[0] : null
@@ -135,7 +131,7 @@ data "local_file" "vmskus_objects" {
 }
 
 resource "random_password" "vm_password_object" {
-  count = local.vm_counter - 1 //Regardless of whether the user wants to supply own passwords, create a list of passwords ready, in case not
+  count = length(local.merge_objects) //Regardless of whether the user wants to supply own passwords, create a list of passwords ready
   length           = 16
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
@@ -211,9 +207,10 @@ resource "azurerm_network_interface" "nic_object" {
   
   ip_configuration {
     name = each.value.ip_configuration_name
+    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("Bastion", each)) == 0][0]
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address = each.value.private_ip_address
-    #public_ip_address_id = local.pip_objects != {} ? [for each in local.pip_resource_id : each if length(regexall(([for each in local.pip_objects : each.name if each.value.vm_name == each.vm_name][0]), each)) > 0][0] : null
+    public_ip_address_id = each.value.pip_resource_id
   }
 }
 /*
@@ -229,6 +226,3 @@ output "counter" {
   value = local.vm_counter
 }
 
-output "subnet_objects" {
-  value = local.pip_helper_objects
-}
