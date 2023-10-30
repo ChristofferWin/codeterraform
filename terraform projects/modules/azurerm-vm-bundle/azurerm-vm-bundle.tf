@@ -34,6 +34,7 @@ provider "azurerm" {
 ##  Improvements (1): Find solution for when JSON payload contain invalid image             ##
 ##  =||= (2): Make it dynamically possible to not run the file data block                   ## 
 ##  =||= (3): To (2), make it possible to parse a filepath for custom JSON payloads         ##
+##  Future improvements: Clean up the locals block & add comment sections in code           ##
 ##                                                                                          ##
 ###############################################################################################
 ###############################################################################################
