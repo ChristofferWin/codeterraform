@@ -96,6 +96,7 @@ variable "vm_windows_objects" {
     admin_username = optional(string)
     admin_password = optional(string)
     size = optional(string)
+    size_pattern = optional(string)
     allow_extension_operations = optional(bool)
     availability_set_id = optional(string)
     bypass_platform_safety_checks_on_user_schedule_enabled = optional(bool)
@@ -113,7 +114,6 @@ variable "vm_windows_objects" {
     license_type = optional(string)
     max_bid_price = optional(number)
     os_name = string
-    os_sku = optional(string)
     patch_assessment_mode = optional(string)
     patch_mode = optional(string)
     platform_fault_domain = optional(number)
@@ -132,10 +132,10 @@ variable "vm_windows_objects" {
       ultra_ssd_enabled = bool
     }))
 
-    additional_unattend_content = optional(object({
+    additional_unattend_content = optional(list(object({
       content = string
       setting = string
-    }))
+    })))
 
     boot_diagnostics = optional(object({
       storage_account_uri = string
@@ -170,14 +170,14 @@ variable "vm_windows_objects" {
       }))
     }))
 
-    secret = optional(object({
+    secret = optional(list(object({
       key_vault_id = string
 
       certificate = optional(list(object({
         store = string
         url = string
       })))
-    }))
+    })))
 
     source_image_reference = optional(object({
       publisher = string
@@ -191,10 +191,10 @@ variable "vm_windows_objects" {
       timeout = optional(string)
     }))
 
-    winrm_listener = optional(object({
+    winrm_listener = optional(list(object({
       protocol = string
       certificate_url = optional(string)
-    }))
+    })))
 
     public_ip = optional(object({
       name = string
@@ -219,24 +219,40 @@ variable "vm_windows_objects" {
   }))
   default = [
     {
-      name = "dynamic-vm"
+      name = "test1"
       os_name = "windows10"
       public_ip = {
-        allocation_method = "Static"
-        name = "test-pipper"
+        name = "test1"
+        allocation_method = "Dynamic"
       }
     },
     {
-      name = "test2"
-      os_name = "windows10"
-    },
-    {
-      name = "test3"
+      name = "super-duper-vm"
       os_name = "windows11"
-    },
-    {
-      name = "test4"
-      os_name = "server2012"
+      size_pattern = "A"
+      admin_username = "testadmin"
+      admin_password = "S4J%];Rmz1£]DT6t"
+
+      public_ip = {
+        allocation_method = "Static"
+        sku = "Standard"
+        name = "the-duper-ip"
+
+        tags = {
+          "environment" = "prod"
+        }
+      }
+
+      source_image_reference = {
+        sku = "win11-22h2-pron"
+        version = "22621.2428.231001"
+        offer = "Windows-11"
+        publisher = "MicrosoftWindowsDesktop"
+      }
+
+      identity = [ {
+        type = "SystemAssigned"
+      } ]
     }
   ]
 }
@@ -249,6 +265,7 @@ variable "vm_linux_objects" {
     admin_password = optional(string)
     license_type = optional(string)
     size = optional(string)
+    size_pattern = optional(string)
     allow_extension_operations = optional(bool)
     availability_set_id = optional(string)
     bypass_platform_safety_checks_on_user_schedule_enabled = optional(bool)
@@ -266,7 +283,6 @@ variable "vm_linux_objects" {
     patch_mode = optional(string)
     max_bid_price = optional(number)
     os_name = string
-    os_sku = optional(string)
     platform_fault_domain = optional(number)
     priority = optional(string)
     provisioning_vm_agent = optional(bool)
@@ -366,10 +382,6 @@ variable "vm_linux_objects" {
     {
       name = "test5"
       os_name = "ubuntu"
-      public_ip = {
-        name = "test"
-        allocation_method = "Static"
-      }
     },
     {
       name = "test6"
