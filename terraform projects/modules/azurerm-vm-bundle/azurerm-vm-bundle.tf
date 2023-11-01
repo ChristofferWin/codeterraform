@@ -35,9 +35,19 @@ provider "azurerm" {
 ##  =||= (2): Make it dynamically possible to not run the file data block                   ## 
 ##  =||= (3): To (2), make it possible to parse a filepath for custom JSON payloads         ##
 ##  Future improvements: Clean up the locals block & add comment sections in code           ##
+##  Comments: First entry                                                                   ##
+##------------------------------------------------------------------------------------------##
 ##                                                                                          ##
-###############################################################################################
-###############################################################################################
+##  Date: 31-10-2023                                                                        ## 
+##  State: All bugs are fixed for all working compontents including creating win vm's       ##
+##  Missing: Define the block for linux vm´s and test many different deployment scenarios   ##
+##  Improvements (1): Find solution for when JSON payload contain invalid image             ##
+##  =||= (2): Make it dynamically possible to not run the file data block                   ## 
+##  =||= (3): To (2), make it possible to parse a filepath for custom JSON payloads         ##
+##  Future improvements: Clean up the locals block & add comment sections in code           ##
+##  Comments: All bugs were NOT fixed yesterday, they are now                               ##
+##                                                                                          ##
+##############################################################################################
 
 locals {
   //Variable transformation
@@ -143,7 +153,7 @@ locals {
 resource "null_resource" "ps_object" {
   count = can(length(local.vm_os_names)) && local.script_name != null ? length(local.vm_os_names) : 0
   provisioner "local-exec" {
-        command = "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json"
+        command = can([for a in local.merge_objects : a if a.os_name == local.vm_os_names[count.index] && a.newest_os_version]) ? "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json -OnlyWithVersion" : "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json"
         interpreter = ["pwsh.exe","-Command"]
   }
 }
@@ -242,7 +252,11 @@ resource "azurerm_network_interface" "nic_object" {
     ignore_changes = [ ip_configuration ]
   }
 }
-
+/*
+resource "azurerm_network_security_group" "vm_nsg_object" {
+  
+}
+*/
 resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   for_each = length(var.vm_windows_objects) > 0 ? {for each in var.vm_windows_objects : each.name => each} : {}
   name = each.key
@@ -283,7 +297,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   vtpm_enabled = can(each.value.vtpm_enabled) ? each.value.vtpm_enabled : null
 
   dynamic "additional_capabilities" {
-    for_each = can(each.value.additional_capabilities.ultra_ssd_enabled) ? {for a in each.value.additional_capabilities : uuid() => a} : {}
+    for_each = can(each.value.additional_capabilities.ultra_ssd_enabled) ? {for a in [each.value.additional_capabilities] : uuid() => a} : {}
     content {
       ultra_ssd_enabled = each.value.additional_capabilities.ultra_ssd_enabled
     }
@@ -298,7 +312,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   dynamic "boot_diagnostics" {
-    for_each = can(each.value.boot_diagnostics.storage_account_uri) ? {for a in each.value.boot_diagnostics : uuid() => a} : {}
+    for_each = can(each.value.boot_diagnostics.storage_account_uri) ? {for a in [each.value.boot_diagnostics] : uuid() => a} : {}
     content {
       storage_account_uri = each.value.boot_diagnostics.storage_account_uri
     }
@@ -313,12 +327,12 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
       tag = gallery_application.value.tag
     }
   }
-
+  
   dynamic "identity" {
-    for_each = can(each.value.identity.type) ? {for a in each.value.identity : uuid() => a} : {}
+    for_each = can(each.value.identity.type) ? {for a in [each.value.identity] : uuid() => a} : {}
     content {
-      type = identity.type
-      identity_ids = identity.identity_ids
+      type = identity.value.type
+      identity_ids = identity.value.identity_ids
     }
   }
 
@@ -342,7 +356,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   dynamic "plan" {
-    for_each = can(each.value.plan.name) ? {for a in each.value.plan : uuid() => a} : {}
+    for_each = can(each.value.plan.name) ? {for a in [each.value.plan] : uuid() => a} : {}
     content {
       name = plan.name
       product = plan.product
@@ -373,7 +387,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   dynamic "termination_notification" {
-    for_each = can(each.value.termination_notification.enabled) ? {for a in each.value.termination_notification : uuid() => a} : {}
+    for_each = can(each.value.termination_notification.enabled) ? {for a in [each.value.termination_notification] : uuid() => a} : {}
     content {
       enabled = termination_notification.value.enabled
       timeout = termination_notification.value.timeout
@@ -389,10 +403,18 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   lifecycle {
-    ignore_changes = [ os_disk, source_image_reference, network_interface_ids, size]
+    ignore_changes = [ os_disk, source_image_reference, network_interface_ids, size, identity]
   }
 }
 
 output "counter" {
   value = local.vm_counter
+}
+
+output "public_ip" {
+  value = can(values(azurerm_public_ip.pip_object)[0].ip_address) ? values(azurerm_public_ip.pip_object)[0].ip_address : null
+}
+
+output "test" {
+  value = can([for a in local.merge_objects : a if a.os_name == local.vm_os_names[0] && a.newest_os_version]) ? "hello" : "hello2"
 }

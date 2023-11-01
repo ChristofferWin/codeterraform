@@ -95,6 +95,7 @@ variable "vm_windows_objects" {
     name = string
     admin_username = optional(string)
     admin_password = optional(string)
+    newest_os_version = optional(bool)
     size = optional(string)
     size_pattern = optional(string)
     allow_extension_operations = optional(bool)
@@ -148,10 +149,10 @@ variable "vm_windows_objects" {
       tag = optional(string)
     })))
 
-    identity = optional(list(object({
+    identity = optional(object({
       type = string
       identity_ids = optional(set(string))
-    })))
+    }))
 
     os_disk = optional(object({
       caching = string
@@ -216,22 +217,18 @@ variable "vm_windows_objects" {
         private_ip_address_allocation = optional(string)
       }))
     }))
+
+    nsg = optional(object({
+      
+    }))
   }))
   default = [
     {
-      name = "test1"
-      os_name = "windows10"
-      public_ip = {
-        name = "test1"
-        allocation_method = "Dynamic"
-      }
-    },
-    {
       name = "super-duper-vm"
       os_name = "windows11"
-      size_pattern = "A"
       admin_username = "testadmin"
       admin_password = "S4J%];Rmz1£]DT6t"
+      newest_os_version = true
 
       public_ip = {
         allocation_method = "Static"
@@ -243,16 +240,9 @@ variable "vm_windows_objects" {
         }
       }
 
-      source_image_reference = {
-        sku = "win11-22h2-pron"
-        version = "22621.2428.231001"
-        offer = "Windows-11"
-        publisher = "MicrosoftWindowsDesktop"
-      }
-
-      identity = [ {
+      identity =  {
         type = "SystemAssigned"
-      } ]
+      }
     }
   ]
 }
@@ -263,6 +253,7 @@ variable "vm_linux_objects" {
     name = optional(string)
     admin_username = optional(string)
     admin_password = optional(string)
+    newest_os_version = optional(bool)
     license_type = optional(string)
     size = optional(string)
     size_pattern = optional(string)
