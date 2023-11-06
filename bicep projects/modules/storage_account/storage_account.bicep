@@ -57,4 +57,4 @@ resource storage_object 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-output test string = resource_group_name
+output test string = resource_group_name 
