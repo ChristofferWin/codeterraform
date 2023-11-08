@@ -377,7 +377,7 @@ function Get-AzVMSKU {
             if($NewestSKUsVersions -and $Versions.Count -gt 0){
                 $FinalOutput.Versions.Add([PSCustomObject]@{
                     SKU = $SKUPlaceholder
-                    Versions = $Versions[-1]
+                    Versions = if($Versions.count -gt 1){$Versions[-1]}else{$Versions}
                 }) | Out-Null
             }
             else {
@@ -406,7 +406,7 @@ function Get-AzVMSKU {
     while($i -le $FinalOutput.SKUs.Count -1)
     #Please check whether a pattern of null results in 0 skus being found or simply that every single possible SKUs for a given OS is found
     if($FinalOutput.Versions.SKU.Count -eq 0){
-        Write-Error "No SKUs were found for Operating system: $OperatingSystem $(if($OSPattern){'and using OSPattern: $($OSPattern)'})`nTry to change the pattern or simply ommit it..."
+        Write-Error "No SKUs were found for Operating system: $OperatingSystem $(if($OSPattern){"and using OSPattern: $($OSPattern)"})`nTry to change the pattern or simply ommit it..."
         return
     }
     return $FinalOutput

@@ -227,8 +227,7 @@ variable "vm_windows_objects" {
       name = "super-duper-vm"
       os_name = "windows11"
       admin_username = "testadmin"
-      admin_password = "S4J%];Rmz1£]DT6t"
-      newest_os_version = true
+      admin_password = "S4J%];Rmz1]DT6t"
 
       public_ip = {
         allocation_method = "Static"
@@ -239,7 +238,6 @@ variable "vm_windows_objects" {
           "environment" = "prod"
         }
       }
-
       identity =  {
         type = "SystemAssigned"
       }
@@ -301,7 +299,7 @@ variable "vm_linux_objects" {
     }))
 
     gallery_application = optional(list(object({
-      version = string
+      version_id = string
       configuration_blob_uri = optional(string)
       order = optional(number)
       tag = optional(string)

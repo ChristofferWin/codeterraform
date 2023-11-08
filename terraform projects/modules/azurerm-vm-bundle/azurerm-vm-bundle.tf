@@ -38,14 +38,14 @@ provider "azurerm" {
 ##  Comments: First entry                                                                   ##
 ##------------------------------------------------------------------------------------------##
 ##                                                                                          ##
-##  Date: 31-10-2023                                                                        ## 
-##  State: All bugs are fixed for all working compontents including creating win vm's       ##
-##  Missing: Define the block for linux vm´s and test many different deployment scenarios   ##
-##  Improvements (1): Find solution for when JSON payload contain invalid image             ##
-##  =||= (2): Make it dynamically possible to not run the file data block                   ## 
-##  =||= (3): To (2), make it possible to parse a filepath for custom JSON payloads         ##
+##  Date: 08-11-2023                                                                        ## 
+##  State: Linux VMs has been defined & fixed a bug in the PS script attached to the code   ##
+##  Missing: Create a resource definition for nsgs to set on subnets & extensive tests      ##
+##  Improvements (1): Since last update the solution for json payload scenarios are added   ##                                                                     
+##  =||= (2): Wont be solved, if TF needs to read a file, let it                            ## 
+##  =||= (3): Need to decide whether I should allow custom json payloads                    ##
 ##  Future improvements: Clean up the locals block & add comment sections in code           ##
-##  Comments: All bugs were NOT fixed yesterday, they are now                               ##
+##  Comments: Module is pretty far at this stage, around 80% done                           ##
 ##                                                                                          ##
 ##############################################################################################
 
@@ -153,7 +153,7 @@ locals {
 resource "null_resource" "ps_object" {
   count = can(length(local.vm_os_names)) && local.script_name != null ? length(local.vm_os_names) : 0
   provisioner "local-exec" {
-        command = can([for a in local.merge_objects : a if a.os_name == local.vm_os_names[count.index] && a.newest_os_version]) ? "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json -OnlyWithVersion" : "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json"
+        command = "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json"
         interpreter = ["pwsh.exe","-Command"]
   }
 }
@@ -322,9 +322,9 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
     for_each = can(each.value.gallery_application[0]) ? {for a in each.value.gallery_application : uuid() => a} : {}
     content {
       version_id = gallery_application.value.version_id
-      configuration_blob_uri = gallery_application.value.configuration_blob_uri
-      order = gallery_application.value.order
-      tag = gallery_application.value.tag
+      configuration_blob_uri = can(gallery_application.value.configuration_blob_uri) ? gallery_application.value.configuration_blob_uri : null
+      order = can(gallery_application.value.order) ? gallery_application.value.order : null
+      tag = can(gallery_application.value.tag) ? gallery_application.value.tag : null
     }
   }
   
@@ -332,7 +332,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
     for_each = can(each.value.identity.type) ? {for a in [each.value.identity] : uuid() => a} : {}
     content {
       type = identity.value.type
-      identity_ids = identity.value.identity_ids
+      identity_ids = can(identity.value.identity_ids[0]) ? identity.value.identity_ids : null
     }
   }
 
@@ -342,15 +342,15 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
     storage_account_type = [for a in local.vm_objects : a.os_disk_storage_account_type if a.name == each.key][0]
     disk_encryption_set_id = can(each.value.os_disk.disk_encryption_set_id) ? each.value.os_disk.disk_encryption_set_id : null
     disk_size_gb = can(each.value.os_disk.disk_size_gb) ? each.value.os_disk.disk_size_gb : null
-    secure_vm_disk_encryption_set_id = can(each.value.secure_vm_disk_encryption_set_id) ? each.value.secure_vm_disk_encryption_set_id : null
-    security_encryption_type = can(each.value.security_encryption_type) ? each.value.security_encryption_type : null
-    write_accelerator_enabled = can(each.value.write_accelerator_enabled) ? each.value.write_accelerator_enabled : null
+    secure_vm_disk_encryption_set_id = can(each.value.os_disk.secure_vm_disk_encryption_set_id) ? each.value.os_disk.secure_vm_disk_encryption_set_id : null
+    security_encryption_type = can(each.value.os_disk.security_encryption_type) ? each.value.os_disk.security_encryption_type : null
+    write_accelerator_enabled = can(each.value.os_disk.write_accelerator_enabled) ? each.value.os_disk.write_accelerator_enabled : null
 
     dynamic "diff_disk_settings" {
-      for_each = can(each.value.diff_disk_settings.option) ? {for a in each.value.diff_disk_settings : uuid() => a} : {}
+      for_each = can(each.value.os_disk.diff_disk_settings.option) ? {for a in each.value.os_disk.diff_disk_settings : uuid() => a} : {}
       content {
-        option = each.value.diff_disk_settings.option
-        placement = can(each.value.diff_disk_settings.placement) ? each.value.diff_disk_settings.placement : null
+        option = each.value.os_disk.diff_disk_settings.option
+        placement = can(each.value.os_disk.diff_disk_settings.placement) ? each.value.os_disk.diff_disk_settings.placement : null
       }
     }
   }
@@ -382,7 +382,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
       publisher = source_image_reference.value.publisher
       offer = source_image_reference.value.offer
       sku = source_image_reference.value.sku
-      version = source_image_reference.value.version == null ? "latest" : source_image_reference.value.version
+      version = source_image_reference.value.version
     }
   }
 
@@ -407,14 +407,150 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 }
 
+resource "azurerm_linux_virtual_machine" "vm_linux_object" {
+  for_each = length(var.vm_linux_objects) > 0 ? {for each in var.vm_linux_objects : each.name => each} : {}
+  name = each.key
+  resource_group_name = local.rg_object.name
+  location = var.location
+  license_type = can(each.value.license_type) ? each.value.license_type : null
+  network_interface_ids = [for a in local.vm_objects : a.nic_resource_id if a.name == each.key][0]
+  size = [for a in local.vm_objects : a.size if a.name == each.key][0]
+  admin_username = [for a in local.vm_objects : a.admin_username if a.name == each.key][0]
+  admin_password = [for a in local.vm_objects : a.admin_password if a.name == each.key][0]
+  allow_extension_operations = can(each.value.allow_extension_operations) ? each.value.allow_extension_operations : null
+  availability_set_id = can(each.value.availability_set_id) ? each.value.availability_set_id : null
+  bypass_platform_safety_checks_on_user_schedule_enabled = can(each.value.bypass_platform_safety_checks_on_user_schedule_enabled) ? each.value.bypass_platform_safety_checks_on_user_schedule_enabled : null
+  capacity_reservation_group_id = can(each.value.capacity_reservation_group_id) ? each.value.capacity_reservation_group_id : null
+  computer_name = can(each.value.computer_name) ? each.value.computer_name : null
+  custom_data = can(each.value.custom_data) ? each.value.custom_data : null
+  dedicated_host_id = can(each.value.dedicated_host_id) ? each.value.dedicated_host_id : null
+  dedicated_host_group_id = can(each.value.dedicated_host_group_id) ? each.value.dedicated_host_group_id : null
+  disable_password_authentication = !can(each.value.disable_password_authentication) ? null : each.value.disable_password_authentication == null ? false : null
+  edge_zone = can(each.value.edge_zone) ? each.value.edge_zone : null
+  encryption_at_host_enabled = can(each.value.encryption_at_host_enabled) ? each.value.encryption_at_host_enabled : null
+  eviction_policy = can(each.value.eviction_policy) ? each.value.eviction_policy : null
+  extensions_time_budget = can(each.value.extensions_time_budget) ? each.value.extensions_time_budget : null
+  patch_assessment_mode = can(each.value.patch_assessment_mode) ? each.value.patch_assessment_mode : null
+  patch_mode = can(each.value.patch_mode) ? each.value.patch_mode : null
+  max_bid_price = can(each.value.max_bid_price) ? each.value.max_bid_price : null
+  platform_fault_domain = can(each.value.platform_fault_domain) ? each.value.platform_fault_domain : null
+  priority = can(each.value.priority) ? each.value.priority : null
+  provision_vm_agent = can(each.value.provision_vm_agent) ? each.value.provision_vm_agent : null
+  proximity_placement_group_id = can(each.value.proximity_placement_group_id) ? each.value.proximity_placement_group_id : null
+  reboot_setting = can(each.value.reboot_setting) ? each.value.reboot_setting : null
+  secure_boot_enabled = can(each.value.secure_boot_enabled) ? each.value.secure_boot_enabled : null
+  source_image_id = can(each.value.source_image_id) ? each.value.source_image_id : null
+  tags = can(each.value.tags) ? each.value.tags : null
+  user_data = can(each.value.user_data) ? each.value.user_data : null
+  vtpm_enabled = can(each.value.vtpm_enabled) ? each.value.vtpm_enabled : null
+  virtual_machine_scale_set_id = can(each.value.virtual_machine_scale_set_id) ? each.value.virtual_machine_scale_set_id : null
+  zone = can(each.value.zone) ? each.value.zone : null
+
+  dynamic "additional_capabilities" {
+    for_each = can(each.value.additional_capabilities.ultra_ssd_enabled) ? {for a in [each.value.additional_capabilities] : uuid() => a} : {}
+    content {
+      ultra_ssd_enabled = each.value.additional_capabilities.ultra_ssd_enabled
+    }
+  }
+
+  dynamic "admin_ssh_key" {
+    for_each = can(each.value.admin_ssh_key[0]) ? {for a in each.value.admin_ssh_key : uuid() => a} : {}
+    content {
+      public_key = admin_ssh_key.value.public_key
+      username = admin_ssh_key.value.username
+    }
+  }
+
+  dynamic "boot_diagnostics" {
+    for_each = can(each.value.boot_diagnostics.storage_account_uri) ? {for a in [each.value.boot_diagnostics] : uuid() => a} : {}
+    content {
+      storage_account_uri = each.value.boot_diagnostics.storage_account_uri
+    }
+  }
+
+  dynamic "gallery_application" {
+    for_each = can(each.value.gallery_application[0]) ? {for a in each.value.gallery_application : uuid() => a} : {}
+    content {
+      version_id = gallery_application.value.version_id
+      configuration_blob_uri = can(gallery_application.value.configuration_blob_uri) ? gallery_application.value.configuration_blob_uri : null
+      order = can(gallery_application.value.order) ? gallery_application.value.order : null
+      tag = can(gallery_application.value.tag) ? gallery_application.value.tag : null
+    }
+  }
+
+  dynamic "identity" {
+  for_each = can(each.value.identity.type) ? {for a in [each.value.identity] : uuid() => a} : {}
+  content {
+    type = identity.value.type
+    identity_ids = can(identity.value.identity_ids[0]) ? identity.value.identity_ids : null
+    }
+  }
+
+  os_disk {
+    name = [for a in local.vm_objects : a.os_disk_name if a.name == each.key][0]
+    caching = [for a in local.vm_objects : a.os_disk_caching if a.name == each.key][0]
+    storage_account_type = [for a in local.vm_objects : a.os_disk_storage_account_type if a.name == each.key][0]
+    disk_encryption_set_id = can(each.value.os_disk.disk_encryption_set_id) ? each.value.os_disk.disk_encryption_set_id : null
+    disk_size_gb = can(each.value.os_disk.disk_size_gb) ? each.value.os_disk.disk_size_gb : null
+    secure_vm_disk_encryption_set_id = can(each.value.os_disk.secure_vm_disk_encryption_set_id) ? each.value.os_disk.secure_vm_disk_encryption_set_id : null
+    security_encryption_type = can(each.value.os_disk.security_encryption_type) ? each.value.os_disk.security_encryption_type : null
+    write_accelerator_enabled = can(each.value.os_disk.write_accelerator_enabled) ? each.value.os_disk.write_accelerator_enabled : null
+
+    dynamic "diff_disk_settings" {
+      for_each = can(each.value.os_disk.diff_disk_settings.option) ? {for a in each.value.os_disk.diff_disk_settings : uuid() => a} : {}
+      content {
+        option = each.value.os_disk.diff_disk_settings.option
+        placement = can(each.value.os_disk.diff_disk_settings.placement) ? each.value.os_disk.diff_disk_settings.placement : null
+      }
+    }
+  }
+
+  dynamic "plan" {
+    for_each = can(each.value.plan.name) ? {for a in [each.value.plan] : uuid() => a} : {}
+    content {
+      name = plan.name
+      product = plan.product
+      publisher = plan.publisher
+    }
+  }
+
+   dynamic "secret" {
+    for_each = can(each.value.secret[0]) ? {for a in each.value.secret : uuid() => a} : {}
+    content {
+      key_vault_id = secret.value.key_vault_id
+
+      dynamic "certificate" {
+        for_each = {for a in secret.value.certificate : uuid() => a}
+        content {
+          url = secret.value.certificate.url
+        }
+      }
+    }
+  }
+
+  dynamic "source_image_reference" {
+    for_each = each.value.source_image_id == null ? {for a in [for b in local.vm_objects : b if b.name == each.key] : a.name => a} : {}
+    content {
+      publisher = source_image_reference.value.publisher
+      offer = source_image_reference.value.offer
+      sku = source_image_reference.value.sku
+      version = source_image_reference.value.version
+    }
+  }
+
+  dynamic "termination_notification" {
+    for_each = can(each.value.termination_notification.enabled) ? {for a in [each.value.termination_notification] : uuid() => a} : {}
+    content {
+      enabled = termination_notification.value.enabled
+      timeout = termination_notification.value.timeout
+    }
+  }
+}
+
 output "counter" {
   value = local.vm_counter
 }
 
 output "public_ip" {
   value = can(values(azurerm_public_ip.pip_object)[0].ip_address) ? values(azurerm_public_ip.pip_object)[0].ip_address : null
-}
-
-output "test" {
-  value = can([for a in local.merge_objects : a if a.os_name == local.vm_os_names[0] && a.newest_os_version]) ? "hello" : "hello2"
 }

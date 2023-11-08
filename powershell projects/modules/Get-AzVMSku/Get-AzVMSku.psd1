@@ -12,7 +12,7 @@
 RootModule = 'Get-AzVMSku.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.9' 
+ModuleVersion = '2.1' 
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ PrivateData = @{
         IconUri = 'https://static.wixstatic.com/media/12b015_965de78de7c74fbda9620030b81f8a1e~mv2.png/v1/fill/w_1057,h_400,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/12b015_965de78de7c74fbda9620030b81f8a1e~mv2.png'
 
         #ReleaseNotes of this module
-        ReleaseNotes = 'As of version 1.8 fixed a bug, where the switch "-NewestSKusVersions" threw an exception saying no SKUs were found.'
+        ReleaseNotes = 'Due to missing release notes for version 2.0, this is included in this new release of version 2.1. For 2.0, fixed a bug where the paramter -NewestSKUsVersions resulted in an invalid result. For 2.1 fixed a bug where the error thrown for 0 skus found had invalid text.'
 
         # Prerelease string of this module
         # Prerelease = ''
