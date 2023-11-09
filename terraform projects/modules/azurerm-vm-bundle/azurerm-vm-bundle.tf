@@ -46,6 +46,18 @@ provider "azurerm" {
 ##  =||= (3): Need to decide whether I should allow custom json payloads                    ##
 ##  Future improvements: Clean up the locals block & add comment sections in code           ##
 ##  Comments: Module is pretty far at this stage, around 80% done                           ##
+##------------------------------------------------------------------------------------------##
+##                                                                                          ##
+##  Date: 09-11-2023                                                                        ## 
+##  State: All resources was though to defined and extensive testing has begun, but turns   ##
+##  out I need to define all possible resources directly in the module to avoid error:      ##
+##  'The "for_each" map includes keys derived from resource attributes...                   ##
+##  Missing: Create storage account, kv      ##
+##  Improvements (1): Since last update the solution for json payload scenarios are added   ##                                                                     
+##  =||= (2): Wont be solved, if TF needs to read a file, let it                            ## 
+##  =||= (3): Need to decide whether I should allow custom json payloads                    ##
+##  Future improvements: Clean up the locals block & add comment sections in code           ##
+##  Comments: Module is pretty far at this stage, around 80% done                           ##      ## // ADD COOL OUTPUT / FORMAT SO ITS EASY TO CONNECT AFTER RESOURCES ARE DONE
 ##                                                                                          ##
 ##############################################################################################
 
@@ -68,7 +80,30 @@ locals {
 
   subnet_objects = local.subnet_objects_pre == null && var.create_bastion ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]},{name = "AzureBastionSubnet", address_prefixes = [local.vnet_object_helper.address_space[1]]}]) : each.name => each} : {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]}] : each.name => each}
 
-  pip_objects = length(local.merge_objects_pip) > 0 ? {for each in [for each in local.merge_objects_pip : {
+  nsg_objects_pre = !can(length(var.nsg_objects)) && var.create_nsg ? 1 : can(length(var.nsg_objects)) ? length(var.nsg_objects) : 0
+  nsg_objects_rules_pre = can(var.nsg_objects.*.security_rules) ? length(flatten(var.nsg_objects.*.security_rules)) : 1
+  
+  nsg_objects = local.nsg_objects_pre > 0 ? {for a in [for b, c in range(local.nsg_objects_pre) : {
+    name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
+    subnet_id = can(var.nsg_objects[b].subnet_id) ? var.nsg_objects[b].subnet_id : var.subnet_resource_id != null ? var.subnet_resource_id : [for each in local.subnet_resource_id : each if length(regexall("vm", each)[0]) > 0][0]
+    tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
+
+    security_rules = {for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
+      name = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
+      priority = can(var.nsg_objects[b].security_rules[e].priority) ? var.nsg_objects[b].security_rules[e].priority : 100
+      direction = can(var.nsg_objects[b].security_rules[e].direction) ? var.nsg_objects[b].security_rules[e].direction : "Inbound"
+      access = can(var.nsg_objects[b].security_rules[e].access) ? var.nsg_objects[b].security_rules[e].access : "Allow"
+      protocol = can(var.nsg_objects[b].security_rules[e].protocol) ? var.nsg_objects[b].security_rules[e].protocol : "Tcp"
+      source_port_range = can(var.nsg_objects[b].security_rules[e].source_port_range) ? var.nsg_objects[b].security_rules[e].source_port_range : "*"
+      source_port_ranges = can(var.nsg_objects[b].security_rules[e].source_port_ranges) ? var.nsg_objects[b].security_rules[e].source_port_ranges : null
+      destination_port_range = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
+      destination_port_ranges = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
+      source_address_prefix = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
+      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : "*"
+    }] : uuid() => d} 
+  }] : a.name => a} : {}
+  
+  pip_objects = can(length(local.merge_objects_pip)) ? {for each in [for each in local.merge_objects_pip : {
       name = each.name == "bastion" && var.env_name != null ? "${var.env_name}-bastion-pip" : each.name == "bastion" ? "bastion-pip" : each.public_ip != null ? each.public_ip.name : var.env_name != null ? "${var.env_name}-${each.name}-pip" : "${each.name}-pip"
       allocation_method = can(each.public_ip.allocation_method) ? each.public_ip.allocation_method : "Static"
       sku = can(each.public_ip.sku) ? each.public_ip.sku : "Standard"
@@ -86,17 +121,20 @@ locals {
       public_ip = local.pip_resource_id
   }] : each.name => each} : var.create_bastion && var.bastion_object != null ? {for each in var.bastion_object : each.name => each} : null
 
-  vm_counter = var.create_public_ip && var.create_bastion ? length(local.merge_objects) + 1 : var.create_bastion == false && var.create_public_ip == false ? length([for each in local.merge_objects : each if each.public_ip != null]) : var.create_bastion ? length([for each in local.merge_objects : each if each.public_ip != null]) + 1 : 0
-  vm_os_names = var.vm_windows_objects != null && var.vm_linux_objects != null ? distinct(flatten([[for each in var.vm_windows_objects : each.os_name if each.source_image_reference == null], [for each in var.vm_linux_objects : each.os_name if each.source_image_reference == null]])) : null
+  vm_counter = var.create_public_ip && var.create_bastion ? length(local.merge_objects) + 1 : var.create_bastion == false && var.create_public_ip == false && can(length([for each in local.merge_objects : each if each.public_ip != null])) ? length([for each in local.merge_objects : each if each.public_ip != null]) : var.create_bastion ? length([for each in local.merge_objects : each if each.public_ip != null]) + 1 : 0
+  vm_os_names = distinct(flatten([[for each in local.vm_windows_objects : each.os_name if each.source_image_reference == null], [for each in local.vm_linux_objects : each.os_name if each.source_image_reference == null]]))
   vm_sizes = jsondecode(data.local_file.vmskus_objects[0].content).VMSizes
 
-  merge_objects = flatten([var.vm_windows_objects, var.vm_linux_objects])
+  vm_linux_objects = var.vm_linux_objects == null ? [] : var.vm_linux_objects
+  vm_windows_objects = var.vm_windows_objects == null ? [] : var.vm_windows_objects
+
+  merge_objects = flatten([local.vm_linux_objects, local.vm_windows_objects])
   logic_bastion = var.create_bastion ? [{name = "bastion"}] : null
-  logic_public_ip_false = var.create_public_ip == false ? [for each in [for each in local.merge_objects : each if each.public_ip != null] : each] : null
-  logic_public_ip_true = local.logic_public_ip_false == null ? local.merge_objects : null
-  merge_objects_pip = flatten([for each in [local.logic_bastion, local.logic_public_ip_false, local.logic_public_ip_true] : each if each != null])
+  logic_public_ip_false = var.create_public_ip == false && can([for each in [for each in local.merge_objects : each if each.public_ip != null] : each]) ? [for each in [for each in local.merge_objects : each if each.public_ip != null] : each] : null
+  logic_public_ip_true = local.logic_public_ip_false == null && var.create_public_ip ? local.merge_objects : null
+  merge_objects_pip = local.logic_public_ip_true != null ? flatten([for each in [local.logic_bastion, local.logic_public_ip_false, local.logic_public_ip_true] : each if each != null]) : can([for each in [for each in local.merge_objects : each if each.public_ip != null] : each]) ? [for each in [for each in local.merge_objects : each if each.public_ip != null] : each] : null
   vm_names = flatten(local.merge_objects.*.name)
-  pip_objects_clean = [for each in local.pip_objects : each if each.vm_name != "bastion"]
+  pip_objects_clean = can([for each in local.pip_objects : each if each.vm_name != "bastion"]) ? [for each in local.pip_objects : each if each.vm_name != "bastion"] : null
 
   vm_objects_pre = [for x, y in range(length(data.local_file.vmskus_objects)) : {
     publisher = jsondecode(data.local_file.vmskus_objects[x].content).Publisher
@@ -113,12 +151,13 @@ locals {
     admin_password = local.merge_objects[x].admin_password != null ? local.merge_objects[x].admin_password : random_password.vm_password_object[x].result
     os_disk_name = can(local.merge_objects[x].os_disk.name) ? local.merge_objects[x].os_disk.name : "${local.merge_objects[x].name}-os-disk"
     os_disk_caching = can(local.merge_objects[x].os_disk.caching) ? local.merge_objects[x].os_disk.caching : "ReadWrite"
-    os_disk_storage_account_type = can(local.merge_objects[x].storage_account_type) ? local.merge_objects[x].storage_account_type : "Standard_LRS"
+    os_disk_storage_account_type = can(local.merge_objects[x].storage_account_type) ? local.merge_objects[x].storage_account_type : "StandardSSD_LRS"
     size = local.merge_objects[x].size_pattern != null ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower(local.merge_objects[x].size_pattern)), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].Name : local.merge_objects[x].size != null ? local.merge_objects[x].size : [for a in ([for b in local.vm_sizes : b if length(regexall((lower("b2ms")), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].Name
-    publisher = can([for each in local.vm_objects_pre : each.publisher if each.os == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.publisher if each.os == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.publisher
-    offer = can([for each in local.vm_objects_pre : each.offer if each.os == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.offer if each.os == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.offer 
-    sku = can([for each in local.vm_objects_pre : each.versions[0].SKU if each.os == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].SKU if each.os == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.sku
-    version = can([for each in local.vm_objects_pre : each.versions[0].Versions if each.os == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].Versions if each.os == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.version
+    os_disk_size = !can(local.merge_objects[x].os_disk.disk_size_gb) ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower("b2ms")), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].OSDiskSizeInGB : local.merge_objects[x].os_disk.disk_size_gb
+    publisher = can([for each in local.vm_objects_pre : each.publisher if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.publisher if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.publisher
+    offer = can([for each in local.vm_objects_pre : each.offer if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.offer if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.offer 
+    sku = can([for each in local.vm_objects_pre : each.versions[0].SKU if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].SKU if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.sku
+    version = can([for each in local.vm_objects_pre : each.versions[0].Versions if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].Versions if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.version
     nic_resource_id = [for a in local.nic_resource_id : a if length(regexall(([for b in local.nic_objects : b.name if b.vm_name == local.merge_objects[index(local.vm_names, local.merge_objects[x].name)].name][0]), a)) > 0]
   }] : each.name => each}
 
@@ -135,19 +174,49 @@ locals {
     pip_resource_id = can([for a in local.pip_resource_id : a if length(regexall(([for b in local.pip_objects_clean : b.name if b.vm_name == local.merge_objects[index(local.vm_names, local.merge_objects[x].name)].name][0]), a)) > 0][0]) ? [for a in local.pip_resource_id : a if length(regexall(([for b in local.pip_objects_clean : b.name if b.vm_name == local.merge_objects[index(local.vm_names, local.merge_objects[x].name)].name][0]), a)) > 0][0] : null
     vm_name = local.merge_objects[x].name
   }] : each.name => each}
-  
-  script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "${path.module}/Get-AzVMSku.ps1" : null
 
-  rg_resource_id = azurerm_resource_group.rg_object != null || azurerm_resource_group.rg_object != [] ? azurerm_resource_group.rg_object[0].id : var.rg_id
-  vnet_resource_id = azurerm_virtual_network.vnet_object != null || azurerm_virtual_network.vnet_object != [] ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
-  subnet_resource_id = azurerm_subnet.subnet_object != null || azurerm_subnet.subnet_object != [] ? flatten(values(azurerm_subnet.subnet_object).*.id) : [var.subnet_resource_id]
-  pip_resource_id = azurerm_public_ip.pip_object != null || azurerm_public_ip.pip_object != [] ? flatten(values(azurerm_public_ip.pip_object).*.id) : []
-  nic_resource_id = azurerm_network_interface.nic_object != null || azurerm_network_interface.nic_object != [] ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
+  storage_account_objects_pre = var.create_diagnostic_settings && can(length(local.merge_objects.*.boot_diagnostics)) ? 1 + length(local.merge_objects.*.boot_diagnostics) : can(length(local.merge_objects.*.boot_diagnostics)) && var.create_diagnostic_settings == false ? length(((local.merge_objects.*.boot_diagnostics))) : 0
+
+  storage_account_objects = local.storage_account_objects_pre > 0 ? {for each in [for a, b in range(local.storage_account_objects_pre) : {
+    //Fix name only lands on "placeholder"
+    name = can(local.merge_objects[a].boot_diagnostics.storage_account) ? local.merge_objects[a].boot_diagnostics.storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
+    vm_name = can(length(flatten(local.merge_objects.*.boot_diagnostics.storage_account))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "placeholder"
+    access_tier = can(local.merge_objects[a].boot_diagnostics.storage_account.access_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.access_tier : "Cool"
+    public_network_access_enabled = can(local.merge_objects[a].boot_diagnostics.storage_account.access_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.access_tier : true
+    account_tier = can(local.merge_objects[a].boot_diagnostics.storage_account.account_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.account_tier : "Standard"
+    account_replication_type = can(local.merge_objects[a].boot_diagnostics.storage_account.account_replication_type) ? local.merge_objects[a].boot_diagnostics.storage_account.account_replication_type : "LRS"
+    account_kind = "StorageV2"
+    network_rules = can(length(local.merge_objects[a].boot_diagnostics.storage_account.network_rules)) ? [for c, d in local.merge_objects[a].boot_diagnostics.storage_account.network_rules : [
+      {
+        default_action = can(length(c.default_action)) ? c.default_action : "Deny"
+        bypass = can(length(c.bypass)) ? c.bypass : ["Logging", "Metrics", "AzureServices"] 
+        virtual_network_subnet_ids = can(length(c.virtual_network_subnet_ids)) ? c.virtual_network_subnet_ids : [for a in local.subnet_resource_id : a if length(regexall("vm", a)) > 0]
+        ip_rules = can(length(c.ip_rules)) ? c.ip_rules : null
+        private_link_access = can(length(c.private_link_access)) ? c.private_link_access : null
+      } 
+    ]] : null
+  }] : each.vm_name => each} : null
+  
+  script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
+
+  rg_resource_id = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
+  vnet_resource_id = can(length(azurerm_virtual_network.vnet_object)) ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
+  subnet_resource_id = can(length(azurerm_subnet.subnet_object)) ? flatten(values(azurerm_subnet.subnet_object).*.id) : [var.subnet_resource_id]
+  pip_resource_id =  can(length(azurerm_public_ip.pip_object)) ? flatten(values(azurerm_public_ip.pip_object).*.id) : []
+  nic_resource_id =  can(length(azurerm_network_interface.nic_object)) ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
+  nsg_resource_id = can(length(azurerm_network_security_group.vm_nsg_object)) ? flatten(values(azurerm_network_security_group.vm_nsg_object).*.id) : []
+  storage_resource_id = can(length(azurerm_storage_account.vm_storage_account_object)) ? flatten(values(azurerm_storage_account.vm_storage_account_object).*.id) : []
 
   //Return objects
   rg_return_object = can(azurerm_resource_group.rg_object[0]) ? azurerm_resource_group.rg_object[0] : null
-  vnet_return_object = azurerm_virtual_network.vnet_object != null || azurerm_virtual_network.vnet_object != {} ? azurerm_virtual_network.vnet_object : null
-  subnet_return_object = azurerm_subnet.subnet_object != null || azurerm_subnet.subnet_object != {} ? azurerm_subnet.subnet_object : null
+  vnet_return_object = can(length(azurerm_virtual_network.vnet_object)) ? azurerm_virtual_network.vnet_object : null
+  subnet_return_object = can(length(azurerm_subnet.subnet_object)) ? azurerm_subnet.subnet_object : null
+  nsg_return_object = can(length(azurerm_network_security_group.vm_nsg_object)) ? azurerm_network_security_group.vm_nsg_object : null
+  nic_return_object = can(length(azurerm_network_interface.nic_object)) ?  azurerm_network_interface.nic_object : null
+  pip_return_object = can(length(azurerm_public_ip.pip_object)) ? azurerm_public_ip.pip_object : null
+  windows_return_object = can(length(azurerm_windows_virtual_machine.vm_windows_object))  ? azurerm_windows_virtual_machine.vm_windows_object : null
+  linux_return_object = can(length(azurerm_linux_virtual_machine.vm_linux_object)) ? azurerm_linux_virtual_machine.vm_linux_object : null
+  storage_return_object = can(length(azurerm_storage_account.vm_storage_account_object)) ? azurerm_storage_account.vm_storage_account_object : null
 }
 
 resource "null_resource" "ps_object" {
@@ -252,13 +321,40 @@ resource "azurerm_network_interface" "nic_object" {
     ignore_changes = [ ip_configuration ]
   }
 }
-/*
+
 resource "azurerm_network_security_group" "vm_nsg_object" {
-  
+  for_each = local.nsg_objects
+  name = each.key
+  resource_group_name = local.rg_object.name
+  location = var.location
+  tags = each.value.tags
+
+  dynamic "security_rule" {
+    for_each = each.value.security_rules
+    content {
+      name = security_rule.value.name
+      priority = security_rule.value.priority
+      direction = security_rule.value.direction
+      access = security_rule.value.access
+      protocol = security_rule.value.protocol
+      source_port_range = security_rule.value.source_port_range
+      source_port_ranges = security_rule.value.source_port_ranges
+      destination_port_range = security_rule.value.destination_port_range
+      destination_port_ranges = security_rule.value.destination_port_ranges
+      source_address_prefix = security_rule.value.source_address_prefix
+      destination_address_prefix = security_rule.value.destination_address_prefix
+    }
+  }
 }
-*/
+
+resource "azurerm_subnet_network_security_group_association" "vm_nsg_link_object" {
+  for_each = local.nsg_objects
+  subnet_id = each.value.subnet_id
+  network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall(each.key, a)) > 0][0]
+}
+
 resource "azurerm_windows_virtual_machine" "vm_windows_object" {
-  for_each = length(var.vm_windows_objects) > 0 ? {for each in var.vm_windows_objects : each.name => each} : {}
+  for_each = var.vm_windows_objects != null ? {for each in var.vm_windows_objects : each.name => each} : {}
   name = each.key
   resource_group_name = local.rg_object.name
   location = var.location
@@ -306,15 +402,15 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   dynamic "additional_unattend_content" {
     for_each = can(each.value.additional_unattend_content[0]) ? {for a in each.value.additional_unattend_content : uuid() => a} : {}
     content {
-      content = each.value.additional_unattend_content.content
-      setting = each.value.additional_unattend_content.setting
+      content = additional_unattend_content.value.content
+      setting = additional_unattend_content.value.setting
     }
   }
-
+  
   dynamic "boot_diagnostics" {
-    for_each = can(each.value.boot_diagnostics.storage_account_uri) ? {for a in [each.value.boot_diagnostics] : uuid() => a} : {}
+    for_each = can(length(local.storage_resource_id)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = each.value.boot_diagnostics.storage_account_uri
+      storage_account_uri = var.create_diagnostic_settings && !can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.name)) > 0][0] : can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall(each.value.boot_diagnostics.storage_account.name, a) > 0)] : null
     }
   }
 
@@ -341,7 +437,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
     caching = [for a in local.vm_objects : a.os_disk_caching if a.name == each.key][0]
     storage_account_type = [for a in local.vm_objects : a.os_disk_storage_account_type if a.name == each.key][0]
     disk_encryption_set_id = can(each.value.os_disk.disk_encryption_set_id) ? each.value.os_disk.disk_encryption_set_id : null
-    disk_size_gb = can(each.value.os_disk.disk_size_gb) ? each.value.os_disk.disk_size_gb : null
+    disk_size_gb = [for a in local.vm_objects : a.os_disk_size if a.name == each.key][0]
     secure_vm_disk_encryption_set_id = can(each.value.os_disk.secure_vm_disk_encryption_set_id) ? each.value.os_disk.secure_vm_disk_encryption_set_id : null
     security_encryption_type = can(each.value.os_disk.security_encryption_type) ? each.value.os_disk.security_encryption_type : null
     write_accelerator_enabled = can(each.value.os_disk.write_accelerator_enabled) ? each.value.os_disk.write_accelerator_enabled : null
@@ -369,9 +465,12 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
     content {
       key_vault_id = secret.value.key_vault_id
 
-      certificate {
-        store = secret.value.certificate.store
-        url = secret.value.certificate.url
+      dynamic "certificate" {
+        for_each = {for a in flatten(each.value.secret.*.certificate) : uuid() => a}
+        content {
+          store = certificate.value.store
+          url = certificate.value.url
+        }
       }
     }
   }
@@ -403,12 +502,12 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   lifecycle {
-    ignore_changes = [ os_disk, source_image_reference, network_interface_ids, size, identity]
+    ignore_changes = [os_disk, source_image_reference, network_interface_ids, size, identity, admin_password]
   }
 }
 
 resource "azurerm_linux_virtual_machine" "vm_linux_object" {
-  for_each = length(var.vm_linux_objects) > 0 ? {for each in var.vm_linux_objects : each.name => each} : {}
+  for_each = var.vm_linux_objects != null ? {for each in var.vm_linux_objects : each.name => each} : {}
   name = each.key
   resource_group_name = local.rg_object.name
   location = var.location
@@ -462,9 +561,9 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   }
 
   dynamic "boot_diagnostics" {
-    for_each = can(each.value.boot_diagnostics.storage_account_uri) ? {for a in [each.value.boot_diagnostics] : uuid() => a} : {}
+    for_each = can(length(local.storage_resource_id)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = each.value.boot_diagnostics.storage_account_uri
+      storage_account_uri = var.create_diagnostic_settings && !can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall("vmstorage", a)) > 0][0] : can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall(each.value.boot_diagnostics.storage_account.name, a) > 0)] : null
     }
   }
 
@@ -491,7 +590,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
     caching = [for a in local.vm_objects : a.os_disk_caching if a.name == each.key][0]
     storage_account_type = [for a in local.vm_objects : a.os_disk_storage_account_type if a.name == each.key][0]
     disk_encryption_set_id = can(each.value.os_disk.disk_encryption_set_id) ? each.value.os_disk.disk_encryption_set_id : null
-    disk_size_gb = can(each.value.os_disk.disk_size_gb) ? each.value.os_disk.disk_size_gb : null
+    disk_size_gb = [for a in local.vm_objects : a.os_disk_size if a.name == each.key][0]
     secure_vm_disk_encryption_set_id = can(each.value.os_disk.secure_vm_disk_encryption_set_id) ? each.value.os_disk.secure_vm_disk_encryption_set_id : null
     security_encryption_type = can(each.value.os_disk.security_encryption_type) ? each.value.os_disk.security_encryption_type : null
     write_accelerator_enabled = can(each.value.os_disk.write_accelerator_enabled) ? each.value.os_disk.write_accelerator_enabled : null
@@ -520,9 +619,9 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
       key_vault_id = secret.value.key_vault_id
 
       dynamic "certificate" {
-        for_each = {for a in secret.value.certificate : uuid() => a}
+        for_each = {for a in flatten(secret.value.*.certificate) : uuid() => a}
         content {
-          url = secret.value.certificate.url
+          url = certificate.value.url
         }
       }
     }
@@ -545,12 +644,42 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
       timeout = termination_notification.value.timeout
     }
   }
+
+  lifecycle {
+    ignore_changes = [admin_ssh_key, admin_password]
+  }
 }
 
-output "counter" {
-  value = local.vm_counter
-}
+resource "azurerm_storage_account" "vm_storage_account_object" {
+  for_each = local.storage_account_objects
+  name = each.value.name
+  resource_group_name = local.rg_object.name
+  location = var.location
+  access_tier = each.value.access_tier
+  public_network_access_enabled = each.value.public_network_access_enabled
+  account_kind = each.value.account_kind
+  account_replication_type = each.value.account_replication_type
+  account_tier = each.value.account_tier
 
-output "public_ip" {
-  value = can(values(azurerm_public_ip.pip_object)[0].ip_address) ? values(azurerm_public_ip.pip_object)[0].ip_address : null
+  dynamic "network_rules" {
+    for_each = can(length(each.value.network_rules)) ? {for a in [each.value.network_rules] : uuid() => a} : {}
+    content {
+      default_action = network_rules.value.default_action
+      bypass = network_rules.value.bypass
+      virtual_network_subnet_ids = network_rules.value.virtual_network_subnet_ids
+      ip_rules = can(length(network_rules.value.ip_rules)) ? network_rules.value.ip_rules : null
+      
+      dynamic "private_link_access" {
+        for_each = can(length(network_rules.value.private_link_access)) ? {for a in network_rules.value.private_link_access : uuid() => a} : {}
+        content {
+          endpoint_resource_id = private_link_access.value.endpoint_resource_id
+          endpoint_tenant_id = can(private_link_access.value.endpoint_tenant_id) ? private_link_access.value.endpoint_tenant_id : null
+        }
+      }
+    }
+  }
+  
+  lifecycle {
+    ignore_changes = [ name ]
+  }
 }

@@ -1,7 +1,7 @@
 variable "rg_name" {
   description = "the name of resource group to put the vm bundle in. use this variable to create a new resource group to put the vm bundle in. either rg_id or this variable must be specified"
   type = string
-  default = "test-rg"
+  default = null
 }
 
 variable "rg_id" {
@@ -19,7 +19,7 @@ variable "location" {
 variable "env_name" {
   description = "the name of the environment. can be any string value, will be used as a prefix in every resource name that does not have an explicit name defined"
   type = string
-  default = "t"
+  default = null
 }
 
 variable "create_bastion" {
@@ -28,8 +28,20 @@ variable "create_bastion" {
   default = false
 }
 
+variable "create_nsg" {
+  description = "switch to determine whether the module shall deploy default nsgs for vm subnet"
+  type = bool
+  default = false
+}
+
 variable "create_public_ip" {
   description = "switch to determine whether the module shall deploy a public ip for the vm"
+  type = bool
+  default = false
+}
+
+variable "create_diagnostic_settings" {
+  description = "switch to determine whether the module shall deploy a storage account and configure diag settings"
   type = bool
   default = false
 }
@@ -89,6 +101,30 @@ variable "bastion_object" {
   default = null
 }
 
+variable "nsg_objects" {
+  description = "a list of objects representing network security groups for subnets"
+  type = list(object({
+    name = string
+    subnet_id = optional(string)
+    tags = optional(map(string))
+
+    security_rules = optional(list(object({
+      name = string
+      priority = optional(number)
+      direction = optional(string)
+      access = optional(string)
+      protocol = optional(string)
+      source_port_range = optional(any)
+      source_port_ranges = optional(any)
+      destination_port_range = optional(any)
+      destination_port_ranges = optional(any)
+      source_address_prefix = optional(any)
+      destination_address_prefix = optional(any)
+    })))
+  }))
+  default = null
+}
+
 variable "vm_windows_objects" {
   description = "a list of objects representing a windows vm configuration"
   type = list(object({
@@ -128,6 +164,28 @@ variable "vm_windows_objects" {
     virtual_machine_scale_set_id = optional(string)
     vtpm_enabled = optional(bool)
     zone = optional(string)
+  
+    boot_diagnostics = optional(object({
+      storage_account = optional(object({
+      name = string
+      access_tier = optional(string)
+      public_network_access_enabled = optional(bool)
+      account_tier = optional(string)
+      account_replication_type = optional(string)
+
+      network_rules = optional(object({
+        default_action = optional(string)
+        bypass = optional(set(string))
+        virtual_network_subnet_ids = optional(set(string))
+        ip_rules = optional(set(string))
+
+        private_link_access = optional(list(object({
+          endpoint_resource_id = string
+          endpoint_tenant_id = optional(string)
+        })))
+      }))
+    }))
+  }))
 
     additional_capabilities = optional(object({
       ultra_ssd_enabled = bool
@@ -137,10 +195,6 @@ variable "vm_windows_objects" {
       content = string
       setting = string
     })))
-
-    boot_diagnostics = optional(object({
-      storage_account_uri = string
-    }))
 
     gallery_application = optional(list(object({
       version_id = string
@@ -222,27 +276,7 @@ variable "vm_windows_objects" {
       
     }))
   }))
-  default = [
-    {
-      name = "super-duper-vm"
-      os_name = "windows11"
-      admin_username = "testadmin"
-      admin_password = "S4J%];Rmz1]DT6t"
-
-      public_ip = {
-        allocation_method = "Static"
-        sku = "Standard"
-        name = "the-duper-ip"
-
-        tags = {
-          "environment" = "prod"
-        }
-      }
-      identity =  {
-        type = "SystemAssigned"
-      }
-    }
-  ]
+  default = null
 }
 
 variable "vm_linux_objects" {
@@ -284,6 +318,7 @@ variable "vm_linux_objects" {
     vtpm_enabled = optional(bool)
     virtual_machine_scale_set_id = optional(string)
     zone = optional(string)
+    boot_diagnostic = optional(bool)
 
     additional_capabilities = optional(object({
       ultra_ssd_enabled = bool
@@ -295,7 +330,25 @@ variable "vm_linux_objects" {
     })))
 
     boot_diagnostics = optional(object({
-      storage_account_uri = string
+      storage_account = optional(object({
+        name = string
+        access_tier = optional(string)
+        public_network_access_enabled = optional(bool)
+        account_tier = optional(string)
+        account_replication_type = optional(string)
+
+        network_rules = optional(object({
+          default_action = optional(string)
+          bypass = optional(set(string))
+          virtual_network_subnet_ids = optional(set(string))
+          ip_rules = optional(set(string))
+
+          private_link_access = optional(list(object({
+            endpoint_resource_id = string
+            endpoint_tenant_id = optional(string)
+          })))
+        }))
+      }))
     }))
 
     gallery_application = optional(list(object({
@@ -367,20 +420,7 @@ variable "vm_linux_objects" {
       tags = optional(map(string))
     }))
   }))
-  default = [
-    {
-      name = "test5"
-      os_name = "ubuntu"
-    },
-    {
-      name = "test6"
-      os_name = "redhat"
-    },
-    {
-      name = "test7"
-      os_name = "redhat"
-    }
-  ]
+  default = null
 }
 
 variable "script_name" {
