@@ -22,6 +22,12 @@ variable "env_name" {
   default = null
 }
 
+variable "ignore_changes" {
+  description = "switch to determine whether to ignore changes. use with caution..."
+  type = bool
+  default = false
+}
+
 variable "create_bastion" {
   description = "switch to determine whether the module shall deploy bastion"
   type = bool

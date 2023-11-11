@@ -102,11 +102,17 @@ module "test_vms" {
           allow_extension_operations = true
         },
         {
-          name = "WINSERVER"
-          os_name = "SERVEr2012"
+          os_name = "windows11"
+          name = "Windows11Machin"
         }
     ]
+    
+    vm_linux_objects = [
+      {
+        name = "myUbuntu"
+        os_name = "CentOS"
+        size = "Standard_D2s_v4"
+      }
+    ]
     create_nsg = true
-    create_diagnostic_settings = true
-    create_public_ip = true
 }

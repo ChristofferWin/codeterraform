@@ -175,18 +175,18 @@ locals {
     vm_name = local.merge_objects[x].name
   }] : each.name => each}
 
-  storage_counter = length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) != 0 && var.create_diagnostic_settings ? length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) + 1 : var.create_diagnostic_settings ? 1 : 0
+  storage_counter = length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) != 0 && var.create_diagnostic_settings ? length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) + 1 : var.create_diagnostic_settings ? 1 : length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))])
+  transformed_storage_objects = [for each in [for each in local.merge_objects.*.boot_diagnostics : each if can(length(each))] : each if each != null]
 
-  storage_account_objects = local.storage_counter > 0 ? {for each in [for a, b in range(local.storage_counter) : {
-    //Fix name only lands on "placeholder"
-    name = can(local.merge_objects[a].boot_diagnostics.storage_account) ? local.merge_objects[a].boot_diagnostics.storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
-    vm_name = can(length(flatten(local.merge_objects.*.boot_diagnostics.storage_account))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "placehoholder${a}"
-    access_tier = can(local.merge_objects[a].boot_diagnostics.storage_account.access_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.access_tier : "Cool"
-    public_network_access_enabled = can(local.merge_objects[a].boot_diagnostics.storage_account.access_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.access_tier : true
-    account_tier = can(local.merge_objects[a].boot_diagnostics.storage_account.account_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.account_tier : "Standard"
-    account_replication_type = can(local.merge_objects[a].boot_diagnostics.storage_account.account_replication_type) ? local.merge_objects[a].boot_diagnostics.storage_account.account_replication_type : "LRS"
-    account_kind = "StorageV2"
-    network_rules = can(length(local.merge_objects[a].boot_diagnostics.storage_account.network_rules)) ? [for c, d in local.merge_objects[a].boot_diagnostics.storage_account.network_rules : [
+  storage_account_objects = local.storage_counter > 0 ? {for each in [for a in range(local.storage_counter) : {
+    name = can(local.transformed_storage_objects[a].storage_account.name) ? local.transformed_storage_objects[a].storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
+    vm_name = can(length(flatten(local.transformed_storage_objects[a].storage_account.name))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "placehoholder${a}"
+    access_tier = can(local.transformed_storage_objects[a].storage_account.access_tier) ? local.transformed_storage_objects[a].storage_account.access_tier : "Cool"
+    public_network_access_enabled = can(local.transformed_storage_objects[a].storage_account.public_network_access_enabled) ? local.transformed_storage_objects[a].storage_account.public_network_access_enabled : true
+    account_tier = can(length(local.transformed_storage_objects[a].storage_account.account_tier)) ? local.transformed_storage_objects[a].storage_account.account_tier : "Standard"
+    account_replication_type = can(length(local.transformed_storage_objects[a].storage_account.account_replication_type)) ? local.transformed_storage_objects[a].storage_account.account_replication_type : "LRS"
+    account_kind = "StorageV2" 
+    network_rules = can(length(local.transformed_storage_objects[a].storage_account.network_rules)) ? [for c, d in local.transformed_storage_objects[a].storage_account.network_rules : [
       {
         default_action = can(length(c.default_action)) ? c.default_action : "Deny"
         bypass = can(length(c.bypass)) ? c.bypass : ["Logging", "Metrics", "AzureServices"] 
@@ -195,7 +195,7 @@ locals {
         private_link_access = can(length(c.private_link_access)) ? c.private_link_access : null
       } 
     ]] : null
-  }] : each.vm_name => each} : null
+  }] : each.vm_name => each} : {}
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
 
@@ -345,12 +345,20 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
       destination_address_prefix = security_rule.value.destination_address_prefix
     }
   }
+
+  lifecycle {
+    ignore_changes = [security_rule]
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "vm_nsg_link_object" {
   for_each = local.nsg_objects
   subnet_id = each.value.subnet_id
   network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall(each.key, a)) > 0][0]
+
+  lifecycle {
+    ignore_changes = [ network_security_group_id ]
+  }
 }
 
 resource "azurerm_windows_virtual_machine" "vm_windows_object" {
@@ -502,7 +510,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   lifecycle {
-    ignore_changes = [os_disk, source_image_reference, network_interface_ids, size, identity, admin_password]
+    ignore_changes = [ source_image_reference ]
   }
 }
 
