@@ -100,14 +100,6 @@ module "test_vms" {
           admin_username = "mofo"
           admin_password = "asdasd123123123540øø^*!"
           allow_extension_operations = true
-
-          boot_diagnostics = {
-            storage_account = {
-              name = "teststorage1256775"
-              account_replication_type = "GRS"
-              account_tier = "Premium"
-            }
-          }
         },
         {
           name = "WINSERVER"

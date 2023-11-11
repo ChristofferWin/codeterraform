@@ -175,12 +175,12 @@ locals {
     vm_name = local.merge_objects[x].name
   }] : each.name => each}
 
-  storage_account_objects_pre = var.create_diagnostic_settings && can(length(local.merge_objects.*.boot_diagnostics)) ? 1 + length(local.merge_objects.*.boot_diagnostics) : can(length(local.merge_objects.*.boot_diagnostics)) && var.create_diagnostic_settings == false ? length(((local.merge_objects.*.boot_diagnostics))) : 0
+  storage_counter = length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) != 0 && var.create_diagnostic_settings ? length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) + 1 : var.create_diagnostic_settings ? 1 : 0
 
-  storage_account_objects = local.storage_account_objects_pre > 0 ? {for each in [for a, b in range(local.storage_account_objects_pre) : {
+  storage_account_objects = local.storage_counter > 0 ? {for each in [for a, b in range(local.storage_counter) : {
     //Fix name only lands on "placeholder"
     name = can(local.merge_objects[a].boot_diagnostics.storage_account) ? local.merge_objects[a].boot_diagnostics.storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
-    vm_name = can(length(flatten(local.merge_objects.*.boot_diagnostics.storage_account))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "placeholder"
+    vm_name = can(length(flatten(local.merge_objects.*.boot_diagnostics.storage_account))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "placehoholder${a}"
     access_tier = can(local.merge_objects[a].boot_diagnostics.storage_account.access_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.access_tier : "Cool"
     public_network_access_enabled = can(local.merge_objects[a].boot_diagnostics.storage_account.access_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.access_tier : true
     account_tier = can(local.merge_objects[a].boot_diagnostics.storage_account.account_tier) ? local.merge_objects[a].boot_diagnostics.storage_account.account_tier : "Standard"
@@ -223,7 +223,7 @@ resource "null_resource" "ps_object" {
   count = can(length(local.vm_os_names)) && local.script_name != null ? length(local.vm_os_names) : 0
   provisioner "local-exec" {
         command = "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json"
-        interpreter = ["pwsh.exe","-Command"]
+        interpreter = ["pwsh","-Command"]
   }
 }
 
@@ -410,7 +410,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   dynamic "boot_diagnostics" {
     for_each = can(length(local.storage_resource_id)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = var.create_diagnostic_settings && !can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.name)) > 0][0] : can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall(each.value.boot_diagnostics.storage_account.name, a) > 0)] : null
+      storage_account_uri = var.create_diagnostic_settings && !can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.name)) > 0][0] : can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.name)) > 0][0] : null
     }
   }
 
