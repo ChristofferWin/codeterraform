@@ -98,21 +98,9 @@ module "test_vms" {
           os_name = "WINDOWS10"
 
           admin_username = "mofo"
-          admin_password = "asdasd123123123540øø^*!"
           allow_extension_operations = true
-        },
-        {
-          os_name = "windows11"
-          name = "Windows11Machin"
         }
     ]
-    
-    vm_linux_objects = [
-      {
-        name = "myUbuntu"
-        os_name = "CentOS"
-        size = "Standard_D2s_v4"
-      }
-    ]
+    create_public_ip = true
     create_nsg = true
 }

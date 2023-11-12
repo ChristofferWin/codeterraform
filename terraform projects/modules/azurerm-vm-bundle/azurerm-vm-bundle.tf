@@ -132,7 +132,7 @@ locals {
   logic_bastion = var.create_bastion ? [{name = "bastion"}] : null
   logic_public_ip_false = var.create_public_ip == false && can([for each in [for each in local.merge_objects : each if each.public_ip != null] : each]) ? [for each in [for each in local.merge_objects : each if each.public_ip != null] : each] : null
   logic_public_ip_true = local.logic_public_ip_false == null && var.create_public_ip ? local.merge_objects : null
-  merge_objects_pip = local.logic_public_ip_true != null ? flatten([for each in [local.logic_bastion, local.logic_public_ip_false, local.logic_public_ip_true] : each if each != null]) : can([for each in [for each in local.merge_objects : each if each.public_ip != null] : each]) ? [for each in [for each in local.merge_objects : each if each.public_ip != null] : each] : null
+  merge_objects_pip = flatten([for each in [local.logic_bastion, local.logic_public_ip_false, local.logic_public_ip_true] : each if each != null])
   vm_names = flatten(local.merge_objects.*.name)
   pip_objects_clean = can([for each in local.pip_objects : each if each.vm_name != "bastion"]) ? [for each in local.pip_objects : each if each.vm_name != "bastion"] : null
 
@@ -238,7 +238,6 @@ resource "random_password" "vm_password_object" {
   count = length(local.merge_objects) //Regardless of whether the user wants to supply own passwords, create a list of passwords ready
   length           = 16
   special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
 resource "azurerm_resource_group" "rg_object" {
@@ -278,6 +277,10 @@ resource "azurerm_public_ip" "pip_object" {
   tags = can(each.value.tags) ? each.value.tags : null
 
   depends_on = [ azurerm_subnet.subnet_object ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "azurerm_bastion_host" "bastion_object" {
@@ -510,7 +513,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   lifecycle {
-    ignore_changes = [ source_image_reference ]
+    ignore_changes = [ source_image_reference, boot_diagnostics ]
   }
 }
 
@@ -654,7 +657,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   }
 
   lifecycle {
-    ignore_changes = [admin_ssh_key, admin_password]
+    ignore_changes = [admin_ssh_key, admin_password, boot_diagnostics]
   }
 }
 
