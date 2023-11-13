@@ -99,7 +99,7 @@ locals {
       destination_port_range = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
       destination_port_ranges = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
       source_address_prefix = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
-      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : "*"
+      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : [for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("vm", each.name)) > 0][0]
     }] : uuid() => d} 
   }] : a.name => a} : {}
   
@@ -217,6 +217,46 @@ locals {
   windows_return_object = can(length(azurerm_windows_virtual_machine.vm_windows_object))  ? azurerm_windows_virtual_machine.vm_windows_object : null
   linux_return_object = can(length(azurerm_linux_virtual_machine.vm_linux_object)) ? azurerm_linux_virtual_machine.vm_linux_object : null
   storage_return_object = can(length(azurerm_storage_account.vm_storage_account_object)) ? azurerm_storage_account.vm_storage_account_object : null
+  
+  summary_of_deployment = {
+    prefix_for_names_used = var.env_name != null ? true : false
+    vnet_deployed = can(length(local.vnet_return_object)) ? true : false
+    subnet_deployed = can(length(local.subnet_return_object)) ? true : false
+    public_ip_deployed = can(length(local.pip_return_object)) ? true : false
+    nsg_deployed = can(length(local.nsg_return_object)) ? true : false
+    storage_deployed = can(length(local.storage_return_object)) ? true : false
+    bastion_deployed = length(azurerm_bastion_host.bastion_object) > 0 ? true : false
+    windows_vm_deployed = can(length(local.windows_return_object)) ? true : false
+    linux_vm_deployed = can(length(local.linux_return_object)) ? true : false
+    cpu_cores_total_sub = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? jsondecode(data.local_file.vmskus_objects[0].content).CoresLimit : null
+    cpu_cores_available_sub = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? jsondecode(data.local_file.vmskus_objects[0].content).CoresAvailable : null
+
+    network_summary = {
+      address_space = can(length(local.vnet_object_helper.address_space)) ? local.vnet_object_helper.address_space : null
+      vnet_name = can(length(local.vnet_object_helper.name)) ? local.vnet_object_helper.name : null
+
+      subnets = [for each in local.subnet_objects : {
+        name = each.name
+        address_prefix = each.address_prefixes
+      }]
+
+      windows_objects = [for each in local.windows_return_object : {
+        name = each.name
+        os = [for a in var.vm_windows_objects : a.os_name if a.name == each.name][0]
+        #os_sku = can([for a in data.local_file.vmskus_objects.*.filename : a if length(regexall(each.name, a)) > 0][0]) ? [for a in local.vm_objects_pre : a.]
+        size =  {
+          name = [for a in local.vm_objects : a.size if a.name == each.name][0]
+          memory_gb = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? [for a in jsondecode(data.local_file.vmskus_objects[0].content).VmVMSizes : a.MemoryInGB if a.Name == [for a in local.vm_objects : a.os_name if a.name == each.name][0]] : null
+          cpu_cores = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? [for a in jsondecode(data.local_file.vmskus_objects[0].content).VmVMSizes : a.CoresAvailable if a.Name == [for a in local.vm_objects : a.os_name if a.name == each.name][0]] : null
+        }
+        network_summary = {
+          private_ip_address = can(length(local.windows_return_object)) ?  values([for a in local.windows_return_object : a.private_ip_address if a.name == each.name])[0] : null
+          public_ip_address = can(length(local.windows_return_object)) ? values([for a in local.windows_return_object : a.public_ip_address if a.name == each.name])[0] : null
+          dns_name = can(length(local.windows_return_object)) ? values([for a in local.nic_return_object : a.internal_domain_name_suffix if a.virtual_machine_id == each.id])[0] : null
+        }
+      }]
+    }
+  }
 }
 
 resource "null_resource" "ps_object" {

@@ -33,3 +33,7 @@ output "linux_object" {
 output "storage_object" {
   value = local.storage_return_object
 }
+
+output "summary_object" {
+  value = local.summary_of_deployment
+}

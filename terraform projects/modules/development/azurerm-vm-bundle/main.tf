@@ -98,9 +98,18 @@ module "test_vms" {
           os_name = "WINDOWS10"
 
           admin_username = "mofo"
+          admin_password = "213452adajdWSCDFUJE!!#"
           allow_extension_operations = true
+        },
+        {
+          name = "Windows11Machin"
+          os_name = "Windows11"
         }
     ]
     create_public_ip = true
     create_nsg = true
+}
+
+output "test" {
+  value = module.test_vms.summary_object
 }
