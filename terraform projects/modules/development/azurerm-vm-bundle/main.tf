@@ -10,16 +10,6 @@ provider "azurerm" {
   features {
   }
 }
-
-locals {
-  rg_name = azurerm_resource_group.rg_object.name
-  rg_id = azurerm_resource_group.rg_object.id
-}
-
-resource "azurerm_resource_group" "rg_object" {
-  name = "test-rg"
-  location = "westeurope"
-}
 /*
 resource "azurerm_storage_account" "storage_object" {
   name = "test12123"
@@ -89,6 +79,7 @@ resource "azurerm_key_vault_certificate" "kv_cert_object" {
   depends_on = [ azurerm_role_assignment.assignment_kv_object ]
 }
 */
+/*
 module "test_vms" {
     source = "../../azurerm-vm-bundle"
     rg_id = local.rg_id
@@ -97,14 +88,135 @@ module "test_vms" {
           name = "Windows10Machin"
           os_name = "WINDOWS10"
 
-          admin_username = "mofo"
-          admin_password = "213452adajdWSCDFUJE!!#"
           allow_extension_operations = true
         },
         {
-          name = "Windows11Machin"
-          os_name = "Windows11"
+        name = "Windows10VM"
+        os_name = "Windows10"
+        allow_extension_operations = true
+        bypass_platform_safety_checks_on_user_schedule_enabled = true
+        computer_name = "tester"
+        disable_password_authentication = true
+        eviction_policy = "Deallocate"
+        extensions_time_budget = "PT1H15M"
+        patch_mode = "AutomaticByPlatform"
+        secure_boot_enabled = true
+        vtpm_enabled = true
+        priority = "Spot"
+
+        termination_notification = {
+          enabled = true
+          timeout = "PT10M"
         }
+
+        os_disk = {
+          name = "testervm-os-disk"
+          caching = "ReadWrite"
+          disk_size_gb = "1000"
+          security_encryption_type = "DiskWithVMGuestState"
+          write_accelerator_enabled = true
+        }
+
+        source_image_reference = {
+          offer = "WindowsServer"
+          sku = "2016-datacenter-server-core-g2"
+          version = "14393.6351.231007"
+          publisher = "MicrosoftWindowsServer"
+        }
+
+        identity = {
+          type = "SystemAssigned"
+        }
+
+        boot_diagnostics = {
+          storage_account = {
+            name = "win123storage1ie"
+            access_tier = "Hot"
+            account_tier = "Premium"
+
+            network_rules = {
+              bypass = ["AzureServices"]
+              ip_rules = ["85.83.136.22/32"]
+              
+              private_link_access = [
+                {
+                  endpoint_resource_id = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/test2-rg/providers/Microsoft.Network/networkInterfaces/test-vm02346"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+    vm_linux_objects = [
+      {
+        name = "UbuntuVM"
+        os_name = "ubuntu"
+        allow_null_version = true
+        allow_extension_operations = true
+        bypass_platform_safety_checks_on_user_schedule_enabled = true
+        computer_name = "tester"
+        disable_password_authentication = true
+        eviction_policy = "Deallocate"
+        extensions_time_budget = "PT1H15M"
+        patch_mode = "AutomaticByPlatform"
+        secure_boot_enabled = true
+        vtpm_enabled = true
+        priority = "Spot"
+
+        termination_notification = {
+          enabled = true
+          timeout = "PT10M"
+        }
+
+        os_disk = {
+          name = "testervm-os-disk"
+          caching = "ReadWrite"
+          disk_size_gb = "1000"
+          security_encryption_type = "DiskWithVMGuestState"
+          write_accelerator_enabled = true
+        }
+
+        source_image_reference = {
+          offer = "UbuntuServer"
+          sku = "19_10-daily-gen2"
+          version = "19.10.202007100"
+          publisher = "Canonical"
+        }
+
+        identity = {
+          type = "SystemAssigned"
+        }
+
+        admin_ssh_key = [
+          {
+            public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+            username = "localadmin"
+          }
+        ]
+
+        boot_diagnostics = {
+          storage_account = {
+            name = "ubuntustorage1ie"
+            access_tier = "Hot"
+            account_tier = "Premium"
+
+            network_rules = {
+              bypass = ["AzureServices"]
+              ip_rules = ["85.83.136.22/32"]
+              
+              private_link_access = [
+                {
+                  endpoint_resource_id = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/test2-rg/providers/Microsoft.Network/networkInterfaces/test-vm02346"
+                }
+              ]
+            }
+          }
+        }
+
+
+
+      }
     ]
     create_public_ip = true
     create_nsg = true
@@ -112,4 +224,99 @@ module "test_vms" {
 
 output "test" {
   value = module.test_vms.summary_object
+}
+
+
+
+
+/*
+module "test2_vms" {
+  source = "../../azurerm-vm-bundle"
+  rg_id = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourcegroups/rg-test3"
+  vnet_resource_id = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourcegroups/rg-test3/providers/Microsoft.Network/virtualNetworks/test-vnet3"
+  subnet_resource_id = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/rg-test3/providers/Microsoft.Network/virtualNetworks/test-vnet3/subnets/default"
+
+  vnet_object = {
+    address_space = ["10.0.0.0/24"]
+    name = "vnet-vms"
+  }
+
+  vm_linux_objects = [
+    {
+      os_name = "ubuntu"
+      name = "testubuntu"
+    }
+  ]
+}
+*/
+
+module "test3_vms" {
+  source = "../../azurerm-vm-bundle"
+  rg_name = "test4-rg"
+  
+  vm_windows_objects = [
+    {
+      name = "windows10-vm"
+      os_name = "windows10"
+
+      public_ip = {
+        allocation_method = "Static"
+        name = "windows10-vm-pip"
+        sku = "Standard"
+      }
+
+      source_image_reference = {
+        offer = "Windows-10"
+        version = "19045.3570.231001"
+        sku = "win10-22h2-pron-g2"
+        publisher = "MicrosoftWindowsDesktop"
+      }
+
+      boot_diagnostics = {
+        storage_account = {
+          name = "randomwin10fde"
+          
+          network_rules = {
+            bypass = ["AzureServices"]
+            default_action = "Deny"
+            ip_rules = ["85.83.136.22/32"]
+            virtual_network_subnet_ids = ["/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/rg-test3/providers/Microsoft.Network/virtualNetworks/test-vnet3/subnets/default"]
+          }
+        }
+      }
+    }
+  ]
+
+  vm_linux_objects = [
+    {
+      name = "Ubuntu1-vm"
+      os_name = "ubuntu"
+
+      admin_ssh_key = [
+        {
+          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+          username = "localadmin"
+        }
+      ]
+    },
+     {
+      name = "Centos1-vm"
+      os_name = "centos"
+
+      admin_ssh_key = [
+        {
+          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+          username = "localadmin"
+        }
+      ]
+    }
+  ]
+
+  create_diagnostic_settings = true
+  create_nsg = true
+  create_public_ip = true
+}
+
+output "vms" {
+  value = module.test3_vms.summary_object
 }

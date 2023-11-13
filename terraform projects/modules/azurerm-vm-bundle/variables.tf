@@ -22,12 +22,6 @@ variable "env_name" {
   default = null
 }
 
-variable "ignore_changes" {
-  description = "switch to determine whether to ignore changes. use with caution..."
-  type = bool
-  default = false
-}
-
 variable "create_bastion" {
   description = "switch to determine whether the module shall deploy bastion"
   type = bool
@@ -137,7 +131,7 @@ variable "vm_windows_objects" {
     name = string
     admin_username = optional(string)
     admin_password = optional(string)
-    newest_os_version = optional(bool)
+    allow_null_version = optional(bool)
     size = optional(string)
     size_pattern = optional(string)
     allow_extension_operations = optional(bool)
@@ -170,6 +164,7 @@ variable "vm_windows_objects" {
     virtual_machine_scale_set_id = optional(string)
     vtpm_enabled = optional(bool)
     zone = optional(string)
+    secure_boot_enabled = optional(bool)
   
     boot_diagnostics = optional(object({
       storage_account = optional(object({
@@ -216,7 +211,7 @@ variable "vm_windows_objects" {
 
     os_disk = optional(object({
       caching = string
-      storage_account_type = string
+      storage_account_type = optional(string)
       disk_encryption_set_id = optional(string)
       disk_size_gb = optional(number)
       name = optional(string)
@@ -291,7 +286,7 @@ variable "vm_linux_objects" {
     name = optional(string)
     admin_username = optional(string)
     admin_password = optional(string)
-    newest_os_version = optional(bool)
+    allow_null_version = optional(bool)
     license_type = optional(string)
     size = optional(string)
     size_pattern = optional(string)

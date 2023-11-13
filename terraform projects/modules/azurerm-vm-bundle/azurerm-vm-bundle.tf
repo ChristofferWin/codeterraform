@@ -52,13 +52,24 @@ provider "azurerm" {
 ##  State: All resources was though to defined and extensive testing has begun, but turns   ##
 ##  out I need to define all possible resources directly in the module to avoid error:      ##
 ##  'The "for_each" map includes keys derived from resource attributes...                   ##
-##  Missing: Create storage account, kv      ##
+##  Missing: Create storage account, kv                                                     ##
 ##  Improvements (1): Since last update the solution for json payload scenarios are added   ##                                                                     
 ##  =||= (2): Wont be solved, if TF needs to read a file, let it                            ## 
 ##  =||= (3): Need to decide whether I should allow custom json payloads                    ##
 ##  Future improvements: Clean up the locals block & add comment sections in code           ##
-##  Comments: Module is pretty far at this stage, around 80% done                           ##      ## // ADD COOL OUTPUT / FORMAT SO ITS EASY TO CONNECT AFTER RESOURCES ARE DONE
+##  Comments: Module is pretty far at this stage, around 80% done                           ##      
+##------------------------------------------------------------------------------------------##                                                                                        
 ##                                                                                          ##
+##  Date: 13-11-2023                                                                        ## 
+##  State: Storage account & customized output has been defined...                          ##
+##  Missing: Create KV                                                                      ##
+##  Improvements (1): Solved many different bugs, module is stable...                       ##                                                                     
+##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
+##  =||= (3): Extensive tests has been done with many different scenarios...                ##
+##  Future improvements: Clean up the locals block & add comment sections in code...        ##
+##  Comments: Module is pretty far at this stage, around 90% done...                        ##      
+##                                                                                          ##
+##############################################################################################
 ##############################################################################################
 
 locals {
@@ -68,9 +79,10 @@ locals {
   vnet_object_pre = var.vnet_resource_id == null && var.vnet_object == null ? {for each in [for each in range(1) : {
       name = var.env_name != null ? "${var.env_name}-vm-vnet" : "vm-vnet"
       address_space = var.env_name == null ? ["192.168.0.0/24", "192.168.99.0/24"] : length(regexall("\\b[pP][rR]?[oO]?[dD]?[uU]?[cC]?[tT]?[iI]?[oO]?[nN]?\\b", var.env_name)) > 0 ? ["10.0.0.0/16", "10.99.0.0/24"] : length(regexall("^\\b[tT][eE]?[sS]?[tT]?[iI]?[nN]?[gG]?\\b$", var.env_name)) > 0 ? ["172.16.0.0/20", "172.16.99.0/24"] : ["192.168.0.0/24", "192.168.99.0/24"]
-  }] : each.name => each} : var.vnet_resource_id != null && var.vnet_object == null ? null : {for each in var.vnet_object : each.name => each}
+  }] : each.name => each} : null
 
-  vnet_object_helper = values(local.vnet_object_pre)[0]
+  vnet_object_pre2 = local.vnet_object_pre == null ? {for each in [var.vnet_object] : each.name => each} : null
+  vnet_object_helper = values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]
 
   subnet_objects_pre = var.subnet_objects!= null && var.vnet_resource_id != null && var.create_bastion == false ? {for each in var.subnet_objects : each.name => each} : var.subnet_objects != null && var.create_bastion ? {for each in ([for x, y in range(2) : {
       name = x == 1 ? "AzureBastionSubnet" : var.subnet_objects[x].name
@@ -143,6 +155,7 @@ locals {
     coresAvailable = jsondecode(data.local_file.vmskus_objects[x].content).CoresAvailable
     coresLimit = jsondecode(data.local_file.vmskus_objects[x].content).CoresLimit
     os = split("-", data.local_file.vmskus_objects[x].filename)[0]
+    vm_sizes = jsondecode(data.local_file.vmskus_objects[x].content).VMSizes
   }]
 
   vm_objects = {for each in [for x, y in local.merge_objects : {
@@ -157,7 +170,7 @@ locals {
     publisher = can([for each in local.vm_objects_pre : each.publisher if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.publisher if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.publisher
     offer = can([for each in local.vm_objects_pre : each.offer if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.offer if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.offer 
     sku = can([for each in local.vm_objects_pre : each.versions[0].SKU if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].SKU if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.sku
-    version = can([for each in local.vm_objects_pre : each.versions[0].Versions if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].Versions if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.version
+    version = can(length([for each in local.vm_objects_pre : each.versions[0].Versions if lower(each.os) == lower(local.merge_objects[x].os_name)][0])) ? [for each in local.vm_objects_pre : each.versions[0].Versions if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : can(length(local.merge_objects[x].source_image_reference.version)) ? local.merge_objects[x].source_image_reference.version : "latest"
     nic_resource_id = [for a in local.nic_resource_id : a if length(regexall(([for b in local.nic_objects : b.name if b.vm_name == local.merge_objects[index(local.vm_names, local.merge_objects[x].name)].name][0]), a)) > 0]
   }] : each.name => each}
 
@@ -194,42 +207,45 @@ locals {
         ip_rules = can(length(c.ip_rules)) ? c.ip_rules : null
         private_link_access = can(length(c.private_link_access)) ? c.private_link_access : null
       } 
-    ]] : null
+    ]] : []
   }] : each.vm_name => each} : {}
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
+  script_commands = length(local.vm_os_names) > 0 && local.script_name != null ? flatten([for a, b in range(length(local.vm_os_names)) : [
+    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
+  ]]) : null
 
   rg_resource_id = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
-  vnet_resource_id = can(length(azurerm_virtual_network.vnet_object)) ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
-  subnet_resource_id = can(length(azurerm_subnet.subnet_object)) ? flatten(values(azurerm_subnet.subnet_object).*.id) : [var.subnet_resource_id]
-  pip_resource_id =  can(length(azurerm_public_ip.pip_object)) ? flatten(values(azurerm_public_ip.pip_object).*.id) : []
-  nic_resource_id =  can(length(azurerm_network_interface.nic_object)) ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
-  nsg_resource_id = can(length(azurerm_network_security_group.vm_nsg_object)) ? flatten(values(azurerm_network_security_group.vm_nsg_object).*.id) : []
-  storage_resource_id = can(length(azurerm_storage_account.vm_storage_account_object)) ? flatten(values(azurerm_storage_account.vm_storage_account_object).*.id) : []
+  vnet_resource_id = length(azurerm_virtual_network.vnet_object) > 0 ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
+  subnet_resource_id = length(azurerm_subnet.subnet_object) > 0 ? flatten(values(azurerm_subnet.subnet_object).*.id) : [var.subnet_resource_id]
+  pip_resource_id =  length(azurerm_public_ip.pip_object) > 0 ? flatten(values(azurerm_public_ip.pip_object).*.id) : []
+  nic_resource_id =  length(azurerm_network_interface.nic_object) > 0 ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
+  nsg_resource_id = length(azurerm_network_security_group.vm_nsg_object) > 0 ? flatten(values(azurerm_network_security_group.vm_nsg_object).*.id) : []
+  storage_resource_id = length(azurerm_storage_account.vm_storage_account_object) > 0 ? flatten(values(azurerm_storage_account.vm_storage_account_object).*.id) : []
 
   //Return objects
   rg_return_object = can(azurerm_resource_group.rg_object[0]) ? azurerm_resource_group.rg_object[0] : null
-  vnet_return_object = can(length(azurerm_virtual_network.vnet_object)) ? azurerm_virtual_network.vnet_object : null
-  subnet_return_object = can(length(azurerm_subnet.subnet_object)) ? azurerm_subnet.subnet_object : null
-  nsg_return_object = can(length(azurerm_network_security_group.vm_nsg_object)) ? azurerm_network_security_group.vm_nsg_object : null
-  nic_return_object = can(length(azurerm_network_interface.nic_object)) ?  azurerm_network_interface.nic_object : null
-  pip_return_object = can(length(azurerm_public_ip.pip_object)) ? azurerm_public_ip.pip_object : null
-  windows_return_object = can(length(azurerm_windows_virtual_machine.vm_windows_object))  ? azurerm_windows_virtual_machine.vm_windows_object : null
-  linux_return_object = can(length(azurerm_linux_virtual_machine.vm_linux_object)) ? azurerm_linux_virtual_machine.vm_linux_object : null
-  storage_return_object = can(length(azurerm_storage_account.vm_storage_account_object)) ? azurerm_storage_account.vm_storage_account_object : null
+  vnet_return_object = length(azurerm_virtual_network.vnet_object) > 0 ? azurerm_virtual_network.vnet_object : null
+  subnet_return_object = length(azurerm_subnet.subnet_object) > 0 ? azurerm_subnet.subnet_object : null
+  nsg_return_object = length(azurerm_network_security_group.vm_nsg_object) > 0 ? azurerm_network_security_group.vm_nsg_object : null
+  nic_return_object = length(azurerm_network_interface.nic_object) > 0 ?  azurerm_network_interface.nic_object : null
+  pip_return_object = length(azurerm_public_ip.pip_object) > 0 ? azurerm_public_ip.pip_object : null
+  windows_return_object = length(azurerm_windows_virtual_machine.vm_windows_object) > 0  ? azurerm_windows_virtual_machine.vm_windows_object : null
+  linux_return_object = length(azurerm_linux_virtual_machine.vm_linux_object) > 0 ? azurerm_linux_virtual_machine.vm_linux_object : null
+  storage_return_object = length(azurerm_storage_account.vm_storage_account_object) > 0 ? azurerm_storage_account.vm_storage_account_object : null
   
   summary_of_deployment = {
     prefix_for_names_used = var.env_name != null ? true : false
-    vnet_deployed = can(length(local.vnet_return_object)) ? true : false
-    subnet_deployed = can(length(local.subnet_return_object)) ? true : false
-    public_ip_deployed = can(length(local.pip_return_object)) ? true : false
-    nsg_deployed = can(length(local.nsg_return_object)) ? true : false
-    storage_deployed = can(length(local.storage_return_object)) ? true : false
+    vnet_deployed = local.vnet_return_object != null ? true : false
+    subnet_deployed = local.subnet_return_object != null ? true : false
+    public_ip_deployed = local.pip_return_object != null ? true : false
+    nsg_deployed = local.nsg_return_object != null ? true : false
+    storage_deployed = local.storage_return_object != null ? true : false
     bastion_deployed = length(azurerm_bastion_host.bastion_object) > 0 ? true : false
-    windows_vm_deployed = can(length(local.windows_return_object)) ? true : false
-    linux_vm_deployed = can(length(local.linux_return_object)) ? true : false
-    cpu_cores_total_sub = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? jsondecode(data.local_file.vmskus_objects[0].content).CoresLimit : null
-    cpu_cores_available_sub = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? jsondecode(data.local_file.vmskus_objects[0].content).CoresAvailable : null
+    windows_vm_deployed = local.windows_return_object != null ? true : false
+    linux_vm_deployed = local.linux_return_object != null ? true : false
+    cpu_cores_total_sub = length(local.vm_objects_pre) > 0 ? local.vm_objects_pre[0].coresLimit : null
+    cpu_cores_available_sub = length(local.vm_objects_pre) > 0 ? local.vm_objects_pre[0].coresAvailable : null
 
     network_summary = {
       address_space = can(length(local.vnet_object_helper.address_space)) ? local.vnet_object_helper.address_space : null
@@ -239,30 +255,46 @@ locals {
         name = each.name
         address_prefix = each.address_prefixes
       }]
+    }
 
-      windows_objects = [for each in local.windows_return_object : {
+    windows_objects = local.windows_return_object != null ? [for each in local.windows_return_object : {
         name = each.name
+        admin_username = [for a in local.vm_objects : a.admin_username if a.name == each.name][0]
         os = [for a in var.vm_windows_objects : a.os_name if a.name == each.name][0]
-        #os_sku = can([for a in data.local_file.vmskus_objects.*.filename : a if length(regexall(each.name, a)) > 0][0]) ? [for a in local.vm_objects_pre : a.]
+        os_sku = [for a in local.vm_objects : a.sku if a.name == each.name][0] 
         size =  {
           name = [for a in local.vm_objects : a.size if a.name == each.name][0]
-          memory_gb = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? [for a in jsondecode(data.local_file.vmskus_objects[0].content).VmVMSizes : a.MemoryInGB if a.Name == [for a in local.vm_objects : a.os_name if a.name == each.name][0]] : null
-          cpu_cores = can(jsondecode(data.local_file.vmskus_objects[0].content)) ? [for a in jsondecode(data.local_file.vmskus_objects[0].content).VmVMSizes : a.CoresAvailable if a.Name == [for a in local.vm_objects : a.os_name if a.name == each.name][0]] : null
+          memory_gb = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.MemoryInGB if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
+          cpu_cores = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.CoresAvailable if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
         }
         network_summary = {
-          private_ip_address = can(length(local.windows_return_object)) ?  values([for a in local.windows_return_object : a.private_ip_address if a.name == each.name])[0] : null
-          public_ip_address = can(length(local.windows_return_object)) ? values([for a in local.windows_return_object : a.public_ip_address if a.name == each.name])[0] : null
-          dns_name = can(length(local.windows_return_object)) ? values([for a in local.nic_return_object : a.internal_domain_name_suffix if a.virtual_machine_id == each.id])[0] : null
+          private_ip_address = can(length(local.windows_return_object)) ?  [for a in local.windows_return_object : a.private_ip_address if a.name == each.name][0] : null
+          public_ip_address = can(length(local.windows_return_object)) ? [for a in local.windows_return_object : a.public_ip_address if a.name == each.name][0] : null
         }
-      }]
-    }
+      }] : null
+
+      linux_objects = local.linux_return_object != null ? [for each in local.linux_return_object : {
+        name = each.name
+        admin_username = [for a in local.vm_objects : a.admin_username if a.name == each.name][0]
+        os = [for a in var.vm_linux_objects : a.os_name if a.name == each.name][0]
+        os_sku = [for a in local.vm_objects : a.sku if a.name == each.name][0] 
+        size =  {
+          name = [for a in local.vm_objects : a.size if a.name == each.name][0]
+          memory_gb = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.MemoryInGB if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
+          cpu_cores = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.CoresAvailable if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
+        }
+        network_summary = {
+          private_ip_address = can(length(local.linux_return_object)) ?  [for a in local.linux_return_object : a.private_ip_address if a.name == each.name][0] : null
+          public_ip_address = can(length(local.linux_return_object)) ? [for a in local.linux_return_object : a.public_ip_address if a.name == each.name][0] : null
+        }
+      }] : null
   }
 }
 
 resource "null_resource" "ps_object" {
-  count = can(length(local.vm_os_names)) && local.script_name != null ? length(local.vm_os_names) : 0
+  count = local.script_commands != null ? length(local.script_commands) : 0
   provisioner "local-exec" {
-        command = "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[count.index]} -OutputFileName ${local.vm_os_names[count.index]}-skus.json"
+        command = local.script_commands[count.index]
         interpreter = ["pwsh","-Command"]
   }
 }
@@ -287,7 +319,7 @@ resource "azurerm_resource_group" "rg_object" {
 }
 
 resource "azurerm_virtual_network" "vnet_object"{
-  for_each = var.vnet_resource_id == null ? local.vnet_object_pre : {}
+  for_each = var.vnet_resource_id == null ? {for each in [local.vnet_object_helper] : each.name => each} : {}
   name = each.key
   resource_group_name = local.rg_object.name
   location = var.location
@@ -614,7 +646,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   dynamic "boot_diagnostics" {
     for_each = can(length(local.storage_resource_id)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = var.create_diagnostic_settings && !can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall("vmstorage", a)) > 0][0] : can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall(each.value.boot_diagnostics.storage_account.name, a) > 0)] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall(each.value.boot_diagnostics.storage_account.name, a)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_resource_id : a if length(regexall("vmstorage", a)) > 0][0] : null
     }
   }
 
@@ -629,7 +661,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   }
 
   dynamic "identity" {
-  for_each = can(each.value.identity.type) ? {for a in [each.value.identity] : uuid() => a} : {}
+  for_each = can(length(each.value.identity.type)) ? {for a in [each.value.identity] : uuid() => a} : {}
   content {
     type = identity.value.type
     identity_ids = can(identity.value.identity_ids[0]) ? identity.value.identity_ids : null
@@ -713,15 +745,15 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
   account_tier = each.value.account_tier
 
   dynamic "network_rules" {
-    for_each = can(length(each.value.network_rules)) ? {for a in [each.value.network_rules] : uuid() => a} : {}
+    for_each = can(length(each.value.boot_diagnostics.storage_account.network_rules)) ? {for a in range(1) : uuid() => a} : {}
     content {
-      default_action = network_rules.value.default_action
-      bypass = network_rules.value.bypass
-      virtual_network_subnet_ids = network_rules.value.virtual_network_subnet_ids
-      ip_rules = can(length(network_rules.value.ip_rules)) ? network_rules.value.ip_rules : null
+      default_action = each.value.boot_diagnostics.storage_account.network_rules.default_action
+      bypass = each.value.boot_diagnostics.storage_account.network_rules.bypass
+      virtual_network_subnet_ids = each.value.boot_diagnostics.storage_account.network_rules.virtual_network_subnet_ids
+      ip_rules = each.value.boot_diagnostics.storage_account.network_rules.ip_rules
       
       dynamic "private_link_access" {
-        for_each = can(length(network_rules.value.private_link_access)) ? {for a in network_rules.value.private_link_access : uuid() => a} : {}
+        for_each = can(length(each.value.boot_diagnostics.storage_account.network_rules.private_link_access)) ? {for a in each.value.boot_diagnostics.storage_account.network_rules.private_link_access : uuid() => a} : {}
         content {
           endpoint_resource_id = private_link_access.value.endpoint_resource_id
           endpoint_tenant_id = can(private_link_access.value.endpoint_tenant_id) ? private_link_access.value.endpoint_tenant_id : null
