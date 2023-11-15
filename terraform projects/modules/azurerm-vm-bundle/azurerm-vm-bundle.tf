@@ -67,7 +67,17 @@ provider "azurerm" {
 ##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
 ##  =||= (3): Extensive tests has been done with many different scenarios...                ##
 ##  Future improvements: Clean up the locals block & add comment sections in code...        ##
-##  Comments: Module is pretty far at this stage, around 90% done...                        ##      
+##  Comments: Module is pretty far at this stage, around 90% done...                        ##
+##------------------------------------------------------------------------------------------##                                                                                        
+##                                                                                          ##
+##  Date: 15-11-2023                                                                        ## 
+##  State: Had huge issues with storage accounts today, should now be stable...             ##
+##  Missing: Create KV                                                                      ##
+##  Improvements (1): Solved many different bugs, module is stable...                       ##                                                                     
+##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
+##  =||= (3): Extensive tests has been done with many different scenarios...                ##
+##  Future improvements: Clean up the locals block & add comment sections in code...        ##
+##  Comments: Module is pretty far at this stage, around 92% done...                        ##
 ##                                                                                          ##
 ##############################################################################################
 ##############################################################################################
@@ -135,7 +145,7 @@ locals {
 
   vm_counter = var.create_public_ip && var.create_bastion ? length(local.merge_objects) + 1 : var.create_bastion == false && var.create_public_ip == false && can(length([for each in local.merge_objects : each if each.public_ip != null])) ? length([for each in local.merge_objects : each if each.public_ip != null]) : var.create_bastion ? length([for each in local.merge_objects : each if each.public_ip != null]) + 1 : 0
   vm_os_names = distinct(flatten([[for each in local.vm_windows_objects : each.os_name if each.source_image_reference == null], [for each in local.vm_linux_objects : each.os_name if each.source_image_reference == null]]))
-  vm_sizes = jsondecode(data.local_file.vmskus_objects[0].content).VMSizes
+  vm_sizes = can(jsondecode(data.local_file.vmskus_objects[0].content).VMSizes) ? jsondecode(data.local_file.vmskus_objects[0].content).VMSizes : null
 
   vm_linux_objects = var.vm_linux_objects == null ? [] : var.vm_linux_objects
   vm_windows_objects = var.vm_windows_objects == null ? [] : var.vm_windows_objects
@@ -165,8 +175,8 @@ locals {
     os_disk_name = can(local.merge_objects[x].os_disk.name) ? local.merge_objects[x].os_disk.name : "${local.merge_objects[x].name}-os-disk"
     os_disk_caching = can(local.merge_objects[x].os_disk.caching) ? local.merge_objects[x].os_disk.caching : "ReadWrite"
     os_disk_storage_account_type = can(local.merge_objects[x].storage_account_type) ? local.merge_objects[x].storage_account_type : "StandardSSD_LRS"
-    size = local.merge_objects[x].size_pattern != null ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower(local.merge_objects[x].size_pattern)), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].Name : local.merge_objects[x].size != null ? local.merge_objects[x].size : [for a in ([for b in local.vm_sizes : b if length(regexall((lower("b2ms")), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].Name
-    os_disk_size = !can(local.merge_objects[x].os_disk.disk_size_gb) ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower("b2ms")), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].OSDiskSizeInGB : local.merge_objects[x].os_disk.disk_size_gb
+    size = local.merge_objects[x].size_pattern != null ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower(local.merge_objects[x].size_pattern)), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].Name : local.merge_objects[x].size != null ? local.merge_objects[x].size : local.vm_sizes != null ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower("b2ms")), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].Name : "Standard_B2ms"
+    os_disk_size = !can(local.merge_objects[x].os_disk.disk_size_gb) && local.vm_sizes != null ? [for a in ([for b in local.vm_sizes : b if length(regexall((lower("b2ms")), lower(b.Name))) > 0]) : a if a.TempDriveSizeInGB > 0][0].OSDiskSizeInGB : can(local.merge_objects[x].os_disk.disk_size_gb) ? local.merge_objects[x].os_disk.disk_size_gb : 128
     publisher = can([for each in local.vm_objects_pre : each.publisher if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.publisher if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.publisher
     offer = can([for each in local.vm_objects_pre : each.offer if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.offer if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.offer 
     sku = can([for each in local.vm_objects_pre : each.versions[0].SKU if lower(each.os) == lower(local.merge_objects[x].os_name)][0]) ? [for each in local.vm_objects_pre : each.versions[0].SKU if lower(each.os) == lower(local.merge_objects[x].os_name)][0] : local.merge_objects[x].source_image_reference.sku
@@ -189,7 +199,7 @@ locals {
   }] : each.name => each}
 
   storage_counter = length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) != 0 && var.create_diagnostic_settings ? length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) + 1 : var.create_diagnostic_settings ? 1 : length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))])
-  transformed_storage_objects = [for each in [for each in local.merge_objects.*.boot_diagnostics : each if can(length(each))] : each if each != null]
+  transformed_storage_objects = can([for each in flatten([for each in local.merge_objects.*.boot_diagnostics : each if each != null]) : each]) ? [for each in flatten([for each in local.merge_objects.*.boot_diagnostics : each if each != null]) : each] : []
 
   storage_account_objects = local.storage_counter > 0 ? {for each in [for a in range(local.storage_counter) : {
     name = can(local.transformed_storage_objects[a].storage_account.name) ? local.transformed_storage_objects[a].storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
@@ -199,15 +209,13 @@ locals {
     account_tier = can(length(local.transformed_storage_objects[a].storage_account.account_tier)) ? local.transformed_storage_objects[a].storage_account.account_tier : "Standard"
     account_replication_type = can(length(local.transformed_storage_objects[a].storage_account.account_replication_type)) ? local.transformed_storage_objects[a].storage_account.account_replication_type : "LRS"
     account_kind = "StorageV2" 
-    network_rules = can(length(local.transformed_storage_objects[a].storage_account.network_rules)) ? [for c, d in local.transformed_storage_objects[a].storage_account.network_rules : [
-      {
-        default_action = can(length(c.default_action)) ? c.default_action : "Deny"
-        bypass = can(length(c.bypass)) ? c.bypass : ["Logging", "Metrics", "AzureServices"] 
-        virtual_network_subnet_ids = can(length(c.virtual_network_subnet_ids)) ? c.virtual_network_subnet_ids : [for a in local.subnet_resource_id : a if length(regexall("vm", a)) > 0]
-        ip_rules = can(length(c.ip_rules)) ? c.ip_rules : null
-        private_link_access = can(length(c.private_link_access)) ? c.private_link_access : null
-      } 
-    ]] : []
+    network_rules = can(length(local.transformed_storage_objects[a].storage_account.network_rules)) ? {for a, b in [for c in range(1) : {
+        default_action = length(local.transformed_storage_objects[c].storage_account.network_rules.default_action) > 0 ? local.transformed_storage_objects[c].storage_account.network_rules.default_action : "Deny" 
+        bypass = can(length(local.transformed_storage_objects[c].storage_account.network_rules.bypass)) ? local.transformed_storage_objects[c].storage_account.network_rules.bypass : ["Logging", "Metrics", "AzureServices"] 
+        virtual_network_subnet_ids = can(length(local.transformed_storage_objects[c].storage_account.network_rules.virtual_network_subnet_ids)) ? local.transformed_storage_objects[c].storage_account.network_rules.virtual_network_subnet_ids : [for a in local.subnet_resource_id : a if length(regexall("vm", a)) > 0]
+        ip_rules = can(length(local.transformed_storage_objects[c].storage_account.network_rules.ip_rules)) ? local.transformed_storage_objects[c].storage_account.network_rules.ip_rules : null
+        private_link_access = can(length(local.transformed_storage_objects[c].storage_account.network_rules.private_link_access)) ? local.transformed_storage_objects[c].storage_account.network_rules.private_link_access : null
+  }] : a => b} : {}
   }] : each.vm_name => each} : {}
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
@@ -262,27 +270,38 @@ locals {
         admin_username = [for a in local.vm_objects : a.admin_username if a.name == each.name][0]
         os = [for a in var.vm_windows_objects : a.os_name if a.name == each.name][0]
         os_sku = [for a in local.vm_objects : a.sku if a.name == each.name][0] 
+
         size =  {
           name = [for a in local.vm_objects : a.size if a.name == each.name][0]
           memory_gb = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.MemoryInGB if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
           cpu_cores = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.CoresAvailable if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
         }
+
         network_summary = {
           private_ip_address = can(length(local.windows_return_object)) ?  [for a in local.windows_return_object : a.private_ip_address if a.name == each.name][0] : null
           public_ip_address = can(length(local.windows_return_object)) ? [for a in local.windows_return_object : a.public_ip_address if a.name == each.name][0] : null
         }
       }] : null
 
-      linux_objects = local.linux_return_object != null ? [for each in local.linux_return_object : {
+      linux_objects = local.linux_return_object != null ? [for a, each in local.linux_return_object : {
         name = each.name
         admin_username = [for a in local.vm_objects : a.admin_username if a.name == each.name][0]
         os = [for a in var.vm_linux_objects : a.os_name if a.name == each.name][0]
-        os_sku = [for a in local.vm_objects : a.sku if a.name == each.name][0] 
+        os_sku = [for a in local.vm_objects : a.sku if a.name == each.name][0]
+
+        //FIX THIS (BELOW)
+
+        ssh = can(length(local.linux_return_object)) && length([for b in var.vm_linux_objects[0] : b if b.admin_ssh_key != null]) > 0 ? [for b in range(length(var.vm_linux_objects[a].admin_ssh_key)) : {
+          connect_string = "${[for b in var.vm_linux_objects : b.os_name if b.name == each.name][0]}@${[for b in local.linux_return_object : b.public_ip_address if b.name == each.name][0]}"
+          public_key = [for b in var.vm_linux_objects.admin_ssh_key : b]
+        }] : null
+
         size =  {
           name = [for a in local.vm_objects : a.size if a.name == each.name][0]
           memory_gb = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.MemoryInGB if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
           cpu_cores = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.CoresAvailable if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
         }
+
         network_summary = {
           private_ip_address = can(length(local.linux_return_object)) ?  [for a in local.linux_return_object : a.private_ip_address if a.name == each.name][0] : null
           public_ip_address = can(length(local.linux_return_object)) ? [for a in local.linux_return_object : a.public_ip_address if a.name == each.name][0] : null
@@ -491,9 +510,9 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
   
   dynamic "boot_diagnostics" {
-    for_each = can(length(local.storage_resource_id)) ? {for a in [range(1)] : uuid() => a} : {}
+    for_each = can(length(local.storage_return_object)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = var.create_diagnostic_settings && !can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.name)) > 0][0] : can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.name)) > 0][0] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.id)) > 0][0] : null
     }
   }
 
@@ -585,7 +604,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   lifecycle {
-    ignore_changes = [ source_image_reference, boot_diagnostics ]
+    ignore_changes = [ source_image_reference, boot_diagnostics, admin_password, network_interface_ids ]
   }
 }
 
@@ -643,10 +662,10 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
     }
   }
 
-  dynamic "boot_diagnostics" {
-    for_each = can(length(local.storage_resource_id)) ? {for a in [range(1)] : uuid() => a} : {}
+ dynamic "boot_diagnostics" {
+    for_each = can(length(local.storage_return_object)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_resource_id : a if length(regexall(each.value.boot_diagnostics.storage_account.name, a)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_resource_id : a if length(regexall("vmstorage", a)) > 0][0] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.id)) > 0][0] : null
     }
   }
 
@@ -729,7 +748,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   }
 
   lifecycle {
-    ignore_changes = [admin_ssh_key, admin_password, boot_diagnostics]
+    ignore_changes = [admin_password, boot_diagnostics]
   }
 }
 
@@ -745,15 +764,15 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
   account_tier = each.value.account_tier
 
   dynamic "network_rules" {
-    for_each = can(length(each.value.boot_diagnostics.storage_account.network_rules)) ? {for a in range(1) : uuid() => a} : {}
+    for_each = length(each.value.network_rules) > 0 ? {for a in values(each.value.network_rules) : uuid() => a} : {}
     content {
-      default_action = each.value.boot_diagnostics.storage_account.network_rules.default_action
-      bypass = each.value.boot_diagnostics.storage_account.network_rules.bypass
-      virtual_network_subnet_ids = each.value.boot_diagnostics.storage_account.network_rules.virtual_network_subnet_ids
-      ip_rules = each.value.boot_diagnostics.storage_account.network_rules.ip_rules
+      default_action = network_rules.value.default_action
+      bypass = network_rules.value.bypass
+      virtual_network_subnet_ids = network_rules.value.virtual_network_subnet_ids
+      ip_rules = network_rules.value.ip_rules
       
       dynamic "private_link_access" {
-        for_each = can(length(each.value.boot_diagnostics.storage_account.network_rules.private_link_access)) ? {for a in each.value.boot_diagnostics.storage_account.network_rules.private_link_access : uuid() => a} : {}
+        for_each = can(length(network_rules.value.private_link_access)) ? {for a in network_rules.value.private_link_access : uuid() => a} : {}
         content {
           endpoint_resource_id = private_link_access.value.endpoint_resource_id
           endpoint_tenant_id = can(private_link_access.value.endpoint_tenant_id) ? private_link_access.value.endpoint_tenant_id : null
@@ -763,6 +782,14 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
   }
   
   lifecycle {
-    ignore_changes = [ name ]
+    ignore_changes = [ name, access_tier ]
   }
+}
+
+output "test" {
+  value = local.storage_account_objects
+}
+
+output "test2" {
+  value = local.transformed_storage_objects
 }

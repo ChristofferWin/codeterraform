@@ -274,14 +274,7 @@ module "test3_vms" {
 
       boot_diagnostics = {
         storage_account = {
-          name = "randomwin10fde"
-          
-          network_rules = {
-            bypass = ["AzureServices"]
-            default_action = "Deny"
-            ip_rules = ["85.83.136.22/32"]
-            virtual_network_subnet_ids = ["/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/rg-test3/providers/Microsoft.Network/virtualNetworks/test-vnet3/subnets/default"]
-          }
+          name = "win1337stor"
         }
       }
     }
@@ -289,34 +282,36 @@ module "test3_vms" {
 
   vm_linux_objects = [
     {
-      name = "Ubuntu1-vm"
+      name = "test-vm"
       os_name = "ubuntu"
 
-      admin_ssh_key = [
-        {
-          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
-          username = "localadmin"
-        }
-      ]
-    },
-     {
-      name = "Centos1-vm"
-      os_name = "centos"
+      public_ip = {
+        name = "ubuntupip"
+        sku = "Basic"
+        allocation_method = "Dynamic"
+      }
 
       admin_ssh_key = [
         {
-          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
           username = "localadmin"
+          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
         }
       ]
+
+      boot_diagnostics = {
+        storage_account = {
+          name = "ubuntustorage123dsa"
+          access_tier = "Hot"
+        }
+      }
     }
   ]
 
-  create_diagnostic_settings = true
   create_nsg = true
   create_public_ip = true
+  create_diagnostic_settings = true
 }
 
-output "vms" {
+output "connect" {
   value = module.test3_vms.summary_object
 }
