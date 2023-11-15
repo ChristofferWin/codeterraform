@@ -1,6 +1,7 @@
 param (
-    [string]$Location = "westeurope", #Default value
-    [string]$OS = "windows11",
+    [string]$Location,
+    [switch]$AllowNoVersions,
+    [string]$OS,
     [string]$VMPattern,
     [string]$OutputFileName = ".\SKUs.json"
 )
@@ -10,7 +11,15 @@ if($Module.Length -eq 0){
     Install-Module -Name Get-AzVMSku -Force
 }
 
-$Skus = Get-AzVMSKu -Location $Location -OperatingSystem $OS -NewestSKUsVersions -VMPattern $VMPattern
+Import-Module Get-AzVMSku
+
+try{
+    $Skus = Get-AzVMSKu -Location $Location -OperatingSystem $OS -NewestSKUsVersions -VMPattern $VMPattern -ErrorAction Stop
+}
+catch{
+    $_
+    Exit
+}
 
 for($i = $Skus.Versions.count -1; $i -ne 0; $i--){
    
@@ -32,4 +41,9 @@ for($i = $Skus.Versions.count -1; $i -ne 0; $i--){
        Return
     }
     Write-Output "The SKU: $($SKUs.Versions[$i].SKU) will be skipped due to missing version..."
+}
+
+if($AllowNoVersions){
+    $Skus | ConvertTo-Json -Depth 3 | Out-File $OutputFileName -Force
+    Return
 }
