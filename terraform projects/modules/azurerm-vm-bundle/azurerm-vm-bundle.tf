@@ -283,28 +283,26 @@ locals {
         }
       }] : null
 
-      linux_objects = local.linux_return_object != null ? [for a, each in local.linux_return_object : {
-        name = each.name
-        admin_username = [for a in local.vm_objects : a.admin_username if a.name == each.name][0]
-        os = [for a in var.vm_linux_objects : a.os_name if a.name == each.name][0]
-        os_sku = [for a in local.vm_objects : a.sku if a.name == each.name][0]
+      linux_objects = local.linux_return_object != null ? [for x, y in local.linux_return_object : {
+        name = y.name
+        admin_username = [for a in local.vm_objects : a.admin_username if a.name == y.name][0]
+        os = [for a in var.vm_linux_objects : a.os_name if a.name == y.name][0]
+        os_sku = [for a in local.vm_objects : a.sku if a.name == y.name][0]
 
-        //FIX THIS (BELOW)
-
-        ssh = can(length(local.linux_return_object)) && length([for b in var.vm_linux_objects[0] : b if b.admin_ssh_key != null]) > 0 ? [for b in range(length(var.vm_linux_objects[a].admin_ssh_key)) : {
-          connect_string = "${[for b in var.vm_linux_objects : b.os_name if b.name == each.name][0]}@${[for b in local.linux_return_object : b.public_ip_address if b.name == each.name][0]}"
-          public_key = [for b in var.vm_linux_objects.admin_ssh_key : b]
-        }] : null
+        #ssh = can(length(local.linux_return_object)) && length([for b in var.vm_linux_objects : b if b.admin_ssh_key != null]) > 0 ? [for b in range(length((var.vm_linux_objects[x]).admin_ssh_key)) : {
+          #connect_string = "${[for b in var.vm_linux_objects : b.os_name if b.name == y.name][x]}@${[for b in local.linux_return_object : b.public_ip_address if b.name == y.name][x]}"
+         # public_key = [for b in var.vm_linux_objects.admin_ssh_key : b]
+     #   }] : null
 
         size =  {
-          name = [for a in local.vm_objects : a.size if a.name == each.name][0]
-          memory_gb = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.MemoryInGB if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
-          cpu_cores = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.CoresAvailable if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == each.name][0])) > 0][0] : null
+          name = [for a in local.vm_objects : a.size if a.name == y.name][0]
+          memory_gb = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.MemoryInGB if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == y.name][0])) > 0][0] : null
+          cpu_cores = length(local.vm_objects_pre) > 0 ? [for a in local.vm_objects_pre[0].vm_sizes : a.CoresAvailable if length(regexall(a.Name, [for a in local.vm_objects : a.size if a.name == y.name][0])) > 0][0] : null
         }
 
         network_summary = {
-          private_ip_address = can(length(local.linux_return_object)) ?  [for a in local.linux_return_object : a.private_ip_address if a.name == each.name][0] : null
-          public_ip_address = can(length(local.linux_return_object)) ? [for a in local.linux_return_object : a.public_ip_address if a.name == each.name][0] : null
+          private_ip_address = can(length(local.linux_return_object)) ?  [for a in local.linux_return_object : a.private_ip_address if a.name == y.name][0] : null
+          public_ip_address = can(length(local.linux_return_object)) ? [for a in local.linux_return_object : a.public_ip_address if a.name == y.name][0] : null
         }
       }] : null
   }

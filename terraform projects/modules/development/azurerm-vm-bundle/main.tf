@@ -288,7 +288,7 @@ module "test3_vms" {
       public_ip = {
         name = "ubuntupip"
         sku = "Basic"
-        allocation_method = "Dynamic"
+        allocation_method = "Static"
       }
 
       admin_ssh_key = [
