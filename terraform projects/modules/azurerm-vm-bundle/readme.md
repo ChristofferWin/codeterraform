@@ -44,20 +44,28 @@ The below list also contain resource types default value in case the user adds a
 5. Bastion
 6. Public ip(s)
   - Either one per vm or one for each specific vm(s)
-    - Standard SKU
-    - Static allocation
+    - sku_name = "standard"
+    - allocation_method = "Static"
 7. Network Security group
  - Add rules to vm subnet
     - ALLOW ports 22/3389 from ANY to VM SUBNET (ssh & rdp)
 8. Storage Account
  - Either one per vm or one total for all vms. Used for boot-diagnostic settings
-    - access_tier = Cool
+    - access_tier = "Cool"
     - public_network_access_enabled = true
-    - account_tier = Standard
-    - account_kind = StorageV2
-    - account_replication_type = LRS
-9. 
-
+    - account_tier = "Standard"
+    - account_kind = "StorageV2"
+    - account_replication_type = "LRS"
+9. Key Vault & secrets
+  - One total to store all vm password secrets in
+    - sku_name = "standard"
+    - enabled_for_deployment = true
+    - enabled_for_disk_encryption = false
+    - enabled_for_template_deployment = false
+    - enable_rbac_authorization = true
+    - purge_protection_enabled = true
+    - public_network_access_enabled = true
+    - soft_delete_retention_days = 7
 ## Prerequisites
 
 Before using this module, make sure you have the following:
