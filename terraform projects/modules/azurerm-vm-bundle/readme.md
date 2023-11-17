@@ -8,8 +8,7 @@
 4. [Versions](#versions)
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
-7. [Resources to Deploy](#resources-to-deploy)
-8. [Examples](#examples)
+7. [Examples](#examples)
 
 ## Description
 
@@ -25,7 +24,7 @@ First off, these are all potential subtypes of resources available for deploymen
 The below list also contain resource types default value in case the user adds any of the 'create' <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">parameters</a>
 
 1. VM(s), both Windows & Linux
-  - Any amount can be created, this is only limitted by the subscriptions internal quota for CPU cores. The module can return this information, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#outputs">outputs</a>
+  - Any amount can be created, this is only limitted by the subscriptions internal quota for CPU cores. The module can return this information, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#return-values">outputs</a>
     - admin_username = localadmin
     - admin_password = <random 16 length password with special chars>
     - os_disk_caching = Read/Write
@@ -66,6 +65,7 @@ The below list also contain resource types default value in case the user adds a
     - purge_protection_enabled = true
     - public_network_access_enabled = true
     - soft_delete_retention_days = 7
+
 ## Prerequisites
 
 Before using this module, make sure you have the following:
@@ -85,19 +85,12 @@ The table below outlines the compatibility of the module:
 For the latest updates, check the [releases](https://github.com/your-username/azurerm-vm-bundle/releases) page.
 
 ## Parameters
-asdasd
+If using VScode, make use of the extension for terraform from Hashicorp and thereby getting access to 'Intellisense'
+
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
 
 ## Return Values
 dasdsdasd
-
-## Resources to Deploy
-
-To deploy Azure VMs using this module, configure the following:
-
-- Resource Group Name
-- Virtual Machine Count
-- OS Type
-- OS Version
 
 ## Getting Started
 
