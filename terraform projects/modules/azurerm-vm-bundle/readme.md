@@ -22,10 +22,10 @@ Furthermore, the module is more than capable of deploying various sub-types that
 ## Detailed Description
 First off, these are all potential subtypes of resources available for deployment, with the option to deploy any number of virtual machines:
 
-The below list also contain resource types default value in case the user adds any of the 'create' <a href="">parameters</a>
+The below list also contain resource types default value in case the user adds any of the 'create' <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">parameters</a>
 
 1. VM(s), both Windows & Linux
-  - Any amount can be created, this is only limitted by the subscriptions internal quota for CPU cores. The module can return this information, see <a href="sss">outputs</a>
+  - Any amount can be created, this is only limitted by the subscriptions internal quota for CPU cores. The module can return this information, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#outputs">outputs</a>
     - admin_username = localadmin
     - admin_password = <random 16 length password with special chars>
     - os_disk_caching = Read/Write
@@ -48,14 +48,14 @@ The below list also contain resource types default value in case the user adds a
     - Static allocation
 7. Network Security group
  - Add rules to vm subnet
-  - ALLOW ports 22/3389 from ANY to VM SUBNET (ssh & rdp)
+    - ALLOW ports 22/3389 from ANY to VM SUBNET (ssh & rdp)
 8. Storage Account
  - Either one per vm or one total for all vms. Used for boot-diagnostic settings
-  - access_tier = Cool
-  - public_network_access_enabled = true
-  - account_tier = Standard
-  - account_kind = StorageV2
-  - account_replication_type = LRS
+    - access_tier = Cool
+    - public_network_access_enabled = true
+    - account_tier = Standard
+    - account_kind = StorageV2
+    - account_replication_type = LRS
 9. 
 
 ## Prerequisites
