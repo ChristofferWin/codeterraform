@@ -862,7 +862,7 @@ resource "azurerm_key_vault" "vm_kv_object" {
 }
 
 resource "azurerm_role_assignment" "kv_role_assignment_object" {
-  for_each = var.create_kv_role_assignment && can(length(local.kv_object)) ? {for each in local.kv_object : "role_assignment_kv" => each} : {}
+  for_each = var.create_kv_role_assignment && local.kv_object != null ? {for each in local.kv_object : "role_assignment_kv" => each} : {}
   principal_id = data.azurerm_client_config.current.client_id
   scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.rg_object.name}/providers/Microsoft.KeyVault/vaults/${each.value.name}"
   role_definition_name = "Key Vault Administrator"
@@ -871,7 +871,9 @@ resource "azurerm_role_assignment" "kv_role_assignment_object" {
 }
 /*
 resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
-  count = var.create_kv_for_vms || var.kv_object != null ? length(local.vm_counter) : 0
-
+  count = var.create_kv_for_vms || var.kv_object != null ? length(local.vm_objects) : 0
+  name = "${local.vm_objects[count.index].name}-secret"
+  value = local.vm_objects[count.index].admin_password
+  key_vault_id = azurerm
 }
 */
