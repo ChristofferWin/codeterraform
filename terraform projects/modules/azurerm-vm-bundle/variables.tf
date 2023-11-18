@@ -46,6 +46,18 @@ variable "create_diagnostic_settings" {
   default = false
 }
 
+variable "create_kv_for_vms" {
+  description = "create a kv containing all vm secrets which are deployed by the module"
+  type = bool
+  default = false
+}
+
+variable "create_kv_role_assignment" {
+  description = "switch to determine whether to automatically create a role assignment of 'key vault administrator' on the kv for the user in the tf context, defaults to 'true', user must be 'user access administrator or owner on the subscription'"
+  type = bool
+  default = true
+}
+
 variable "vnet_object" {
   description = "an object defining the vnet address spaces in format [x.x.x.x/x] and its name. must be at least /24 in case bastion or vpn is also enabled"
   type = object({
@@ -272,10 +284,6 @@ variable "vm_windows_objects" {
         private_ip_address_allocation = optional(string)
       }))
     }))
-
-    nsg = optional(object({
-      
-    }))
   }))
   default = null
 }
@@ -421,6 +429,36 @@ variable "vm_linux_objects" {
       tags = optional(map(string))
     }))
   }))
+  default = null
+}
+
+variable "kv_resource_id" {
+  description = "the resource id of the key vault to add all vm admin password secrets"
+  type = string
+  default = null
+}
+
+variable "kv_object" {
+  description = "an object representation of a customized kv configuration. use variable 'create_kv_for_vms' to deploy one with default settings"
+  type = object({
+    name = optional(string)
+    sku_name = optional(string)
+    enabled_for_deployment = optional(bool)
+    enabled_for_disk_encryption = optional(bool)
+    enabled_for_template_deployment = optional(bool)
+    purge_protection_enabled = optional(bool)
+    public_network_access_enabled = optional(bool)
+    soft_delete_retention_days = optional(number)
+    tags = optional(map(string))
+
+    network_acls = optional(object({
+      bypass = optional(string)
+      default_action = optional(string)
+      ip_rules = optional(set(string))
+      virtual_network_subnet_ids = optional(set(string))
+      add_vm_subnet_id = optional(bool)
+    }))
+  })
   default = null
 }
 

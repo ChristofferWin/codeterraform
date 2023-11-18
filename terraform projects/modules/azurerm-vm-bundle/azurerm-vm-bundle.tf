@@ -97,10 +97,11 @@ locals {
   subnet_objects_pre = var.subnet_objects!= null && var.vnet_resource_id != null && var.create_bastion == false ? {for each in var.subnet_objects : each.name => each} : var.subnet_objects != null && var.create_bastion ? {for each in ([for x, y in range(2) : {
       name = x == 1 ? "AzureBastionSubnet" : var.subnet_objects[x].name
       address_prefixes = x == 1 && !can(cidrsubnet(var.subnet_objects[x].address_prefixes[0], 6, 0)) && can(var.subnet_objects[x].address_prefixes) ? ["${split("/", var.subnet_objects[x].address_prefixes[0])[0]}/${split("/", var.subnet_objects[x].address_prefixes[0])[1] - (6 - (32 - split("/", var.subnet_objects[x].address_prefixes[0])[1]))}"] : {for each in var.subnet_objects : each.name => each}
+      service_endpoints = ["Microsoft.KeyVault"]
     }
   ]) : each.name => each} : null
 
-  subnet_objects = local.subnet_objects_pre == null && var.create_bastion ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]},{name = "AzureBastionSubnet", address_prefixes = [local.vnet_object_helper.address_space[1]]}]) : each.name => each} : {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]}] : each.name => each}
+  subnet_objects = local.subnet_objects_pre == null && var.create_bastion ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)], service_endpoints = ["Microsoft.KeyVault"]},{name = "AzureBastionSubnet", address_prefixes = [local.vnet_object_helper.address_space[1]], service_endpoints = ["Microsoft.KeyVault"]}]) : each.name => each} : {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)], service_endpoints = ["Microsoft.KeyVault"]}] : each.name => each}
 
   nsg_objects_pre = !can(length(var.nsg_objects)) && var.create_nsg ? 1 : can(length(var.nsg_objects)) ? length(var.nsg_objects) : 0
   nsg_objects_rules_pre = can(var.nsg_objects.*.security_rules) ? length(flatten(var.nsg_objects.*.security_rules)) : 1
@@ -203,7 +204,7 @@ locals {
 
   storage_account_objects = local.storage_counter > 0 ? {for each in [for a in range(local.storage_counter) : {
     name = can(local.transformed_storage_objects[a].storage_account.name) ? local.transformed_storage_objects[a].storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
-    vm_name = can(length(flatten(local.transformed_storage_objects[a].storage_account.name))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "placehoholder${a}"
+    vm_name = can(length(flatten(local.transformed_storage_objects[a].storage_account.name))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "storage${a}"
     access_tier = can(local.transformed_storage_objects[a].storage_account.access_tier) ? local.transformed_storage_objects[a].storage_account.access_tier : "Cool"
     public_network_access_enabled = can(local.transformed_storage_objects[a].storage_account.public_network_access_enabled) ? local.transformed_storage_objects[a].storage_account.public_network_access_enabled : true
     account_tier = can(length(local.transformed_storage_objects[a].storage_account.account_tier)) ? local.transformed_storage_objects[a].storage_account.account_tier : "Standard"
@@ -217,10 +218,29 @@ locals {
         private_link_access = can(length(local.transformed_storage_objects[c].storage_account.network_rules.private_link_access)) ? local.transformed_storage_objects[c].storage_account.network_rules.private_link_access : null
   }] : a => b} : {}
   }] : each.vm_name => each} : {}
+
+  kv_object = var.create_kv_for_vms || can(length(var.kv_object)) ? {for each in [for a in range(1) : {
+    name = can(length(var.kv_object.name))  ? var.kv_object.name : var.env_name != null ? "${var.env_name}vmkv${substr(uuid(), 0, 5)}" : "vmkv${substr(uuid(), 0, 5)}"
+    sku_name = can(length(var.kv_object.sku_name)) ? var.kv_object.sku_name : "standard"
+    enabled_for_deployment = can(length(var.kv_object.enabled_for_deployment)) ? var.kv_object.enabled_for_deployment : true
+    enabled_for_disk_encryption = can(length(var.kv_object.enabled_for_disk_encryption)) ? var.kv_object.enabled_for_disk_encryption : false
+    enabled_for_template_deployment = can(length(var.kv_object.enabled_for_template_deployment)) ? var.kv_object.enabled_for_template_deployment : false
+    enable_rbac_authorization = true //Module will only allow RBAC authorization
+    purge_protection_enabled = can(length(var.kv_object.purge_protection_enabled)) ? var.kv_object.purge_protection_enabled : false
+    public_network_access_enabled = can(length(var.kv_object.public_network_access_enabled)) ? var.kv_object.public_network_access_enabled : true
+    tags = can(length(var.kv_object.tags)) ? var.kv_object.tags : null
+    soft_delete_retention_days = can(length(var.kv_object.soft_delete_retention_days)) ? var.kv_object.soft_delete_retention_days : 7
+
+    network_acls = can(var.kv_object.network_acls.add_vm_subnet_id) ? {for each in [for a in range(1) : {
+       bypass = "AzureServices"
+       default_action = "Deny"
+       virtual_network_subnet_ids = [for b in local.subnet_resource_id : b if length(regexall("vm", a)) > 0]
+    }] : "network_acls" => each} : null
+  }] : "kv_object" => each} : null
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
   script_commands = length(local.vm_os_names) > 0 && local.script_name != null ? flatten([for a, b in range(length(local.vm_os_names)) : [
-    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
+    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? " -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
   ]]) : null
 
   rg_resource_id = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
@@ -283,16 +303,16 @@ locals {
         }
       }] : null
 
-      linux_objects = local.linux_return_object != null ? [for x, y in local.linux_return_object : {
+      linux_objects = local.linux_return_object != null ? [for x, y in var.vm_linux_objects : {
         name = y.name
         admin_username = [for a in local.vm_objects : a.admin_username if a.name == y.name][0]
         os = [for a in var.vm_linux_objects : a.os_name if a.name == y.name][0]
         os_sku = [for a in local.vm_objects : a.sku if a.name == y.name][0]
 
-        #ssh = can(length(local.linux_return_object)) && length([for b in var.vm_linux_objects : b if b.admin_ssh_key != null]) > 0 ? [for b in range(length((var.vm_linux_objects[x]).admin_ssh_key)) : {
-          #connect_string = "${[for b in var.vm_linux_objects : b.os_name if b.name == y.name][x]}@${[for b in local.linux_return_object : b.public_ip_address if b.name == y.name][x]}"
-         # public_key = [for b in var.vm_linux_objects.admin_ssh_key : b]
-     #   }] : null
+       # ssh = can(length(local.linux_return_object)) && length([for b in var.vm_linux_objects : b if b.admin_ssh_key != null]) > 0 ? {for a in [for b, c in var.vm_linux_objects : {
+         #   connect_string = "${[for d in var.vm_linux_objects : d.os_name if d.name == y.name][0]}@${[for d in local.linux_return_object : d.public_ip_address if d.name == y.name][0]}"
+          #  public_key = c.*.public_key
+       # }] : y.name => a} : null
 
         size =  {
           name = [for a in local.vm_objects : a.size if a.name == y.name][0]
@@ -308,12 +328,26 @@ locals {
   }
 }
 
+resource "null_resource" "download_script" {
+  # This provisioner will execute only once during the Terraform apply
+  provisioner "local-exec" {
+    command = <<-EOT
+      $url = "https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
+      $outputPath = "${path.module}/Get-AzVMSKu.ps1"
+      Invoke-WebRequest -Uri $url -OutFile $outputPath
+    EOT
+    interpreter = ["pwsh","-Command"]
+  }
+}
+
 resource "null_resource" "ps_object" {
   count = local.script_commands != null ? length(local.script_commands) : 0
   provisioner "local-exec" {
         command = local.script_commands[count.index]
         interpreter = ["pwsh","-Command"]
   }
+
+  depends_on = [ null_resource.download_script ]
 }
 
 data "local_file" "vmskus_objects" {
@@ -327,6 +361,8 @@ resource "random_password" "vm_password_object" {
   count = length(local.merge_objects) //Regardless of whether the user wants to supply own passwords, create a list of passwords ready
   length           = 16
   special          = true
+
+  depends_on = [ azurerm_key_vault.vm_kv_object ]
 }
 
 resource "azurerm_resource_group" "rg_object" {
@@ -746,7 +782,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   }
 
   lifecycle {
-    ignore_changes = [admin_password, boot_diagnostics]
+    ignore_changes = [admin_password, boot_diagnostics, admin_ssh_key]
   }
 }
 
@@ -784,10 +820,59 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
   }
 }
 
-output "test" {
-  value = local.storage_account_objects
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_key_vault" "vm_kv_object" {
+  for_each = local.kv_object != null ? local.kv_object : {}
+  name = each.value.name
+  resource_group_name = local.rg_object.name
+  location = var.location
+  sku_name = each.value.sku_name
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  enabled_for_disk_encryption = each.value.enabled_for_disk_encryption
+  enable_rbac_authorization = each.value.enable_rbac_authorization
+  enabled_for_deployment = each.value.enabled_for_deployment
+  enabled_for_template_deployment = each.value.enabled_for_template_deployment
+  purge_protection_enabled = each.value.purge_protection_enabled
+  public_network_access_enabled = each.value.public_network_access_enabled
+  soft_delete_retention_days = each.value.soft_delete_retention_days
+  tags = each.value.tags
+
+  dynamic "network_acls" {
+    for_each = can(length(var.kv_object.network_acls.bypass)) ? {for each in var.kv_object.network_acls : "network_acls" => each} : can(local.kv_object.network_acls) ? {for each in [local.kv_object.network_acls] : "network_acls" => each} : {}
+    content {
+      bypass = network_acls.value.bypass
+      default_action = network_acls.value.default_action
+      ip_rules = network_acls.value.ip_rules
+      virtual_network_subnet_ids = network_acls.value.virtual_network_subnet_ids
+    }
+  }
+
+  dynamic "contact" {
+    for_each = can(each.value.contact[0]) ? {for a in each.value.contact : uuid() => a} : {}
+    content {
+      email = contact.value.email
+      name = can(contact.value.name) ? contact.value.name : null
+      phone = can(contact.value.phone) ? contact.value.phone : null
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [ tags, name, contact, network_acls]
+  }
 }
 
-output "test2" {
-  value = local.transformed_storage_objects
+resource "azurerm_role_assignment" "kv_role_assignment_object" {
+  for_each = var.create_kv_role_assignment ? {for each in local.kv_object : "role_assignment_kv" => each} : {}
+  principal_id = data.azurerm_client_config.current.client_id
+  scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.rg_object.name}/providers/Microsoft.KeyVault/vaults/${each.value.name}"
+  role_definition_name = "Key Vault Administrator"
+
+  depends_on = [ azurerm_windows_virtual_machine.vm_windows_object, azurerm_linux_virtual_machine.vm_linux_object, azurerm_key_vault.vm_kv_object ]
 }
+/*
+resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
+  count = var.create_kv_for_vms || var.kv_object != null ? length(local.vm_counter) : 0
+
+}
+*/
