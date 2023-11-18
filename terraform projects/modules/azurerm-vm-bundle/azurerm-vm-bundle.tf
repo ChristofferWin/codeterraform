@@ -327,7 +327,7 @@ locals {
 }
 
 resource "null_resource" "download_script" {
-  # This provisioner will execute only once during the Terraform apply
+  count = local.script_commands != null ? length(local.script_commands) : 0
   provisioner "local-exec" {
     command = <<-EOT
       $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
