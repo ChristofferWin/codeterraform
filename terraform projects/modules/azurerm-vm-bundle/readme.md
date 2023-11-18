@@ -20,7 +20,8 @@ Furthermore, the module is more than capable of deploying various subtypes that 
 
 Maybe you want a simple test environment with a few virtual machines and what about all their dependencies?
 
-Deploying 2 Linux machines with public ips and ssh setup
+Example deployment of 2 Linux machines with public ips and ssh setup
+</br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
 
