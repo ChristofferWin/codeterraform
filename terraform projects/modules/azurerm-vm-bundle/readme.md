@@ -151,7 +151,41 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 6. How it looks in Azure
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/first-vm-black.png"/>
 
-7. 
+7. If you want to simply be able to connect to it, add the following code to the module code
+```hcl
+module "my_first_vm" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=0.9.0-beta" //Always use a specific version of the module
+
+  rg_name = "vm-rg" //Creating a new rg
+
+  vm_linux_objects = [
+    {
+      name = "ubuntu-vm"
+      os_name = "ubuntu"
+    }
+  ]
+
+  create_public_ip = true
+  create_nsg = true
+
+  // VNet and VM subnet will also be created.
+  // Required dependencies for the vm will also be created.
+  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
+  // Refer to the examples section for many more combinations of configurations.
+}
+```
+8. Run terraform apply again
+```hcl
+//Skipping confirm
+terraform apply --auto-approve=true
+
+//apply output
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+```
+
+9. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
+
 ## Examples
 
 ```hcl
