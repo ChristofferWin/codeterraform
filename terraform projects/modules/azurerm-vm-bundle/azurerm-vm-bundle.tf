@@ -863,7 +863,7 @@ resource "azurerm_key_vault" "vm_kv_object" {
 }
 
 resource "azurerm_role_assignment" "kv_role_assignment_object" {
-  for_each = var.create_kv_role_assignment ? {for each in local.kv_object : "role_assignment_kv" => each} : {}
+  for_each = var.create_kv_role_assignment && can(length(local.kv_object)) ? {for each in local.kv_object : "role_assignment_kv" => each} : {}
   principal_id = data.azurerm_client_config.current.client_id
   scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${local.rg_object.name}/providers/Microsoft.KeyVault/vaults/${each.value.name}"
   role_definition_name = "Key Vault Administrator"
