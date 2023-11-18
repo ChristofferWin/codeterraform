@@ -240,7 +240,7 @@ locals {
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
   script_commands = length(local.vm_os_names) > 0 && local.script_name != null ? flatten([for a, b in range(length(local.vm_os_names)) : [
-    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? " -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${path.module}/${local.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
+    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
   ]]) : null
 
   rg_resource_id = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
@@ -332,8 +332,8 @@ resource "null_resource" "download_script" {
   # This provisioner will execute only once during the Terraform apply
   provisioner "local-exec" {
     command = <<-EOT
-      $url = "https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
-      $outputPath = "${path.module}/Get-AzVMSKu.ps1"
+      $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
+      $outputPath = "Get-AzVMSKu.ps1"
       Invoke-WebRequest -Uri $url -OutFile $outputPath
     EOT
     interpreter = ["pwsh","-Command"]

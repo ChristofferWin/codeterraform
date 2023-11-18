@@ -16,7 +16,10 @@ Welcome to the Azure VM Bundle Terraform module! The "azurerm-vm-bundle" module 
 
 The module boasts extensive configuration flexibility, supporting a wide array of customization options. For a comprehensive overview of these options, please refer to the detailed description provided.
 
-Furthermore, the module is more than capable of deploying various sub-types that is typically used together with Azure virtual machines. 
+Furthermore, the module is more than capable of deploying various sub-types that is typically used together with Azure virtual machines.
+
+Maybe you want a simple test environment with a few virtual machines and what about all their dependencies?
+
 
 ## Detailed Description
 First off, these are all potential subtypes of resources available for deployment, with the option to deploy any number of virtual machines:
