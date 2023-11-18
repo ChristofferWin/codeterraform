@@ -868,6 +868,10 @@ resource "azurerm_role_assignment" "kv_role_assignment_object" {
   role_definition_name = "Key Vault Administrator"
 
   depends_on = [ azurerm_windows_virtual_machine.vm_windows_object, azurerm_linux_virtual_machine.vm_linux_object, azurerm_key_vault.vm_kv_object ]
+
+  lifecycle {
+    ignore_changes = [ principal_id, scope ]
+  }
 }
 
 resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
@@ -875,4 +879,6 @@ resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
   name = "${values(local.vm_objects)[count.index].name}-secret"
   value = values(local.vm_objects)[count.index].admin_password
   key_vault_id = azurerm_key_vault.vm_kv_object["kv_object"].id
+
+  depends_on = [azurerm_role_assignment.kv_role_assignment_object]
 }
