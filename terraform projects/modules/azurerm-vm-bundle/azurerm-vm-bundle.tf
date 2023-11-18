@@ -238,7 +238,7 @@ locals {
     }] : "network_acls" => each} : null
   }] : "kv_object" => each} : null
   
-  script_commands = length(local.vm_os_names) > 0 && local.script_name != null ? flatten([for a, b in range(length(local.vm_os_names)) : [
+  script_commands = length(local.vm_os_names) > 0 ? flatten([for a, b in range(length(local.vm_os_names)) : [
     length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? ".\\Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : ".\\Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
   ]]) : null
 
