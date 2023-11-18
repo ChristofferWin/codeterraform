@@ -89,6 +89,7 @@ For the latest updates, check the [releases](https://github.com/your-username/az
 
 ## Parameters
 If using VScode, make use of the extension for terraform from Hashicorp and thereby getting access to 'Intellisense'
+(Might require you to clone the repo, as the terraform Hashicorp extension can have issues resolving parameters through a remote module)
 
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
 
@@ -96,8 +97,61 @@ If using VScode, make use of the extension for terraform from Hashicorp and ther
 dasdsdasd
 
 ## Getting Started
+Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
 
+1. Create a new terraform script file in any folder
+2. Define terraform boilerplate code
+```hcl
+provider "azurerm" {
+  features{}
+  //Can define a specific context, but we will use an interrogated one.
+}
+```
+3. Login to Azure with an active subscription using az cli
+```powershell
+az login //Web browser interactive prompt.
+```
+4. Define the module definition
+```hcl
+module "my_first_vm" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=0.9.0-beta" //Always use a specific version of the module
 
+  rg_name = "vm-rg" //Creating a new rg
+
+  vm_linux_objects = [
+    {
+      name = "ubuntu-vm"
+      os_name = "ubuntu"
+    }
+  ]
+
+  // VNet and VM subnet will also be created.
+  // Required dependencies for the vm will also be created.
+  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
+  // Refer to the examples section for many more combinations of configurations.
+}
+```
+5. Run terraform init & terraform apply
+```hcl
+terraform init
+terraform apply
+
+//Plan output
+Plan: 8 to add, 0 to change, 0 to destroy.
+
+────────────────────────────────────────────────────────────────────────────────── 
+
+//press yes
+yes
+
+//apply output
+Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+```
+
+6. How it looks in Azure
+<a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/first-vm.png"></a>
+
+7. 
 ## Examples
 
 ```hcl
