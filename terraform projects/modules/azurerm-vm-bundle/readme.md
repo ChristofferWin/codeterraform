@@ -149,7 +149,7 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 ```
 
 6. How it looks in Azure
-<img href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/first-vm.png"/>
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/first-vm.png"/>
 
 7. 
 ## Examples
