@@ -874,5 +874,5 @@ resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
   count = var.create_kv_for_vms || var.kv_object != null ? length(local.vm_objects) : 0
   name = "${local.vm_objects[count.index].name}-secret"
   value = local.vm_objects[count.index].admin_password
-  key_vault_id = azurerm_key_vault.vm_kv_object.id
+  key_vault_id = azurerm_key_vault.vm_kv_object.kv_object.id
 }
