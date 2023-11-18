@@ -240,7 +240,7 @@ locals {
   
   script_name = var.script_name != null && can(file(var.script_name)) ? var.script_name : var.script_name == null ? "Get-AzVMSku.ps1" : null
   script_commands = length(local.vm_os_names) > 0 && local.script_name != null ? flatten([for a, b in range(length(local.vm_os_names)) : [
-    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
+    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "./Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "Get-AzVMSku.ps1 -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
   ]]) : null
 
   rg_resource_id = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
