@@ -426,16 +426,18 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
 ## Examples
-This section is split into 2 different sub sections:
+<b>This section is split into 2 different sub sections:</b>
 
-- Simple examples = Meant to be useful for deployments using default values or for deploying vms where some or all dependencies are already deployed and is instead simply referenced using resource_ids. If in any doubt, please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section
+- <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#simple-examples---seperated-on-topics">Simple examples</a> = Meant to be useful for deployments using default values or for deploying vms where some or all dependencies are already deployed and is instead simply referenced using resource_ids. If in any doubt, please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section
 - Advanced examples = Meant to showcase different combination of resources to deploy with vms
 
-### Simple examples - Seperated on topics
-1. [vms & bastion & default settings](#vms-&-bastion-&-default-settings)
+### Simple examples - Separated on topics
+1. [How to retrieve required information like os_name](#1-how-to-retrieve-required-information-like-os_name)
+2. [A few vms and bastion](#2-a-few-vms-and-bastion)
+3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
 
-#### vms & bastion & default settings
 
+### (1) how to retrieve required information like 'os_name'
 ```hcl
 module "azure_vm_bundle" {
   source                 = "path/to/azurerm-vm-bundle"
@@ -445,6 +447,16 @@ module "azure_vm_bundle" {
   os_version             = "Ubuntu 20.04 LTS"
   // Add more configuration as needed
 }
+```
+
+### (2) A few vms and bastion
+```hcl
+
+```
+
+### (3) Using existing Virtual vnet and subnet
+```hcl
+
 ```
 
 ### Advanced examples
