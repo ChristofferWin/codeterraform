@@ -664,7 +664,7 @@ output "vm_specific_config_result" {
 /*
 ```
 How it looks in Azure:
-<img href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/5th-vm-black.png" />
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/5th-vm-black.png" />
 
 ### (5) Avoid using PowerShell 7 entirely when deploying with the module
 ```hcl
