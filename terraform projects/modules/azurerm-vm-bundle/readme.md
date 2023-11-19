@@ -486,17 +486,69 @@ win11-21h2-ent
 win11-21h2-entn
 win11-21h2-pro
 
-#In summary, the PowerShell module can be used interactively before executing the Terraform module #to gather necessary information for deployment. 
-#For most applications, obtaining specific OS #information is unnecessary, as the module can handle this automatically. 
-#However, in cases where #a particular SKU or SKU version is required for any operating system, the information obtained from the last output needs to be provided as input to the module
-
-
+#In summary, the PowerShell module can be used interactively before executing the Terraform module to gather necessary information for deployment. 
+#For most applications, obtaining specific OS information is unnecessary, as the module can handle this automatically. 
+#However, in cases where #a particular SKU or SKU version is required for any operating system, the information obtained from the last output needs to be provided as input to the module.
 ```
+For more information about how to use the PowerShell module, please visit the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/powershell%20projects/modules/Get-AzVMSku/Examples.md">readme</a> where a lot of examples are shown
 
 ### (2) A few vms and bastion
 ```hcl
+//Boilerplate
 
+provider "azurerm" {
+  features{}
+}
+
+module "simple_vms" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+
+  rg_name = "simple-vms-rg"
+  create_public_ip = true
+  create_nsg = true //With publicIP true, nsg should also be created otherwise we cant connect via the public ip
+  create_diagnostic_settings = true //Will create us a storage account and link both vms to it
+
+  vm_windows_objects = [
+    {
+      name = "simple-win-vm"
+      os_name = "windows10"
+    }
+  ]
+
+  vm_linux_objects = [
+    {
+      name = "simple-linux-vm"
+      os_name = "centos"
+    }
+  ]
+}
+
+//Create a simple output to see our deployment results
+output "deployment_results" {
+  value = module.simple_vms.summary_object
+}
+
+//Sample output
+"linux_objects" = [
+    {
+      "admin_username" = "localadmin"
+      "name" = "simple-linux-vm"
+      "network_summary" = {
+        "private_ip_address" = "192.168.0.5"
+        "public_ip_address" = "20.126.18.32"
+      }
+      "os" = "centos"
+      "os_sku" = "8_5-gen2"
+      "size" = {
+        "cpu_cores" = 2
+        "memory_gb" = 8
+        "name" = "Standard_B2ms"
+      }
+    },
+  ]
 ```
+How it looks in Azure:
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/3rd-vm-black.png" />
 
 ### (3) Using existing virtual vnet and subnet
 ```hcl
