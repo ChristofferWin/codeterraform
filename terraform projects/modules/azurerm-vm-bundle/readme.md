@@ -286,7 +286,6 @@ env_name_7 = "tst" = test
     - name (must be globally unique)
     - network_acls = an object defining:
       - Define a custom network security ruleset for the kv
-        - 
     - For all other attributes, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'kv_object'
     - *Warning* Its only recommended to use this parameter in case a network security rule is to be customized - See the advanced examples for guidance
 
