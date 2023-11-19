@@ -575,8 +575,26 @@ output "existing_resources_vm_result" {
 }
 
 //Sample output
-
+windows_objects" = [
+    {
+      "admin_username" = "localadmin"
+      "name" = "windows-vm01"
+      "network_summary" = {
+        "private_ip_address" = "192.168.0.6"
+        "public_ip_address" = "40.118.59.198"
+      }
+      "os" = "windows11"
+      "os_sku" = "win11-23h2-pron"
+      "size" = {
+        "cpu_cores" = 2
+        "memory_gb" = 8
+        "name" = "Standard_B2ms"
+      }
+    },
+  ]
 ```
+How it looks in Azure:
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/4th-vm-black.png" />
 
 ### Advanced examples - Seperated on topics
 1. [Define custom vnet, subnet and bastion](#1-define-custom-vnet-subnet-and-bastion)
