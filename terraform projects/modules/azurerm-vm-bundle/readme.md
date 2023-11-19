@@ -8,7 +8,8 @@
 4. [Versions](#versions)
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
-7. [Examples](#examples)
+7. [Examples simple](#examples-simple)
+8. [Examples advanced](#examples-advanced)
 
 ## Description
 
@@ -249,7 +250,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 
 10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
-## Examples
+## Examples simple
 
 ```hcl
 module "azure_vm_bundle" {
@@ -262,4 +263,5 @@ module "azure_vm_bundle" {
 }
 ```
 
-## Detailed_Description2
+## Examples advanced
+This is the section for any advanced examples using the module
