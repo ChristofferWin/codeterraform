@@ -341,7 +341,7 @@ resource "null_resource" "download_script" {
 }
 
 resource "null_resource" "ps_object" {
-  count = local.script_commands != null ? length(local.script_commands) : 0
+  count = local.script_commands != null ? 1 : 0
   provisioner "local-exec" {
         command = local.script_commands[count.index]
         interpreter = ["pwsh","-Command"]
