@@ -432,7 +432,7 @@ This section is split into 2 different sub sections:
 - Advanced examples = Meant to showcase different combination of resources to deploy with vms
 
 ### Simple examples - Seperated on topics
-1. [vms & bastion & default settings](#vms-&-bastion-default-settings)
+1. [vms & bastion & default settings](#vms-&-bastion-&-default-settings)
 
 #### vms & bastion & default settings
 
