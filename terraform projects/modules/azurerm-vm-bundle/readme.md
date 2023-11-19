@@ -208,7 +208,7 @@ create_kv_role_assignment = false //If create_kv_for_vms is set to true, this wi
 2. location = Define the Azure location of which to deploy to
 3. env_name = Define an env to use as prefix on resources being deployed
   - The module can track a multitude of env names as it uses complex regex expressions
-  - Also, using the env_name will effect the ip ranges, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Detailed Description</a> for more information
+  - Also, using the env_name will effect the ip ranges, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Detailed Description</a> for more information, under "Virtual network"
 4. script_name = *Warning* This parameter is experimental and currently not utilized for any purpose
 
 #### Example of values to use for mgmt parameters
@@ -315,7 +315,7 @@ create_bastion = true
 
 #### Example 2 of defining custom sub resource objects
 ```hcl
-//In this example I want a custom bastion config, but rest shall be default. Notice how we do not need to specify the create_bastion switch as the object is already defined by us
+//In this example we want a custom bastion config, but rest shall be default. Notice how we do not need to specify the create_bastion switch as the object is already defined by us
 bastion_object = {
   copy_paste_enabled = false
   file_copy_enabled = false
