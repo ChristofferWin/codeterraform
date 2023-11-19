@@ -101,7 +101,7 @@ locals {
     }
   ]) : each.name => each} : null
 
-  subnet_objects = local.subnet_objects_pre == null && var.create_bastion ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)], service_endpoints = ["Microsoft.KeyVault"]},{name = "AzureBastionSubnet", address_prefixes = [local.vnet_object_helper.address_space[1]], service_endpoints = ["Microsoft.KeyVault"]}]) : each.name => each} : local.subnet_objects_pre == null ? {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)], service_endpoints = ["Microsoft.KeyVault"]}] : each.name => each} : local.subnet_objects_pre
+  subnet_objects = local.subnet_objects_pre == null && var.create_bastion && var.subnet_resource_id == null ? {for each in ([{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)], service_endpoints = ["Microsoft.KeyVault"]},{name = "AzureBastionSubnet", address_prefixes = [local.vnet_object_helper.address_space[1]], service_endpoints = ["Microsoft.KeyVault"]}]) : each.name => each} : local.subnet_objects_pre == null && var.subnet_resource_id == null ? {for each in [{name = "vm-subnet", address_prefixes = [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)], service_endpoints = ["Microsoft.KeyVault"]}] : each.name => each} : local.subnet_objects_pre
   
   nsg_objects_pre = !can(length(var.nsg_objects)) && var.create_nsg ? 1 : can(length(var.nsg_objects)) ? length(var.nsg_objects) : 0
   nsg_objects_rules_pre = can(var.nsg_objects.*.security_rules) ? length(flatten(var.nsg_objects.*.security_rules)) : 1
