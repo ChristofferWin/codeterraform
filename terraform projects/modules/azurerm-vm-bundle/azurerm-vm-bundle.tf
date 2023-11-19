@@ -212,7 +212,7 @@ locals {
     account_replication_type = can(length(local.transformed_storage_objects[a].storage_account.account_replication_type)) ? local.transformed_storage_objects[a].storage_account.account_replication_type : "LRS"
     account_kind = "StorageV2" 
     network_rules = can(length(local.transformed_storage_objects[a].storage_account.network_rules)) ? {for a, b in [for c in range(1) : {
-        default_action = length(local.transformed_storage_objects[c].storage_account.network_rules.default_action) > 0 ? local.transformed_storage_objects[c].storage_account.network_rules.default_action : "Deny" 
+        default_action = can(length(local.transformed_storage_objects[c].storage_account.network_rules.default_action)) > 0 ? local.transformed_storage_objects[c].storage_account.network_rules.default_action : "Deny" 
         bypass = can(length(local.transformed_storage_objects[c].storage_account.network_rules.bypass)) ? local.transformed_storage_objects[c].storage_account.network_rules.bypass : ["Logging", "Metrics", "AzureServices"] 
         virtual_network_subnet_ids = can(length(local.transformed_storage_objects[c].storage_account.network_rules.virtual_network_subnet_ids)) ? local.transformed_storage_objects[c].storage_account.network_rules.virtual_network_subnet_ids : [for a in local.subnet_resource_id : a if length(regexall("vm", a)) > 0]
         ip_rules = can(length(local.transformed_storage_objects[c].storage_account.network_rules.ip_rules)) ? local.transformed_storage_objects[c].storage_account.network_rules.ip_rules : null
