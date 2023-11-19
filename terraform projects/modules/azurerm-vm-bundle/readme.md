@@ -212,7 +212,7 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 6. How it looks in Azure
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/first-vm-black.png"/>
 
-7. If you want to simply be able to connect to it, add the following code to the module code
+7. To easily establish a connection, include the following code in your module.
 ```hcl
 module "my_first_vm" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=0.9.0-beta" //Always use a specific version of the module
@@ -244,8 +244,10 @@ terraform apply --auto-approve=true
 
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ```
+9. What has been added to Azure
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/second-vm-black.png" />
 
-9. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
+10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
 ## Examples
 
