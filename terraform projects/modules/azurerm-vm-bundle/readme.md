@@ -292,16 +292,19 @@ vnet_object = {
   }
 }
 
+//You need define 2 subnets in case 'create_bastion = true' The module will always use index 0 for the vm's
+//Name is not required and for the bastion subnet it will always be 'AzureBastionSubnet' Regardless of user defined name
 subnet_objects = [
   {
     name = "custom-vm-subnet"
     address_prefixes = ["192.168.0.0/22"]
   },
   {
-    name = "AzureBastionSubnet"
-    address_prefixes = ["192.168.99.0/24"]
+    address_prefixes = ["192.168.10.0/24"]
   }
 ]
+
+create_bastion = true
 ```
 
 ## Return Values
