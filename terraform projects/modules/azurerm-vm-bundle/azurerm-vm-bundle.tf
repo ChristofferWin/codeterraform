@@ -204,7 +204,7 @@ locals {
   transformed_storage_objects = can([for each in flatten([for each in local.merge_objects.*.boot_diagnostics : each if each != null]) : each]) ? [for each in flatten([for each in local.merge_objects.*.boot_diagnostics : each if each != null]) : each] : []
 
   storage_account_objects = local.storage_counter > 0 ? {for each in [for a in range(local.storage_counter) : {
-    name = can(local.transformed_storage_objects[a].storage_account.name) ? local.transformed_storage_objects[a].storage_account.name : var.env_name != null ? "${var.env_name}$vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
+    name = can(local.transformed_storage_objects[a].storage_account.name) ? local.transformed_storage_objects[a].storage_account.name : var.env_name != null ? "${var.env_name}vmstorage${substr(uuid(), 0, 5)}" : "vmstorage${substr(uuid(), 0, 5)}"
     vm_name = can(length(flatten(local.transformed_storage_objects[a].storage_account.name))) ? [for a in local.merge_objects : a.name if can(length(a.boot_diagnostics.storage_account))][0] : "storage${a}"
     access_tier = can(local.transformed_storage_objects[a].storage_account.access_tier) ? local.transformed_storage_objects[a].storage_account.access_tier : "Cool"
     public_network_access_enabled = can(local.transformed_storage_objects[a].storage_account.public_network_access_enabled) ? local.transformed_storage_objects[a].storage_account.public_network_access_enabled : true
