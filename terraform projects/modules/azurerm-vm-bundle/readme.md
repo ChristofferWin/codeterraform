@@ -19,8 +19,6 @@ The module boasts extensive configuration flexibility, supporting a wide array o
 
 Furthermore, the module is more than capable of deploying various subtypes that is typically used together with Azure virtual machines.
 
-Maybe you want a simple test environment with a few virtual machines and what about all their dependencies?
-
 <b>Example deployment of 2 Linux machines with public ips and ssh setup:</b>
 </br>
 </br>
