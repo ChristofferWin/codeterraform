@@ -436,6 +436,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 2. [A few vms and bastion](#2-a-few-vms-and-bastion)
 3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
 4. [Use attributes like size_pattern and defining a custom os_disk configuration](#4-use-attributes-like-size_pattern-and-defining-a-custom-os_disk-configuration)
+5. [Avoid using PowerShell 7 entirely when deploying with the module](#5-avoid-using-powershell-7-entirely-when-deploying-with-the-module)
 
 
 ### (1) how to retrieve required information like 'os_name'
@@ -530,6 +531,7 @@ output "deployment_results" {
 }
 
 //Sample output
+/*
 "linux_objects" = [
     {
       "admin_username" = "localadmin"
@@ -547,6 +549,7 @@ output "deployment_results" {
       }
     },
   ]
+  */
 ```
 How it looks in Azure:
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/3rd-vm-black.png" />
@@ -576,6 +579,7 @@ output "existing_resources_vm_result" {
 }
 
 //Sample output
+/*
 windows_objects" = [
     {
       "admin_username" = "localadmin"
@@ -593,6 +597,7 @@ windows_objects" = [
       }
     },
   ]
+*/
 ```
 How it looks in Azure:
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/4th-vm-black.png" />
@@ -632,9 +637,89 @@ module "vm_specific_config" {
   ]
 }
 
+//Output
+output "vm_specific_config_result" {
+  value = module.vm_specific_config.summary_object
+}
+
+//Sample (Notice how the size of the vm became 'Standard_DS4_v2' and we only wrote 'DS4' in the 'size_patteren')
+/*
+"windows_objects" = [
+    {
+      "admin_username" = "localadmin"
+      "name" = "default-vm"
+      "network_summary" = {
+        "private_ip_address" = "192.168.0.4"
+        "public_ip_address" = "13.94.244.99"
+      }
+      "os" = "windows11"
+      "os_sku" = "win11-23h2-pron"
+      "size" = {
+        "cpu_cores" = 8
+        "memory_gb" = 28
+        "name" = "Standard_DS4_v2" 
+      }
+    },
+]
+/*
 ```
 How it looks in Azure:
 <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/5th-vm-black.png"></a>
+
+### (5) Avoid using PowerShell 7 entirely when deploying with the module
+```hcl
+module "avoid_using_powershell" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+
+  rg_name = "avoid-using-powershell-rg"
+
+  create_public_ip = true
+  create_nsg = true
+
+  //We can define any attribute, but because we have statically defined the 'source_image_reference' PowerShell will NOT be executed by the module
+  vm_linux_objects = [
+    {
+      name = "custom-sku-ubuntu"
+      os_name = "ubuntu"
+
+      //used the PS module 'Get-AzVMSku' to retrieve the below information, only parsing 'Get-AzVmsku -Location westeurope -OperatingSystem ubuntu -NewestSKUsVersions'
+      source_image_reference = {
+        offer = "UbuntuServer"
+        publisher = "Canonical"
+        sku = "14.04.5-DAILY-LTS"
+        version = "14.04.201911070"
+      }
+    }
+  ]
+}
+
+output "avoid_using_powershell" {
+  value = module.avoid_using_powershell.summary_object
+}
+
+//Sample output
+/*
+"linux_objects" = [
+    {
+      "admin_username" = "localadmin"
+      "name" = "custom-sku-ubuntu"
+      "network_summary" = {
+        "private_ip_address" = "192.168.0.4"
+        "public_ip_address" = "13.81.201.156"
+      }
+      "os" = "ubuntu"
+      "os_sku" = "14.04.5-DAILY-LTS"
+      "size" = {
+        "cpu_cores" = null
+        "memory_gb" = null
+        "name" = "Standard_B2ms"
+      }
+    },
+  ]
+/*
+```
+How it looks in Azure:
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/6th-vm-black.png" />
 
 ### Advanced examples - Seperated on topics
 1. [Define custom vnet, subnet and bastion](#1-define-custom-vnet-subnet-and-bastion)
