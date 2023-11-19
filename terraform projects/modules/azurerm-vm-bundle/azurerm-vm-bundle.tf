@@ -279,10 +279,10 @@ locals {
       address_space = can(length(local.vnet_object_helper.address_space)) ? local.vnet_object_helper.address_space : null
       vnet_name = can(length(local.vnet_object_helper.name)) ? local.vnet_object_helper.name : null
 
-      subnets = [for each in local.subnet_objects : {
+      subnets = can(length(local.subnet_objects)) ? [for each in local.subnet_objects : {
         name = each.name
         address_prefix = each.address_prefixes
-      }]
+      }] : null
     }
 
     windows_objects = local.windows_return_object != null ? [for each in local.windows_return_object : {
