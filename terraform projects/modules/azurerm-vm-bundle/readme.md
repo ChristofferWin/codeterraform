@@ -127,7 +127,7 @@ terraform init
 │ Could not retrieve the list of available versions for provider hashicorp/azurerm: no available releases match the given constraints 3.64.0, >= 3.76.0
 ```
 To solve it, simply remove the version parameter:
-```
+```hcl
 //Remove the version parameter entirely which causes terraform to use the latest version of azurerm
 terraform {
   required_providers {
