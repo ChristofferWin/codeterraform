@@ -91,8 +91,8 @@ locals {
       address_space = var.env_name == null ? ["192.168.0.0/24", "192.168.99.0/24"] : length(regexall("\\b[pP][rR]?[oO]?[dD]?[uU]?[cC]?[tT]?[iI]?[oO]?[nN]?\\b", var.env_name)) > 0 ? ["10.0.0.0/16", "10.99.0.0/24"] : length(regexall("^\\b[tT][eE]?[sS]?[tT]?[iI]?[nN]?[gG]?\\b$", var.env_name)) > 0 ? ["172.16.0.0/20", "172.16.99.0/24"] : ["192.168.0.0/24", "192.168.99.0/24"]
   }] : each.name => each} : null
 
-  vnet_object_pre2 = local.vnet_object_pre == null ? {for each in [var.vnet_object] : each.name => each} : null
-  vnet_object_helper = values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]
+  vnet_object_pre2 = local.vnet_object_pre == null && var.vnet_object != null ? {for each in [var.vnet_object] : each.name => each} : null
+  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
   subnet_objects_pre = var.subnet_objects != null ? {for each in ([for x, y in range(2) : {
       name = x == 1 ? "AzureBastionSubnet" : var.subnet_objects[x].name
