@@ -307,6 +307,20 @@ subnet_objects = [
 create_bastion = true
 ```
 
+#### Example 2 of defining custom sub resource objects
+```hcl
+//In this example I want a custom bastion config, but rest shall be default. Notice how we do not need to specify the create_bastion switch as the object is already defined by us
+bastion_object = {
+  copy_paste_enabled = false
+  file_copy_enabled = false
+  name = "my-custom-bastion"
+  scale_units = 6
+  sku = "Standard"
+}
+
+//With no other configuration than the required, a custom bastion will be created with default vnet and default subnets
+```
+
 ## Return Values
 dasdsdasd
 
