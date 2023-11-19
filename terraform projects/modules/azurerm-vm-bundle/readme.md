@@ -130,7 +130,7 @@ terraform init
 │
 │ Could not retrieve the list of available versions for provider hashicorp/azurerm: no available releases match the given constraints 3.64.0, >= 3.76.0
 ```
-To solve it, simply remove the version parameter:
+To solve it, simply remove the version parameter OR use a version that is the minimum requirement from <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#versions">Versions</a>:
 ```hcl
 //Remove the version parameter entirely which causes terraform to use the latest version of azurerm
 terraform {
