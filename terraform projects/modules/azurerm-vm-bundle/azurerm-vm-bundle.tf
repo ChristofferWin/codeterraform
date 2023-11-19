@@ -329,7 +329,7 @@ locals {
 }
 
 resource "null_resource" "download_script" {
-  count = local.script_commands != null ? length(local.script_commands) : 0
+  count = local.script_commands != null ? 1 : 0
   provisioner "local-exec" {
     command = <<-EOT
       $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
@@ -341,7 +341,7 @@ resource "null_resource" "download_script" {
 }
 
 resource "null_resource" "ps_object" {
-  count = local.script_commands != null ? 1 : 0
+  count = local.script_commands != null ? length(local.script_commands) : 0
   provisioner "local-exec" {
         command = local.script_commands[count.index]
         interpreter = ["pwsh","-Command"]
