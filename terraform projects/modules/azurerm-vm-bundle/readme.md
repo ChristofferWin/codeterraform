@@ -723,11 +723,203 @@ How it looks in Azure:
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/6th-vm-black.png" />
 
 ### Advanced examples - Seperated on topics
-1. [Define custom vnet, subnet and bastion](#1-define-custom-vnet-subnet-and-bastion)
+1. [Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object](#1-define-custom-vnet-subnet-bastion-and-both-nic-and-public-ip-directly-on-a-windows-vm-object)
 2. [A few vms and bastion](#2-a-few-vms-and-bastion)
 3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
 
-### (1) Define custom vnet, subnet and bastion
+### (1) Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object
 ```hcl
+module "custom_advanced_settings" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
 
+  rg_name = "custom-advanced-settings-rg"
+
+  //Windows 10 with a custom public ip and NIC configurations
+  vm_windows_objects = [
+    {
+      name = "win10"
+      os_name = "windows10"
+
+      public_ip = {
+        name = "vm-custom-pip"
+        allocation_method = "Dynamic"
+        sku = "Basic"
+        
+        tags = {
+          "environment" = "prod"
+        }
+      }
+
+      nic = {
+        name = "vm-custom-nic"
+        dns_servers = ["8.8.8.8", "8.8.4.4"] //Google DNS
+        enable_ip_forwarding = true
+        
+        ip_configuration = {
+          name = "ip-config"
+          private_ip_address_version = "IPv4"
+          private_ip_address_allocation = "Static"
+          private_ip_address = "10.0.0.5" //First possible address in the subnet we are deploying, as Azure takes the first 4 and last 1
+        }
+
+        tags = {
+          "vm_name" = "win10"
+        }
+      }
+    }
+  ]
+
+  vnet_object = {
+    name = "custom-with-bastion-vnet"
+    address_space = ["10.0.0.0/20"]
+  }
+
+  subnet_objects = [
+    {
+      name = "custom-vm-subnet"
+      address_prefixes = ["10.0.0.0/24"]
+
+      tags = {
+        "environment" = "prod"
+      }
+    },
+    {
+      //Name wont matter, it will be overwritten as the bastion subnet must have a specific name
+      address_prefixes = ["10.0.10.0/26"]
+
+      tags = {
+        "environment" = "mgmt"
+      }
+    }
+  ]
+
+  bastion_object = {
+    name = "custom-bastion" //must contain 'bastion'
+    copy_paste_enabled = true
+    file_copy_enabled = true
+    sku = "Standard"
+    scale_units = 5
+
+    tags = {
+      "environment" = "mgmt"
+    }
+  }
+}
+
+output "custom_advanced_settings" {
+  value = module.custom_advanced_settings.summary_object
+}
+
+//Sample output
+/*
+
+*/
 ```
+How it looks in Azure:
+<img src="" />
+
+### (2) Use of default settings combined with specialized vm configurations on multiple vms
+```hcl
+module "custom_combined_with_default" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+
+  rg_id = module.custom_advanced_settings.rg_object.id
+
+  env_name = "prd" //prod, pd, and so on will indicate prod
+  create_nsg = true
+  create_public_ip = true //Will create a default public ip for each vm that does not have a specific public ip configuration set
+  create_diagnostic_settings = true //Will create a default storage account that will be used by any vm with NO specific configuration set
+  create_kv_for_vms = true //Will deploy keyvault + role assignment + secrets
+  
+  vm_linux_objects = [
+    {
+      name = "advanced-linux-redhat"
+      os_name = "redhat"
+      computer_name = "redhat"
+      secure_boot_enabled = true
+
+      os_disk = {
+        name = "advanced-os-disk-redhat"
+        caching = "ReadWrite"
+        disk_size_gb = 512
+        security_encryption_type = "asdasd"
+        write_accelerator_enabled = true
+        storage_account_type = "LRS"
+      }
+
+      admin_ssh_key = [
+        {
+          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+          username = "redhat"
+        }
+      ]
+
+      boot_diagnostics = {
+        storage_account = {
+          name = "customstorage121das"
+          access_tier = "Hot"
+          public_network_access_enabled = false
+          account_replication_type = "LRS"
+
+          network_rules = {
+            //By simply adding the block, the module will create a rule allowing the vm subnet to access the storage account
+          }
+        }
+      }
+
+      nic = {
+        name = "advanced-vm-nic" //Name must contain 'vm'
+        enable_ip_forwarding = true
+
+        ip_configuration = {
+          name = "advanced-config"
+          private_ip_address_version = "IPv4"
+          private_ip_address = "10.0.0.5"
+          private_ip_address_allocation = "Static"
+        }
+      }
+
+      public_ip = {
+        name = "advanced-vm-pip"
+        sku = "Standard"
+        allocation_method = "static"
+      }
+
+      termination_notification = {
+        enabled = true
+        timeout = "PT10M"
+      }
+    },
+    {
+      name = "custom-sku-ubuntu"
+      os_name = "ubuntu"
+
+      source_image_reference = {
+        offer = "UbuntuServer"
+        publisher = "Canonical"
+        sku = "16.04.0-LTS"
+        version = "16.04.202109280"
+      }
+    }
+  ]
+
+  vm_windows_objects = [
+    {
+      name = "Server2016-vm01"
+      os_name = "SERVER2016"
+    }
+  ]
+}
+
+
+output "custom_combined_with_default" {
+  value = module.custom_combined_with_default
+}
+
+Sample output:
+/*
+
+*/
+```
+How it looks in Azure:
+<img src="" />
