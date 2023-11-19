@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     azurerm = {
-        source = "hashicorp/azurerm"
+      source = "hashicorp/azurerm"
     }
   }
 }
@@ -249,10 +249,10 @@ module "test2_vms" {
   ]
 }
 */
-
+/*
 module "test3_vms" {
   source = "../../azurerm-vm-bundle"
-  rg_name = "test4-rg"
+  rg_name = "test5-rg"
   
   vm_windows_objects = [
     {
@@ -304,8 +304,26 @@ module "test3_vms" {
           access_tier = "Hot"
         }
       }
+    },
+    {
+      name = "Centos1"
+      os_name = "Centos"
+
+       admin_ssh_key = [
+        {
+          username = "localadmin"
+          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+        }
+      ]
     }
   ]
+
+  kv_object = {
+
+    network_acls = {
+      add_vm_subnet_id = true
+    }
+  }
 
   create_nsg = true
   create_public_ip = true
@@ -314,4 +332,59 @@ module "test3_vms" {
 
 output "connect" {
   value = module.test3_vms.summary_object
+}
+*/
+
+data "azurerm_client_config" "current" {}
+
+module "my_first_vm" {
+  source = "../../azurerm-vm-bundle" //Always use a specific version of the module
+
+  rg_name = "vm-rg2" //Creating a new rg
+
+  //We will only define some simple object configurations here. For more information, see the advanced examples
+vnet_object = {
+  address_space = ["192.168.0.0/20"]
+  name = "custom-vnet"
+  tags = {
+    "environment" = "prod"
+  }
+}
+
+//You need define 2 subnets in case 'create_bastion = true' The module will always use index 0 for the vm's
+//Name is not required and for the bastion subnet it will always be 'AzureBastionSubnet' Regardless of user defined name
+subnet_objects = [
+  {
+    name = "custom-vm-subnet"
+    address_prefixes = ["192.168.0.0/22"]
+  },
+  {
+    address_prefixes = ["192.168.10.0/24"]
+  }
+]
+
+  vm_linux_objects = [
+    {
+      name = "ubuntu-vm"
+      os_name = "ubuntu"
+    }
+  ]
+
+  bastion_object = {
+    copy_paste_enabled = false
+    file_copy_enabled = false
+    name = "my-custom-bastion"
+    scale_units = 6
+    sku = "Standard"
+  }
+
+  kv_object = {
+    enabled_for_deployment = false
+    enabled_for_disk_encryption = true
+    enabled_for_template_deployment = true
+    
+    network_acls = {
+      add_vm_subnet_id = true
+    }
+  }
 }

@@ -77,7 +77,7 @@ variable "vnet_resource_id" {
 variable "subnet_objects" {
   description = "define up to 2 subnets. 1 for the vm(s), another for bastion. index 0 will always be the vm subnet. name is not required and will be 'vm-subnet' by default. note, the bastion subnet name cannot be changed"
   type = list(object({
-    name = string
+    name = optional(string)
     address_prefixes = list(string)
   }))
   default = null
@@ -89,16 +89,6 @@ variable "subnet_resource_id" {
   default = null
 }
 
-variable "pip_objects" {
-  description = "a list of objects representing public ips to create. must have the same length as the total length of 'vm_windows_objects & 'vm_linux_objects'"
-  type = list(object({
-    name = string
-    allocation_method = optional(string)
-    sku = optional(string)
-    tags = optional(map(string))
-  }))
-  default = null
-}
 
 variable "bastion_object" {
   description = "define a custom bastion configuration"

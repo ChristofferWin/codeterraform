@@ -486,7 +486,9 @@ win11-21h2-ent
 win11-21h2-entn
 win11-21h2-pro
 
-#In summary, the PowerShell module can be used interactively before executing the Terraform module #to gather necessary information for deployment. For most applications, obtaining specific OS #information is unnecessary, as the module can handle this automatically. However, in cases where #a particular SKU or SKU version is required for any operating system, the information obtained #from the last output needs to be provided as input to the module
+#In summary, the PowerShell module can be used interactively before executing the Terraform module #to gather necessary information for deployment. 
+#For most applications, obtaining specific OS #information is unnecessary, as the module can handle this automatically. 
+#However, in cases where #a particular SKU or SKU version is required for any operating system, the information obtained from the last output needs to be provided as input to the module
 
 
 ```
