@@ -330,7 +330,55 @@ bastion_object = {
 ```
 
 ## Return Values
-dasdsdasd
+Its important to state that almost all values returned from the module is of type map. This can either be used to our advantage by making our variable references more type-safe
+or we can simply use a function like 'values' to make the return value a list of object instead, where we can then simply use int index-based references like [0]
+
+See below list of possible return values:
+ - summary_object = simpel object, can call attributes directly
+    - <general information> even how many CPU cores are left in terms of quota on the subscription
+    - network_summary
+    - windows_objects
+      - passwords are NOT 
+    - linux_objects
+ - rg_object = simpel object, can call attributes directly
+    - id
+    - name
+    - location
+ - vnet_object = map of object, call specific key, or use values()
+    - id
+    - name
+    - address_space
+    - See vnet <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network#attributes-reference">Hashicorp docs / attributes references</a>
+ - subnet_object = map of object, call specific key, or use values()
+    - id
+    - name
+    - virtual_network_name
+    - address_prefixes
+ - nsg_object = map of object, call specific key, or use values()
+    - id
+    - name
+    - See nsg
+ - nic_object = map of object, call specific key, or use values()
+    - id
+    - name
+    - See nic <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface#attributes-reference">Hashicorp docs / attribute references</a>
+ - pip_object = map of object, call specific key, or use values()
+    - id
+    - name
+    - ip_address
+    - fqdn
+ - windows_object = map of object, call specific key, or use values()
+    - id
+    - name
+    - See windows vm <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_virtual_machine#attributes-reference">Hashicorp docs / attribute references</a>
+ - linux_object = map of object, call specific key or use values()
+    - id
+    - name
+    - See linux vm <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine#attributes-reference">Hashicorp docs / attribute references</a>
+ - storage_object = map of object, call specific key or use values()
+    - id
+    - name
+    - See storage <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account#attributes-reference">Hashicorp docs / attribute references</a>
 
 ## Getting Started
 Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
