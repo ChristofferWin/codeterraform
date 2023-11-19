@@ -428,7 +428,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ## Examples
 <b>This section is split into 2 different sub sections:</b>
 
-- <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#simple-examples---separated-on-topics">Simple examples</a> = Meant to be useful for deployments using default values or for deploying vms where some or all dependencies are already deployed and is instead simply referenced using resource_ids. If in any doubt, please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section
+- <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase the easiest ways to deploy vms with its dependencies
 - <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase different combinations of resources to deploy with vms
 
 ### Simple examples - Separated on topics
@@ -438,15 +438,57 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 
 
 ### (1) how to retrieve required information like 'os_name'
-```hcl
-module "azure_vm_bundle" {
-  source                 = "path/to/azurerm-vm-bundle"
-  resource_group_name   = "myResourceGroup"
-  virtual_machine_count  = 3
-  os_type                = "linux"
-  os_version             = "Ubuntu 20.04 LTS"
-  // Add more configuration as needed
-}
+```powershell
+#Make sure to have the PowerShell module 'Get-AzVMSku' Installed
+#Must be in administrator mode to install
+Install-module Get-AzVMSku -Force
+
+#Run the show command for different information that you may require to run the terraform module
+
+#Retrive name needed for parameter 'os_name' of the terraform module
+Get-AzVmSku -ShowVMOperatingSystems
+
+#Sample output
+server2008
+server2012
+server2012r2
+....
+
+#Retrieve valid Azure locations required by parameter 'location'
+#Requires an Azure context
+Login-AzAccount #Interactive browser prompt
+Get-AzVmSku -ShowLocations #Use the 'ShortName' output
+
+#Sample output
+ShortName          LongName
+---------          --------
+eastus             East US
+eastus2            East US 2
+westus             West US
+centralus          Central US
+northcentralus     North Central US
+....
+
+#We can also retrieve a specific os and use this information for other parameters
+$VMObject = Get-AzVMSKU -Location "westeurope" -OperatingSystem "windows11"
+
+#Sample output required in case you want to deploy vms with specific version and sku
+$VMObject | Select-Object Publisher, Offer
+
+Publisher               Offer
+---------               -----
+MicrosoftWindowsDesktop Windows-11
+
+$VMObject.SKUs #Sample of windows11 skus
+
+win11-21h2-avd
+win11-21h2-ent
+win11-21h2-entn
+win11-21h2-pro
+
+#In summary, the PowerShell module can be used interactively before executing the Terraform module #to gather necessary information for deployment. For most applications, obtaining specific OS #information is unnecessary, as the module can handle this automatically. However, in cases where #a particular SKU or SKU version is required for any operating system, the information obtained #from the last output needs to be provided as input to the module
+
+
 ```
 
 ### (2) A few vms and bastion
@@ -454,7 +496,7 @@ module "azure_vm_bundle" {
 
 ```
 
-### (3) Using existing Virtual vnet and subnet
+### (3) Using existing virtual vnet and subnet
 ```hcl
 
 ```
