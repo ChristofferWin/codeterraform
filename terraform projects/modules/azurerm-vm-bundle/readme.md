@@ -19,7 +19,7 @@ The module boasts extensive configuration flexibility, supporting a wide array o
 
 Furthermore, the module is more than capable of deploying various subtypes that is typically used together with Azure virtual machines.
 
-<b>Example deployment of 2 Linux machines with public ips and ssh setup:</b>
+<b>Example deployment of 2 Linux machines with public ips, NSG and ssh setup:</b>
 </br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
@@ -284,6 +284,9 @@ env_name_7 = "tst" = test
     - *Warning* Its only recommended to use this parameter in case the security rule is to be customized - See the advanced examples for guidance
 5. kv_object = an object defining:
     - name (must be globally unique)
+    - network_acls = an object defining:
+      - Define a custom network security ruleset for the kv
+        - 
     - For all other attributes, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'kv_object'
     - *Warning* Its only recommended to use this parameter in case a network security rule is to be customized - See the advanced examples for guidance
 
