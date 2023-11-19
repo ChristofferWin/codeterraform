@@ -148,8 +148,9 @@ Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/mai
 
 
 ## Parameters
-If using VScode, make use of the extension for terraform from Hashicorp and thereby getting access to 'Intellisense'
-(Might require you to clone the repo, as the terraform Hashicorp extension can have issues resolving parameters through a remote module)
+If you're using VSCode, leverage the Terraform extension from HashiCorp to benefit from 'Intellisense.' Note that, in some cases, you may need to clone the repository as the HashiCorp Terraform extension might encounter difficulties resolving parameters through a remote module.
+
+(Intellisense might need a local copy of the repository, clone <a href="https://github.com/ChristofferWin/codeterraform.git">codeterraform</a>)
 
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
 
