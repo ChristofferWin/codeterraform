@@ -153,6 +153,76 @@ If you're using VSCode, leverage the Terraform extension from HashiCorp to benef
 
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
 
+The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Default Description</a>
+
+### resource_id (to avoid that the module must create the resoruce type)
+1. rg_id = resource id of a resource group to deploy resources to
+2. vnet_resource_id = resource id of virtual network to deploy subnet to
+3. subnet_resource_id = resource id of the vm subnet where the module shall deploy vms to
+4. kv_resource_id = resource id of the key vault to add vm admin password secret to
+
+#### Example of each resource id type
+```hcl
+rg_id = /subscriptions/<sub id>/resourceGroups/<rg name>
+vnet_resource_id = /subscriptions/<sub id>/resourceGroups/<rg name>/providers/Microsoft.Network/virtualNetworks/<vnet name>
+subnet_resource_id = /subscriptions/<sub id>/resourceGroups/<rg name>/providers/Microsoft.Network/virtualNetworks/<vnet name>/subnets/<subnet name>
+kv_resource_id = /subscriptions/<sub id>/resourceGroups/<rg name>/providers/Microsoft.KeyVault/vaults/<key vault name>
+
+//Remember in most cases these ids can be retrieved directly from resource definitions like:
+
+resource "azurerm_resource_group" "rg_object" {
+  name = "rg-test"
+  location = "westeurope"
+}
+
+//Which gives us the rg_id as such:
+azurerm_resource_group.rg_object.id //Which can be used directly in the module resource call. OBS. all resources parsed as resource_ids MUST be deployed ahead of time of the module. See the examples for a detailed explanation.
+```
+
+### create_ statement, switches used to tell the module to create specific sub resources
+1. create_bastion = Creates a bastion host to be used by any VM on the same vnet
+2. create_nsg = Creates 1 nsg for the vm subnet
+3. create_public_ip = Creates a public ip for each vm specified
+4. create_diagnostic_settings = Creates a storage account to hold boot diagnostics information from all vms defined
+5. create_kv_for_vms = Creates a kv to be used to store all vm admin passwords as secrets
+6. create_kv_role_assignment = Creates RBAC role assignment for the principal in the current Azure context
+
+#### Example of create statements
+```hcl
+create_bastion = true //Not defining it means not deploying it
+create_nsg = true //Not defining it means not deploying it
+create_public_ip = true //Not defining it means not deploying it
+create_diagnostic_settings = true //Not defining it means not deploying it
+create_kv_for_vms = true //Not defining it means not deploying it
+create_kv_role_assignment = false //Not defining it means not deploying it, but it will stop terraform from being able to add the secrets to the kv
+```
+
+### mgmt parameters used to define the most backbone pieces of information for the module
+1. rg_name = Define a name for the resource group to be deployed
+2. location = Define the Azure location of which to deploy to
+3. env_name = Define an env to use as prefix on resources being deployed
+  - The module can track a multitude of env names as it uses complex regex expressions
+  - Also, using the env_name will effect the ip ranges, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Detailed Description</a> for more information
+4. script_name = *Warning* This parameter is experimental and currently not utilized for any purpose
+
+#### Example of values to use for mgmt parameters
+```hcl
+rg_name = "some-rg"
+location = "northeurope" Must be a valid Microsoft location, use the powershell module 'Get-AzVMSKu' With the switch '-ShowLocations' To see all valid regions
+env_name_1 = "p" = prod
+env_name_2 = "prod" = prod
+env_name_3 = "prd" = prod
+env_name_4 = "pd" = prod
+env_name_5 = "t" = test
+env_name_6 = "test" = test
+env_name_7 = "tst" = test
+
+//Many more names can be used for the environments, these are simply a slice of them
+```
+
+### object defined parameters
+1. 
+
 ## Return Values
 dasdsdasd
 
@@ -248,7 +318,15 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 
 10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
-## Examples simple
+## Examples
+This section is split into 2 different sub sections:
+
+- Simple examples = Meant to be useful for deployments using default values or for deploying vms where some or all dependencies are already deployed and is instead simply referenced using resource_ids. If in any doubt, please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section
+- Advanced examples = Meant to showcase different combination of resources to deploy with vms
+
+### Simple examples
+
+#### Deploy 1 Windows vm with bastion:
 
 ```hcl
 module "azure_vm_bundle" {
@@ -261,5 +339,6 @@ module "azure_vm_bundle" {
 }
 ```
 
-## Examples advanced
-This is the section for any advanced examples using the module
+### Advanced examples
+
+#### Deploy 2 windows vms, one needs a specific public ip config, + a few other features
