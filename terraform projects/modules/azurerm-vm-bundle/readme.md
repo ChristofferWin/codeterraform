@@ -79,18 +79,73 @@ The below list also contain resource types default value in case the user adds a
 Before using this module, make sure you have the following:
 
 - Active Azure Subscription
+  - Must either have RBAC roles:
+    - Contributor (Module wont be able to assign kv rbac role)
+    - Contributor + User Access Administrator
+    - Owner
 - Installed Terraform (download [here](https://www.terraform.io/downloads.html))
-- Azure CLI installed for authentication
+- Azure CLI installed for authentication (download [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli))
+- PowerShell Core installed for intergration with PS module (download [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3))
+  - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
+- Have local admin permissions on the machine executing
 
 ## Versions
-
 The table below outlines the compatibility of the module:
 
-| Terraform Version | Azure Provider Version | Module Version |
-| ------------------ | ---------------------- | -------------- |
-| 0.15 and above    | 2.0 and above          | 1.0            |
+Please take note of the 'Azure Provider Version' among the various providers utilized by the module. Keep in mind that there WILL be a required minimum version, and this requirement can vary with each module version.
 
-For the latest updates, check the [releases](https://github.com/your-username/azurerm-vm-bundle/releases) page.
+<b>Module version 1.0.0 requires the following provider versions:<b>
+
+| Provider name | Provider url | Minimum version |
+| ------------------ | ---------------------- | -------------- |
+| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a>  | 3.76.0            |
+| null | <a href="https://registry.terraform.io/providers/hashicorp/null/latest/docs">hashicorp/null</a> | 3.2.1 |
+| random | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/random</a> | 3.5.1 |
+local | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/local</a> | 2.4.0
+
+For the latest updates of the terraform module, check the [releases](https://github.com/your-username/azurerm-vm-bundle/releases) page.
+
+Make sure, if using a static version, that it follows above version table, otherwise the following error will occur:
+```hcl
+//Showcasing issue with using too old providers
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "3.64.0"
+    }
+  }
+}
+
+//run terraform init
+terraform init
+
+//Init results:
+
+│ Error: Failed to query available provider packages
+│
+│ Could not retrieve the list of available versions for provider hashicorp/azurerm: no available releases match the given constraints 3.64.0, >= 3.76.0
+```
+To solve it, simply remove the version parameter:
+```
+//Remove the version parameter entirely which causes terraform to use the latest version of azurerm
+terraform {
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+    }
+  }
+}
+
+terraform init
+
+//Init results:
+- Installed hashicorp/azurerm v3.81.0 (signed by HashiCorp)
+
+Terraform has been successfully initialized!
+```
+Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section for a better understanding of what the module can take as inputs
+
 
 ## Parameters
 If using VScode, make use of the extension for terraform from Hashicorp and thereby getting access to 'Intellisense'
