@@ -334,7 +334,7 @@ output "connect" {
   value = module.test3_vms.summary_object
 }
 */
-
+/*
 data "azurerm_client_config" "current" {}
 
 module "my_first_vm" {
@@ -387,4 +387,47 @@ subnet_objects = [
       add_vm_subnet_id = true
     }
   }
+}
+*/
+
+module "simple_vms" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+
+  rg_name = "simple-vms-rg"
+  create_public_ip = true
+  create_nsg = true //With publicIP true, nsg should also be created otherwise we cant connect via the public ip
+  create_diagnostic_settings = true //Will create us a storage account and link both vms to it
+
+  vm_windows_objects = [
+    {
+      name = "simple-win-vm"
+      os_name = "windows10"
+    }
+  ]
+
+  vm_linux_objects = [
+    {
+      name = "simple-linux-vm"
+      os_name = "centos"
+    }
+  ]
+}
+
+//Create a simple output to see our deployment results
+output "deployment_results" {
+  value = module.simple_vms.summary_object
+}
+
+module "existing_resources_vm" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+  rg_id = module.simple_vms.rg_object.id
+  vnet_resource_id = module.simple_vms.vnet_object["vm-vnet"].id
+  subnet_resource_id = values(module.simple_vms.subnet_object)[0].id
+
+  vm_windows_objects = [
+    {
+      name = "windows-vm01"
+      os_name = "windows11"
+    }
+  ]
 }
