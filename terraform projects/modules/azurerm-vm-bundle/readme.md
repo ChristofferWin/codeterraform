@@ -155,7 +155,6 @@ If you're using VSCode, leverage the Terraform extension from HashiCorp to benef
 
 The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Default Description</a>
 
-</br>
 
 ### resource_id (to avoid that the module must create the resoruce type)
 1. rg_id = resource id of a resource group to deploy resources to
