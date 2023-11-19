@@ -435,6 +435,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 1. [How to retrieve required information like os_name](#1-how-to-retrieve-required-information-like-os_name)
 2. [A few vms and bastion](#2-a-few-vms-and-bastion)
 3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
+4. [Use attributes like size_pattern and defining a custom os_disk configuration](#4-use-attributes-like-size_pattern-and-defining-a-custom-os_disk-configuration)
 
 
 ### (1) how to retrieve required information like 'os_name'
@@ -595,6 +596,45 @@ windows_objects" = [
 ```
 How it looks in Azure:
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/4th-vm-black.png" />
+
+### (4) Use attributes like 'size_pattern' and defining a custom 'os_disk' configuration 
+```hcl
+module "vm_specific_config" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+
+  rg_name = "vm-specific-config-rg"
+  
+  create_public_ip = true
+  create_nsg = true //With publicIP true, nsg should also be created otherwise we cant connect via the public ip
+  create_diagnostic_settings = true //Will create us a storage account and link both vms to it
+
+  vm_windows_objects = [
+    {
+      name = "simple-win-vm" //Required
+      os_name = "windows10" //Required
+      admin_username = "mycustomuser" //Optional
+      admin_password = "ShowCasedONLYFORDEMO!" //Optional
+      //See the parameters section or use Intellisense to see the rest of the possible attributes to set
+      
+      os_disk = {
+        name = "custom-os-disk" //Optional
+        disk_size_gb = 256 //Optional
+        caching = "ReadWrite" //Required
+        //See the parameters section or use Intellisense to see the rest of the possible attributes to set
+      }
+    },
+    {
+      name = "default-vm"
+      os_name = "windows11"
+      size_pattern = "DS4" //Module retrieves the closest vm sized matched
+      //See the parameters section or use Intellisense to see the rest of the possible attributes to set
+    }
+  ]
+}
+
+```
+How it looks in Azure:
+<a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/5th-vm-black.png"></a>
 
 ### Advanced examples - Seperated on topics
 1. [Define custom vnet, subnet and bastion](#1-define-custom-vnet-subnet-and-bastion)
