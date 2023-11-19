@@ -221,7 +221,88 @@ env_name_7 = "tst" = test
 ```
 
 ### object defined parameters
-1. 
+1. vm_windows_objects & vm_linux_objects = a list of objects defining:
+    - name
+    - admin_username
+    - admin_password
+    - size (vm)
+    - size_pattern (use a pattern to find a vm size, like e.g. 'A1')
+      - size will then be decided by the module using specific logic - See the advanced examples section for more information
+    - boot_diagnostics which is an object defining:
+      - storage_account, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'storage_account'
+    - os_disk which is an object defining:
+      - name
+      - disk_size_gb
+      - see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a> for all other attributes to set, search for variable 'os_disk'
+    - source_image_reference which is an object defining:
+      - offer
+      - publisher
+      - sku
+      - version
+      - *Warning* Only utilize this option when a custom SKU or version is necessary. To obtain this information, employ the PowerShell module 'Get-AzVmSku' with parameters '-Location <location> -OperatingSystem <os_name>' to retrieve all the necessary details.
+    - nic which is an object defining:
+      - name
+      - dns_servers
+      - enable_ip_forwarding
+      - ip_configuration, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a> for all other attributes to set, search for variable 'nic'
+    - public_ip which is an object defining:
+      - name
+      - allocation_method
+      - sku
+      - tags
+    - admin_ssh_key which is a list of objects defining (Only Linux vms):
+      - public_key
+      - username
+    - Many other attributes, they can all be found at <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>
+2. vnet_object = an object defining:
+    - name
+    - address_space
+    - tags
+2. subnet_objects = a list of objects defining:
+    - name
+    - address_prefixes (bastion must be at least /26)
+    - The structure must be created in a specific order, see the examples for an explanation
+3. bastion_object = an object defining:
+    - name
+    - copy_paste_enabled
+    - file_copy_enabled
+    - sku 
+    - scale_units
+    - tags
+    - *Warning* Its only recommended to use this parameter in case the number of 'scale_units' is to be customized  See the advanced examples for guidance
+4. nsg_objects = a list of objects defining:
+    - name
+    - subnet_id
+    - tags
+    - security_rule, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'nsg_objects'
+    - *Warning* Its only recommended to use this parameter in case the security rule is to be customized - See the advanced examples for guidance
+5. kv_object = an object defining:
+    - name (must be globally unique)
+    - For all other attributes, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'kv_object'
+    - *Warning* Its only recommended to use this parameter in case a network security rule is to be customized - See the advanced examples for guidance
+
+#### Example of defining custom sub resource objects
+```hcl
+//We will only define some simple object configurations here. For more information, see the advanced examples
+vnet_object = {
+  address_space = ["192.168.0.0/20"]
+  name = "custom-vnet"
+  tags = {
+    "environment" = "prod"
+  }
+}
+
+subnet_objects = [
+  {
+    name = "custom-vm-subnet"
+    address_prefixes = ["192.168.0.0/22"]
+  },
+  {
+    name = "AzureBastionSubnet"
+    address_prefixes = ["192.168.99.0/24"]
+  }
+]
+```
 
 ## Return Values
 dasdsdasd
@@ -244,7 +325,7 @@ az login //Web browser interactive prompt.
 4. Define the module definition
 ```hcl
 module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=0.9.0-beta" //Always use a specific version of the module
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
 
   rg_name = "vm-rg" //Creating a new rg
 
@@ -284,7 +365,7 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 7. To easily establish a connection, include the following code in your module.
 ```hcl
 module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=0.9.0-beta" //Always use a specific version of the module
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
 
   rg_name = "vm-rg" //Creating a new rg
 
