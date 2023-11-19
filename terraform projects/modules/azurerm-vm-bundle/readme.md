@@ -48,6 +48,11 @@ The below list also contain resource types default value in case the user adds a
     - vm subnet = /25 (123 host addresses)
     - bastion subnet = /26 (as per required by Azure)
 5. Bastion
+  - Configured to work for most use-cases
+    - copy_paste_enabled = true
+    - file_copy_enabled = true
+    - sku = Standard
+    - scale_units = 2
 6. Public ip(s)
   - Either one per vm or one for each specific vm(s)
     - sku_name = "standard"
@@ -97,7 +102,7 @@ Please take note of the 'Azure Provider Version' among the various providers uti
 
 | Provider name | Provider url | Minimum version |
 | ------------------ | ---------------------- | -------------- |
-| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a>  | 3.76.0            |
+| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a>  | 3.76.0 |
 | null | <a href="https://registry.terraform.io/providers/hashicorp/null/latest/docs">hashicorp/null</a> | 3.2.1 |
 | random | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/random</a> | 3.5.1 |
 local | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/local</a> | 2.4.0
@@ -195,7 +200,7 @@ create_nsg = true //Not defining it means not deploying it
 create_public_ip = true //Not defining it means not deploying it
 create_diagnostic_settings = true //Not defining it means not deploying it
 create_kv_for_vms = true //Not defining it means not deploying it
-create_kv_role_assignment = false //Not defining it means not deploying it, but it will stop terraform from being able to add the secrets to the kv
+create_kv_role_assignment = false //If create_kv_for_vms is set to true, this will automatically be true. The parameter can be used to overwrite the module and not allowing it to create the role assignment "Key Vault Administrator" On the kv. 
 ```
 
 ### mgmt parameters used to define the most backbone pieces of information for the module
