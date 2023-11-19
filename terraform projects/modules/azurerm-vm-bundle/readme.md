@@ -22,7 +22,7 @@ Furthermore, the module is more than capable of deploying various subtypes that 
 <b>Example deployment of 2 Linux machines with public ips, NSG and ssh setup:</b>
 </br>
 </br>
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
 
 
 ## Detailed Description
@@ -156,7 +156,7 @@ If you're using VSCode, leverage the Terraform extension from HashiCorp to benef
 
 (Intellisense might need a local copy of the repository, clone <a href="https://github.com/ChristofferWin/codeterraform.git">codeterraform</a>)
 
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
 
 The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Detailed Description</a>
 
@@ -386,7 +386,7 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 ```
 
 6. How it looks in Azure
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/first-vm-black.png"/>
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/first-vm-black.png"/>
 
 7. To easily establish a connection, include the following code in your module.
 ```hcl
@@ -421,7 +421,7 @@ terraform apply --auto-approve=true
 Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ```
 9. What has been added to Azure
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/second-vm-black.png" />
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
 
 10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
@@ -548,10 +548,33 @@ output "deployment_results" {
   ]
 ```
 How it looks in Azure:
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/development/azurerm-vm-bundle/pictures/3rd-vm-black.png" />
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/3rd-vm-black.png" />
 
 ### (3) Using existing virtual vnet and subnet
 ```hcl
+//The resource group, virtual network & subnet must be created in advance
+//Using reference from example 2, adding 1 new windows vm to the environment and a public ip for it
+module "existing_resources_vm" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+  rg_id = module.simple_vms.rg_object.id
+  vnet_resource_id = module.simple_vms.vnet_object["vm-vnet"].id
+  subnet_resource_id = module.simple_vms.subnet_object["vm-subnet"].id
+  create_public_ip = true //So we can connect to it
+
+  vm_windows_objects = [
+    {
+      name = "windows-vm01"
+      os_name = "windows11"
+    }
+  ]
+}
+
+//Create a simple output to see our deployment results
+output "existing_resources_vm_result" {
+  value = module.existing_resources_vm.summary_object
+}
+
+//Sample output
 
 ```
 
