@@ -424,7 +424,11 @@ resource "azurerm_bastion_host" "bastion_object" {
     public_ip_address_id = [for each in local.pip_resource_id : each if length(regexall("bastion", lower(each))) > 0][0]
   }
 
-  depends_on = [ azurerm_public_ip.pip_object ]
+  lifecycle {
+    ignore_changes = [ ip_configuration ]
+  }
+
+  depends_on = [ azurerm_public_ip.pip_object]
 }
 
 resource "azurerm_network_interface" "nic_object" {
