@@ -782,8 +782,7 @@ How it looks in Azure:
 [Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
 1. [Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object](#1-define-custom-vnet-subnet-bastion-and-both-nic-and-public-ip-directly-on-a-windows-vm-object)
-2. [A few vms and bastion](#2-a-few-vms-and-bastion)
-3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
+2. [Use of default settings combined with specialized vm configurations on multiple vms](#2-use-of-default-settings-combined-with-specialized-vm-configurations-on-multiple-vms)
 
 ### (1) Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object
 ```hcl
