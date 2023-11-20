@@ -78,6 +78,16 @@ provider "azurerm" {
 ##  =||= (3): Extensive tests has been done with many different scenarios...                ##
 ##  Future improvements: Clean up the locals block & add comment sections in code...        ##
 ##  Comments: Module is pretty far at this stage, around 92% done...                        ##
+##------------------------------------------------------------------------------------------##                                                                                        
+##                                                                                          ##
+##  Date: 20-11-2023                                                                        ## 
+##  State: Ready for production, version 1.0                                                ##
+##  Missing: Being able to parse a kv_resource_id, to use existing key vault for vm secrets ##
+##  Improvements (1): Many small bugs has been fixed during final testing...                ##                                                                     
+##  =||= (2): Multiple different "nice-to-have" features added via object parameters...     ## 
+##  =||= (3): N/A                                                                           ##
+##  Future improvements: Still missing comments...                                          ##
+##  Comments: Module is pretty far at this stage, around 99% done...                        ##
 ##                                                                                          ##
 ##############################################################################################
 ##############################################################################################
@@ -420,8 +430,8 @@ resource "azurerm_bastion_host" "bastion_object" {
 
   ip_configuration {
     name = "ip-config"
-    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("bastion", lower(each))) > 0][0]
-    public_ip_address_id = [for each in local.pip_resource_id : each if length(regexall("bastion", lower(each))) > 0][0]
+    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("^bastion$", lower(each))) > 0][0]
+    public_ip_address_id = [for each in local.pip_resource_id : each if length(regexall("^bastion$", lower(each))) > 0][0]
   }
 
   lifecycle {
@@ -443,7 +453,7 @@ resource "azurerm_network_interface" "nic_object" {
   
   ip_configuration {
     name = each.value.ip_configuration_name
-    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][0]
+    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("^vm$", lower(each))) > 0][0]
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address = each.value.private_ip_address
     public_ip_address_id = each.value.pip_resource_id
@@ -550,7 +560,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   dynamic "boot_diagnostics" {
     for_each = can(length(local.storage_return_object)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.id)) > 0][0] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("^vmstorage$", a.id)) > 0][0] : null
     }
   }
 
@@ -703,7 +713,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
  dynamic "boot_diagnostics" {
     for_each = can(length(local.storage_return_object)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.id)) > 0][0] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("^vmstorage$", a.id)) > 0][0] : null
     }
   }
 
