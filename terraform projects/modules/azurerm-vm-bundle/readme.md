@@ -478,7 +478,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 ## Examples
 <b>This section is split into 2 different sub sections:</b>
 
-- <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase the easiest ways to deploy vms with its dependencies
+- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase the easiest ways to deploy vms with its dependencies
 - <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase different combinations of resources to deploy with vms
 
 [Back to the top](#table-of-contents)
