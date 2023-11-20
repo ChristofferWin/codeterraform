@@ -34,12 +34,12 @@ Before using this module, make sure you have the following:
     - Contributor (Module wont be able to assign kv rbac role)
     - Contributor + User Access Administrator
     - Owner
-- Installed Terraform (download [here](https://www.terraform.io/downloads.html))
+- Installed terraform (download [here](https://www.terraform.io/downloads.html))
 - Azure CLI installed for authentication (download [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli))
 - PowerShell Core installed for intergration with PS module (download [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3))
   - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#5-avoid-using-powershell-7-entirely-when-deploying-with-the-module">Examples</a> for details
 - Have local admin permissions on the machine executing
-  - PowerShell will need to install the Get-AzVNSku module from PSGallery
+  - PowerShell will need to install the 'Get-AzVMSku' module from PSGallery
 
 [Back to the top](#table-of-contents)
 ## Getting Started
