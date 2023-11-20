@@ -43,7 +43,7 @@ Before using this module, make sure you have the following:
 
 [Back to the top](#table-of-contents)
 ## Getting Started
-Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
+Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#prerequisites">Prerequisites</a> before getting started.
 
 1. Create a new terraform script file in any folder
 2. Define terraform boilerplate code
@@ -132,7 +132,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 9. What has been added to Azure
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
 
-10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
+10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#examples">Examples</a> for details
 
 [Back to the top](#table-of-contents)
 ## Versions
