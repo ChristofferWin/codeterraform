@@ -8,8 +8,7 @@
 4. [Versions](#versions)
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
-7. [Examples simple](#examples-simple)
-8. [Examples advanced](#examples-advanced)
+7. [Examples](#examples)
 
 ## Description
 
@@ -971,3 +970,5 @@ Sample output:
 ```
 How it looks in Azure:
 <img src="" />
+
+[Back to the top](#table-of-contents)
