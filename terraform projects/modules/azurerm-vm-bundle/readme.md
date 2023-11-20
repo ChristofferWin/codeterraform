@@ -76,6 +76,7 @@ The below list also contain resource types default value in case the user adds a
     - purge_protection_enabled = true
     - public_network_access_enabled = true
     - soft_delete_retention_days = 7
+
 [Back to the top](#table-of-contents)
 ## Prerequisites
 
@@ -91,6 +92,7 @@ Before using this module, make sure you have the following:
 - PowerShell Core installed for intergration with PS module (download [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3))
   - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 - Have local admin permissions on the machine executing
+
 [Back to the top](#table-of-contents)
 ## Versions
 The table below outlines the compatibility of the module:
@@ -378,6 +380,7 @@ See below list of possible return values:
     - id
     - name
     - See storage <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account#attributes-reference">Hashicorp docs / attribute references</a>
+
 [Back to the top](#table-of-contents)
 ## Getting Started
 Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
@@ -470,6 +473,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
 
 10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
+
 [Back to the top](#table-of-contents)
 ## Examples
 <b>This section is split into 2 different sub sections:</b>
