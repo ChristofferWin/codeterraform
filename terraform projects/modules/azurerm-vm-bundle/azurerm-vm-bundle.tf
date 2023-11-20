@@ -430,8 +430,8 @@ resource "azurerm_bastion_host" "bastion_object" {
 
   ip_configuration {
     name = "ip-config"
-    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("^bastion$", lower(each))) > 0][0]
-    public_ip_address_id = [for each in local.pip_resource_id : each if length(regexall("^bastion$", lower(each))) > 0][0]
+    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("bastion", lower(each))) > 0][0]
+    public_ip_address_id = [for each in local.pip_resource_id : each if length(regexall("bastion", lower(each))) > 0][0]
   }
 
   lifecycle {
@@ -453,7 +453,7 @@ resource "azurerm_network_interface" "nic_object" {
   
   ip_configuration {
     name = each.value.ip_configuration_name
-    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("^vm$", lower(each))) > 0][0]
+    subnet_id = [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][0]
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address = each.value.private_ip_address
     public_ip_address_id = each.value.pip_resource_id
@@ -560,7 +560,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   dynamic "boot_diagnostics" {
     for_each = can(length(local.storage_return_object)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("^vmstorage$", a.id)) > 0][0] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.id)) > 0][0] : null
     }
   }
 
@@ -713,7 +713,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
  dynamic "boot_diagnostics" {
     for_each = can(length(local.storage_return_object)) ? {for a in [range(1)] : uuid() => a} : {}
     content {
-      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("^vmstorage$", a.id)) > 0][0] : null
+      storage_account_uri = can(length(each.value.boot_diagnostics)) ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall(each.value.boot_diagnostics.storage_account.name, a.id)) > 0][0] : var.create_diagnostic_settings ? [for a in local.storage_return_object : a.primary_blob_endpoint if length(regexall("vmstorage", a.id)) > 0][0] : null
     }
   }
 
