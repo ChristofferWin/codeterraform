@@ -875,7 +875,7 @@ output "custom_advanced_settings" {
 How it looks in Azure:
 <img src="" />
 
-[Back to the Examples](#examples)
+[Back to the Examples](#advanced-examples---seperated-on-topics)
 ### (2) Use of default settings combined with specialized vm configurations on multiple vms
 ```hcl
 module "custom_combined_with_default" {
@@ -982,4 +982,4 @@ Sample output:
 How it looks in Azure:
 <img src="" />
 
-[Back to the Examples](#examples)
+[Back to the Examples](#advanced-examples---seperated-on-topics)
