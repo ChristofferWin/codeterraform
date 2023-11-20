@@ -23,7 +23,7 @@ Furthermore, the module is more than capable of deploying various subtypes that 
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
 
-
+[Back to the top](#table-of-contents)
 ## Detailed Description
 First off, these are all potential subtypes of resources available for deployment, with the option to deploy any number of virtual machines:
 
@@ -76,7 +76,7 @@ The below list also contain resource types default value in case the user adds a
     - purge_protection_enabled = true
     - public_network_access_enabled = true
     - soft_delete_retention_days = 7
-
+[Back to the top](#table-of-contents)
 ## Prerequisites
 
 Before using this module, make sure you have the following:
@@ -91,7 +91,7 @@ Before using this module, make sure you have the following:
 - PowerShell Core installed for intergration with PS module (download [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3))
   - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 - Have local admin permissions on the machine executing
-
+[Back to the top](#table-of-contents)
 ## Versions
 The table below outlines the compatibility of the module:
 
@@ -149,7 +149,7 @@ Terraform has been successfully initialized!
 ```
 Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section for a better understanding of what the module can take as inputs
 
-
+[Back to the top](#table-of-contents)
 ## Parameters
 If you're using VSCode, leverage the Terraform extension from HashiCorp to benefit from 'Intellisense.' Note that, in some cases, you may need to clone the repository as the HashiCorp Terraform extension might encounter difficulties resolving parameters through a remote module.
 
@@ -327,7 +327,7 @@ bastion_object = {
 
 //With no other configuration than the required, a custom bastion will be created with default vnet and default subnets
 ```
-
+[Back to the top](#table-of-contents)
 ## Return Values
 Its important to state that almost all values returned from the module is of type map. This can either be used to our advantage by making our variable references more type-safe
 or we can simply use a function like 'values' to make the return value a list of object instead, where we can then simply use int index-based references like [0]
@@ -378,7 +378,7 @@ See below list of possible return values:
     - id
     - name
     - See storage <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account#attributes-reference">Hashicorp docs / attribute references</a>
-
+[Back to the top](#table-of-contents)
 ## Getting Started
 Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
 
@@ -470,12 +470,14 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
 
 10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
-
+[Back to the top](#table-of-contents)
 ## Examples
 <b>This section is split into 2 different sub sections:</b>
 
 - <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase the easiest ways to deploy vms with its dependencies
 - <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase different combinations of resources to deploy with vms
+
+[Back to the top](#table-of-contents)
 
 ### Simple examples - Separated on topics
 1. [How to retrieve required information like os_name](#1-how-to-retrieve-required-information-like-os_name)
@@ -769,6 +771,7 @@ How it looks in Azure:
 
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/6th-vm-black.png" />
 
+[Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
 1. [Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object](#1-define-custom-vnet-subnet-bastion-and-both-nic-and-public-ip-directly-on-a-windows-vm-object)
 2. [A few vms and bastion](#2-a-few-vms-and-bastion)
@@ -971,4 +974,4 @@ Sample output:
 How it looks in Azure:
 <img src="" />
 
-[Back to the top](#table-of-contents)
+[Back to the Examples](#examples)
