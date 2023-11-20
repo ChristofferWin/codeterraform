@@ -879,7 +879,7 @@ resource "azurerm_key_vault" "vm_kv_object" {
 resource "azurerm_role_assignment" "kv_role_assignment_object" {
   for_each = var.create_kv_role_assignment && local.kv_object != null ? {for each in local.kv_object : "role_assignment_kv" => each} : {}
   principal_id = data.azurerm_client_config.current.object_id
-  scope = azurerm_key_vault.vm_kv_object.kv_object.id
+  scope = azurerm_key_vault.vm_kv_object["kv_object"].id
   role_definition_name = "Key Vault Administrator"
 
   depends_on = [ azurerm_windows_virtual_machine.vm_windows_object, azurerm_linux_virtual_machine.vm_linux_object, azurerm_key_vault.vm_kv_object ]
