@@ -3,12 +3,12 @@
 ## Table of Contents
 
 1. [Description](#description)
-2. [Detailed Description](#detailed-description)
-3. [Prerequisites](#prerequisites)
-4. [Versions](#versions)
-5. [Parameters](#parameters)
-6. [Return Values](#return-values)
-7. [Getting Started](#getting-started)
+2. [Prerequisites](#prerequisites)
+3. [Getting Started](#getting-started)
+4. [Detailed Description](#detailed-description)
+5. [Versions](#versions)
+6. [Parameters](#parameters)
+7. [Return Values](#return-values)
 8. [Examples](#examples)
 
 ## Description
@@ -23,60 +23,6 @@ Furthermore, the module is more than capable of deploying various subtypes that 
 </br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
-
-[Back to the top](#table-of-contents)
-## Detailed Description
-First off, these are all potential subtypes of resources available for deployment, with the option to deploy any number of virtual machines:
-
-The below list also contain resource types default value in case the user adds any of the 'create' <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">parameters</a>
-
-1. VM(s), both Windows & Linux
-  - Any amount can be created, this is only limitted by the subscriptions internal quota for CPU cores. The module can return this information, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#return-values">outputs</a>
-    - admin_username = localadmin
-    - admin_password = <random 16 length password with special chars>
-    - os_disk_caching = Read/Write
-    - os_disk_size = 128 GB
-    - size = Standard_B2ms
-2. Resource group
-3. Virtual network
-  - The address space depends on the environment, with the first space designated for VM subnets and the second reserved for bastion and other management resources.:
-    - prod = ["10.0.0.0/16", "10.99.0.0/24"]
-    - test = ["172.16.0.0/20", "172.16.99.0/24]
-    - any other environment name = ["192.168.0.0/24", "192.168.99.0/24"] (can be used for environments like dev)
-4. Subnet(s)
-  - The address prefixes of each subnet, bastion subnet wont be created unless the resource is to be deployed
-    - vm subnet = /25 (123 host addresses)
-    - bastion subnet = /26 (as per required by Azure)
-5. Bastion
-  - Configured to work for most use-cases
-    - copy_paste_enabled = true
-    - file_copy_enabled = true
-    - sku = Standard
-    - scale_units = 2
-6. Public ip(s)
-  - Either one per vm or one for each specific vm(s)
-    - sku_name = "standard"
-    - allocation_method = "Static"
-7. Network Security group
- - Add rules to vm subnet
-    - ALLOW ports 22/3389 from ANY to VM SUBNET (ssh & rdp)
-8. Storage Account
- - Either one per vm or one total for all vms. Used for boot-diagnostic settings
-    - access_tier = "Cool"
-    - public_network_access_enabled = true
-    - account_tier = "Standard"
-    - account_kind = "StorageV2"
-    - account_replication_type = "LRS"
-9. Key Vault & secrets
-  - One total to store all vm password secrets in
-    - sku_name = "standard"
-    - enabled_for_deployment = true
-    - enabled_for_disk_encryption = false
-    - enabled_for_template_deployment = false
-    - enable_rbac_authorization = true
-    - purge_protection_enabled = true
-    - public_network_access_enabled = true
-    - soft_delete_retention_days = 7
 
 [Back to the top](#table-of-contents)
 ## Prerequisites
@@ -94,6 +40,99 @@ Before using this module, make sure you have the following:
   - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#examples">Examples</a> for details
 - Have local admin permissions on the machine executing
   - PowerShell will need to install the Get-AzVNSku module from PSGallery
+
+[Back to the top](#table-of-contents)
+## Getting Started
+Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
+
+1. Create a new terraform script file in any folder
+2. Define terraform boilerplate code
+```hcl
+provider "azurerm" {
+  features{}
+  //Can define a specific context, but we will use an interrogated one.
+}
+```
+3. Login to Azure with an active subscription using az cli
+```powershell
+az login //Web browser interactive prompt.
+```
+4. Define the module definition
+```hcl
+module "my_first_vm" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
+
+  rg_name = "vm-rg" //Creating a new rg
+
+  vm_linux_objects = [
+    {
+      name = "ubuntu-vm"
+      os_name = "ubuntu"
+    }
+  ]
+
+  // VNet and VM subnet will also be created.
+  // Required dependencies for the vm will also be created.
+  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
+  // Refer to the examples section for many more combinations of configurations.
+}
+```
+5. Run terraform init & terraform apply
+```hcl
+terraform init
+terraform apply
+
+//Plan output
+Plan: 8 to add, 0 to change, 0 to destroy.
+
+────────────────────────────────────────────────────────────────────────────────── 
+
+//press yes
+yes
+
+//apply output
+Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
+```
+
+6. How it looks in Azure
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/first-vm-black.png"/>
+
+7. To easily establish a connection, include the following code in your module.
+```hcl
+module "my_first_vm" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
+
+  rg_name = "vm-rg" //Creating a new rg
+
+  vm_linux_objects = [
+    {
+      name = "ubuntu-vm"
+      os_name = "ubuntu"
+    }
+  ]
+
+  create_public_ip = true
+  create_nsg = true
+
+  // VNet and VM subnet will also be created.
+  // Required dependencies for the vm will also be created.
+  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
+  // Refer to the examples section for many more combinations of configurations.
+}
+```
+8. Run terraform apply again
+```hcl
+//Skipping confirm
+terraform apply --auto-approve=true
+
+//apply output
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+```
+9. What has been added to Azure
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
+
+10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
 [Back to the top](#table-of-contents)
 ## Versions
@@ -332,6 +371,60 @@ bastion_object = {
 //With no other configuration than the required, a custom bastion will be created with default vnet and default subnets
 ```
 [Back to the top](#table-of-contents)
+## Detailed Description
+First off, these are all potential subtypes of resources available for deployment, with the option to deploy any number of virtual machines:
+
+The below list also contain resource types default value in case the user adds any of the 'create' <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">parameters</a>
+
+1. VM(s), both Windows & Linux
+  - Any amount can be created, this is only limitted by the subscriptions internal quota for CPU cores. The module can return this information, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#return-values">outputs</a>
+    - admin_username = localadmin
+    - admin_password = <random 16 length password with special chars>
+    - os_disk_caching = Read/Write
+    - os_disk_size = 128 GB
+    - size = Standard_B2ms
+2. Resource group
+3. Virtual network
+  - The address space depends on the environment, with the first space designated for VM subnets and the second reserved for bastion and other management resources.:
+    - prod = ["10.0.0.0/16", "10.99.0.0/24"]
+    - test = ["172.16.0.0/20", "172.16.99.0/24]
+    - any other environment name = ["192.168.0.0/24", "192.168.99.0/24"] (can be used for environments like dev)
+4. Subnet(s)
+  - The address prefixes of each subnet, bastion subnet wont be created unless the resource is to be deployed
+    - vm subnet = /25 (123 host addresses)
+    - bastion subnet = /26 (as per required by Azure)
+5. Bastion
+  - Configured to work for most use-cases
+    - copy_paste_enabled = true
+    - file_copy_enabled = true
+    - sku = Standard
+    - scale_units = 2
+6. Public ip(s)
+  - Either one per vm or one for each specific vm(s)
+    - sku_name = "standard"
+    - allocation_method = "Static"
+7. Network Security group
+ - Add rules to vm subnet
+    - ALLOW ports 22/3389 from ANY to VM SUBNET (ssh & rdp)
+8. Storage Account
+ - Either one per vm or one total for all vms. Used for boot-diagnostic settings
+    - access_tier = "Cool"
+    - public_network_access_enabled = true
+    - account_tier = "Standard"
+    - account_kind = "StorageV2"
+    - account_replication_type = "LRS"
+9. Key Vault & secrets
+  - One total to store all vm password secrets in
+    - sku_name = "standard"
+    - enabled_for_deployment = true
+    - enabled_for_disk_encryption = false
+    - enabled_for_template_deployment = false
+    - enable_rbac_authorization = true
+    - purge_protection_enabled = true
+    - public_network_access_enabled = true
+    - soft_delete_retention_days = 7
+
+[Back to the top](#table-of-contents)
 ## Return Values
 Its important to state that almost all values returned from the module is of type map. This can either be used to our advantage by making our variable references more type-safe
 or we can simply use a function like 'values' to make the return value a list of object instead, where we can then simply use int index-based references like [0]
@@ -382,99 +475,6 @@ See below list of possible return values:
     - id
     - name
     - See storage <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account#attributes-reference">Hashicorp docs / attribute references</a>
-
-[Back to the top](#table-of-contents)
-## Getting Started
-Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#prerequisites">Prerequisites</a> before getting started.
-
-1. Create a new terraform script file in any folder
-2. Define terraform boilerplate code
-```hcl
-provider "azurerm" {
-  features{}
-  //Can define a specific context, but we will use an interrogated one.
-}
-```
-3. Login to Azure with an active subscription using az cli
-```powershell
-az login //Web browser interactive prompt.
-```
-4. Define the module definition
-```hcl
-module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
-
-  rg_name = "vm-rg" //Creating a new rg
-
-  vm_linux_objects = [
-    {
-      name = "ubuntu-vm"
-      os_name = "ubuntu"
-    }
-  ]
-
-  // VNet and VM subnet will also be created.
-  // Required dependencies for the vm will also be created.
-  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
-  // Refer to the examples section for many more combinations of configurations.
-}
-```
-5. Run terraform init & terraform apply
-```hcl
-terraform init
-terraform apply
-
-//Plan output
-Plan: 8 to add, 0 to change, 0 to destroy.
-
-────────────────────────────────────────────────────────────────────────────────── 
-
-//press yes
-yes
-
-//apply output
-Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
-```
-
-6. How it looks in Azure
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/first-vm-black.png"/>
-
-7. To easily establish a connection, include the following code in your module.
-```hcl
-module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
-
-  rg_name = "vm-rg" //Creating a new rg
-
-  vm_linux_objects = [
-    {
-      name = "ubuntu-vm"
-      os_name = "ubuntu"
-    }
-  ]
-
-  create_public_ip = true
-  create_nsg = true
-
-  // VNet and VM subnet will also be created.
-  // Required dependencies for the vm will also be created.
-  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
-  // Refer to the examples section for many more combinations of configurations.
-}
-```
-8. Run terraform apply again
-```hcl
-//Skipping confirm
-terraform apply --auto-approve=true
-
-//apply output
-
-Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
-```
-9. What has been added to Azure
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
-
-10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
 
 [Back to the top](#table-of-contents)
 ## Examples
