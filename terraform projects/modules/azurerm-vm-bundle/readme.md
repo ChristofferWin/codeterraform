@@ -479,7 +479,7 @@ Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
 <b>This section is split into 2 different sub sections:</b>
 
 - <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase the easiest ways to deploy vms with its dependencies
-- <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase different combinations of resources to deploy with vms
+- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase different combinations of resources to deploy with vms
 
 [Back to the top](#table-of-contents)
 
@@ -546,6 +546,7 @@ win11-21h2-pro
 ```
 For more information about how to use the PowerShell module, please visit the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/powershell%20projects/modules/Get-AzVMSku/Examples.md">readme</a> where a lot of examples are shown
 
+[Back to the Examples](#examples)
 ### (2) A few vms and bastion
 ```hcl
 //Boilerplate
@@ -606,6 +607,7 @@ output "deployment_results" {
 How it looks in Azure:
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/3rd-vm-black.png" />
 
+[Back to the Examples](#examples)
 ### (3) Using existing virtual vnet and subnet
 ```hcl
 //The resource group, virtual network & subnet must be created in advance
@@ -654,6 +656,7 @@ windows_objects" = [
 How it looks in Azure:
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/4th-vm-black.png" />
 
+[Back to the Examples](#examples)
 ### (4) Use attributes like 'size_pattern' and defining a custom 'os_disk' configuration 
 ```hcl
 module "vm_specific_config" {
@@ -719,6 +722,7 @@ How it looks in Azure:
 
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/5th-vm-black.png" />
 
+[Back to the Examples](#examples)
 ### (5) Avoid using PowerShell 7 entirely when deploying with the module
 ```hcl
 module "avoid_using_powershell" {
@@ -872,6 +876,7 @@ output "custom_advanced_settings" {
 How it looks in Azure:
 <img src="" />
 
+[Back to the Examples](#examples)
 ### (2) Use of default settings combined with specialized vm configurations on multiple vms
 ```hcl
 module "custom_combined_with_default" {
