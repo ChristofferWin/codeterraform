@@ -8,7 +8,8 @@
 4. [Versions](#versions)
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
-7. [Examples](#examples)
+7. [Getting Started](#getting-started)
+8. [Examples](#examples)
 
 ## Description
 
@@ -90,8 +91,9 @@ Before using this module, make sure you have the following:
 - Installed Terraform (download [here](https://www.terraform.io/downloads.html))
 - Azure CLI installed for authentication (download [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli))
 - PowerShell Core installed for intergration with PS module (download [here](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows?view=powershell-7.3))
-  - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#examples">Examples</a> for details
+  - Its possible to run module without it, see <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#examples">Examples</a> for details
 - Have local admin permissions on the machine executing
+  - PowerShell will need to install the Get-AzVNSku module from PSGallery
 
 [Back to the top](#table-of-contents)
 ## Versions
