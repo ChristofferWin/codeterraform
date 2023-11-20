@@ -149,7 +149,7 @@ Please take note of the 'Azure Provider Version' among the various providers uti
 | random | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/random</a> | 3.5.1 |
 local | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/local</a> | 2.4.0
 
-For the latest updates of the terraform module, check the [releases](https://github.com/your-username/azurerm-vm-bundle/releases) page.
+For the latest updates of the terraform module, check the <a href="https://github.com/ChristofferWin/codeterraform/releases">release page</a>
 
 Make sure, if using a static version, that it follows above version table, otherwise the following error will occur:
 ```hcl
