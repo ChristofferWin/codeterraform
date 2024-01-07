@@ -126,7 +126,7 @@ locals {
       destination_port_range = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
       destination_port_ranges = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
       source_address_prefix = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
-      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : [for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("vm", each.name)) > 0][0]
+      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : [for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("^vm$", each.name)) > 0][0]
     }] : uuid() => d} 
   }] : a.name => a} : {}
   
