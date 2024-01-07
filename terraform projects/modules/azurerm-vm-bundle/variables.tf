@@ -62,7 +62,7 @@ variable "vnet_object" {
   description = "an object defining the vnet address spaces in format [x.x.x.x/x] and its name. must be at least /24 in case bastion or vpn is also enabled"
   type = object({
     name = string
-    address_space = optional(list(string))
+    address_space = list(string)
     tags = optional(map(string))
   })
   default = null
@@ -78,7 +78,7 @@ variable "subnet_objects" {
   description = "define up to 2 subnets. 1 for the vm(s), another for bastion. index 0 will always be the vm subnet. name is not required and will be 'vm-subnet' by default. note, the bastion subnet name cannot be changed"
   type = list(object({
     name = optional(string)
-    address_prefixes = optional(list(string))
+    address_prefixes = list(string)
   }))
   default = null
 }
