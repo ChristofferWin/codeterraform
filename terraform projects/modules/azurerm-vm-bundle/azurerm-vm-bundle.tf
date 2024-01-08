@@ -114,7 +114,7 @@ locals {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
     tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
 
-    security_rules = length(var.nsg_objects[b].no_rules) > 0 ? null : {for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
+    security_rules = length(var.nsg_objects[0].no_rules) > 0 ? null : {for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
       name = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
       priority = can(var.nsg_objects[b].security_rules[e].priority) ? var.nsg_objects[b].security_rules[e].priority : 100
       direction = can(var.nsg_objects[b].security_rules[e].direction) ? var.nsg_objects[b].security_rules[e].direction : "Inbound"
