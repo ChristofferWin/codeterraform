@@ -112,7 +112,6 @@ locals {
   
   nsg_objects = local.nsg_objects_pre > 0 ? {for a in [for b, c in range(local.nsg_objects_pre) : {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
-    subnet_id = can(var.nsg_objects[b].subnet_id) ? var.nsg_objects[b].subnet_id : var.subnet_resource_id != null ? var.subnet_resource_id : var.subnet_objects != null ? [for a in local.subnet_resource_id : a if length(regexall("Bastion", a)) == 0][0] : [for each in local.subnet_resource_id : each if length(regexall("vm", each)[0]) > 0][0]
     tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
     no_rules = can(var.nsg_objects[b].no_rules) ? var.nsg_objects[b].no_rules : false
 
@@ -490,8 +489,8 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
 
 resource "azurerm_subnet_network_security_group_association" "vm_nsg_link_object" {
   for_each = local.nsg_objects
-  subnet_id = each.value.subnet_id
-  network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall("vm", a)) > 0][0]
+  subnet_id = [for a in local.subnet_resource_id : a if length(regexall("vm", a)) > 0][0]
+  network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall(each.key, a)) > 0][0]
 
   lifecycle {
     ignore_changes = [ network_security_group_id, subnet_id ]
