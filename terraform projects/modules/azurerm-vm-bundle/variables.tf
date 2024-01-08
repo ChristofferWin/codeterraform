@@ -89,7 +89,6 @@ variable "subnet_resource_id" {
   default = null
 }
 
-
 variable "bastion_object" {
   description = "define a custom bastion configuration"
   type = object({
@@ -109,6 +108,7 @@ variable "nsg_objects" {
     name = string
     subnet_id = optional(string)
     tags = optional(map(string))
+    no_rules = optional(bool)
 
     security_rules = optional(list(object({
       name = string
