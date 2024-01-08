@@ -484,6 +484,8 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
   lifecycle {
     ignore_changes = [security_rule]
   }
+
+  depends_on = [ azurerm_resource_group.rg_object ]
 }
 
 resource "azurerm_subnet_network_security_group_association" "vm_nsg_link_object" {
