@@ -467,7 +467,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
   tags = each.value.tags
 
   dynamic "security_rule" {
-    for_each = each.value.security_rules
+    for_each = can(length(each.value.security_rules)) ? each.value.security_rules : {}
     content {
       name = security_rule.value.name
       priority = security_rule.value.priority
@@ -491,7 +491,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
 resource "azurerm_subnet_network_security_group_association" "vm_nsg_link_object" {
   for_each = local.nsg_objects
   subnet_id = each.value.subnet_id
-  network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall(each.key, a)) > 0][0]
+  network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall("vm", a)) > 0][0]
 
   lifecycle {
     ignore_changes = [ network_security_group_id, subnet_id ]
