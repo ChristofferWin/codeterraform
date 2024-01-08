@@ -114,7 +114,7 @@ locals {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
     tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
 
-    security_rules = can(var.nsg_objects[b].no_rules) ? {for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
+    security_rules = can(var.nsg_objects[b].no_rules) ? null : {for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
       name = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
       priority = can(var.nsg_objects[b].security_rules[e].priority) ? var.nsg_objects[b].security_rules[e].priority : 100
       direction = can(var.nsg_objects[b].security_rules[e].direction) ? var.nsg_objects[b].security_rules[e].direction : "Inbound"
@@ -126,7 +126,7 @@ locals {
       destination_port_ranges = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
       source_address_prefix = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : [for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("vm", each.name)) > 0][0]
-    }] : uuid() => d} : null
+    }] : uuid() => d}
   }] : a.name => a} : {}
   
    pip_objects = can(length(local.merge_objects_pip)) ? {for each in [for each in local.merge_objects_pip : {
