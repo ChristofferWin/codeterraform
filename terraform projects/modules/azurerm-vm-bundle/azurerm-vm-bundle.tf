@@ -99,7 +99,7 @@ locals {
   vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
   subnet_objects_pre = var.subnet_objects != null ? {for each in ([for x, y in range(length(var.subnet_objects)) : {
-      name = x == 1 ? "AzureBastionSubnet" : "hello world ${x}"
+      name = x == 1 ? "AzureBastionSubnet" : var.subnet_objects[0].name
       address_prefixes = x == 1 && !can(cidrsubnet(var.subnet_objects[x].address_prefixes[0], 6, 0)) && can(var.subnet_objects[x].address_prefixes) ? ["${split("/", var.subnet_objects[x].address_prefixes[0])[0]}/${split("/", var.subnet_objects[x].address_prefixes[0])[1] - (6 - (32 - split("/", var.subnet_objects[x].address_prefixes[0])[1]))}"] : [var.subnet_objects[x].address_prefixes][0]
       service_endpoints = x != 1 ? ["Microsoft.KeyVault"] : null
     }
