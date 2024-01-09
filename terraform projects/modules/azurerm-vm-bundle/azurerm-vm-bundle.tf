@@ -253,7 +253,7 @@ locals {
   nic_resource_id =  length(azurerm_network_interface.nic_object) > 0 ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
   nsg_resource_id = length(azurerm_network_security_group.vm_nsg_object) > 0 ? flatten(values(azurerm_network_security_group.vm_nsg_object).*.id) : []
   storage_resource_id = length(azurerm_storage_account.vm_storage_account_object) > 0 ? flatten(values(azurerm_storage_account.vm_storage_account_object).*.id) : []
-  kv_resource_id = length(azurerm_key_vault.vm_kv_object) > 0 ? flatten(values(azurerm_key_vault.vm_kv_object).*.id) : var.kv_resource_id
+  kv_resource_id = length(azurerm_key_vault.vm_kv_object) > 0 ? flatten(values(azurerm_key_vault.vm_kv_object).*.id)[0] : var.kv_resource_id
 
   //Return objects
   rg_return_object = can(azurerm_resource_group.rg_object[0]) ? azurerm_resource_group.rg_object[0] : null
