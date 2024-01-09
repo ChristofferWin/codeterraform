@@ -253,6 +253,7 @@ locals {
   nic_resource_id =  length(azurerm_network_interface.nic_object) > 0 ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
   nsg_resource_id = length(azurerm_network_security_group.vm_nsg_object) > 0 ? flatten(values(azurerm_network_security_group.vm_nsg_object).*.id) : []
   storage_resource_id = length(azurerm_storage_account.vm_storage_account_object) > 0 ? flatten(values(azurerm_storage_account.vm_storage_account_object).*.id) : []
+  kv_resource_id = length(azurerm_key_vault.vm_kv_object) > 0 ? flatten(values(azurerm_key_vault.vm_kv_object).*.id) : var.kv_resource_id
 
   //Return objects
   rg_return_object = can(azurerm_resource_group.rg_object[0]) ? azurerm_resource_group.rg_object[0] : null
@@ -889,7 +890,7 @@ resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
   count = var.create_kv_for_vms || var.kv_object != null || var.kv_resource_id != null ? length(local.vm_objects) : 0
   name = "${values(local.vm_objects)[count.index].name}-secret"
   value = values(local.vm_objects)[count.index].admin_password
-  key_vault_id = azurerm_key_vault.vm_kv_object["kv_object"].id
+  key_vault_id = local.kv_resource_id
 
   depends_on = [azurerm_role_assignment.kv_role_assignment_object]
 }
