@@ -34,6 +34,10 @@ output "storage_object" {
   value = local.storage_return_object
 }
 
+output "kv_object" {
+  value = local.kv_return_object
+}
+
 output "summary_object" {
   value = local.summary_of_deployment
 }

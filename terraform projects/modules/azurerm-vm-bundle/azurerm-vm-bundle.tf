@@ -264,6 +264,7 @@ locals {
   windows_return_object = length(azurerm_windows_virtual_machine.vm_windows_object) > 0  ? azurerm_windows_virtual_machine.vm_windows_object : null
   linux_return_object = length(azurerm_linux_virtual_machine.vm_linux_object) > 0 ? azurerm_linux_virtual_machine.vm_linux_object : null
   storage_return_object = length(azurerm_storage_account.vm_storage_account_object) > 0 ? azurerm_storage_account.vm_storage_account_object : null
+  kv_return_object = length(azurerm_key_vault.vm_kv_object) > 0 ? azurerm_key_vault.vm_kv_object : null
   
   summary_of_deployment = {
     prefix_for_names_used = var.env_name != null ? true : false
