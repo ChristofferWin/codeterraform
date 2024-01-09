@@ -19,28 +19,52 @@ terraform {
   }
 }
 
+
 ##############################################################################################
 ######################################### NOTES ##############################################
 ##                                                                                          ##
-##  Date: 30-10-2023                                                                        ## 
-##  State: All bugs are fixed for all working compontents including creating win vm's       ##
-##  Missing: Define the block for linux vm´s and test many different deployment scenarios   ##
-##  Improvements (1): Find solution for when JSON payload contain invalid image             ##
-##  =||= (2): Make it dynamically possible to not run the file data block                   ## 
-##  =||= (3): To (2), make it possible to parse a filepath for custom JSON payloads         ##
-##  Future improvements: Clean up the locals block & add comment sections in code           ##
-##  Comments: First entry                                                                   ##
+##  Date: 09-01-2024                                                                        ## 
+##  State: Bumped to version 1.2 - skipping 1.1 due to bad release...                       ##
+##  Missing: Continue to improve the functionallity of the module...                        ##
+##  Improvements (1): Made it possible to create mgmt resources then use them in other calls##                                                                                
+##  =||= (2): Added a new sub-parameter that enables you to create a nsg with 0 custom rules## 
+##  =||= (3): Added kv output and improved logic in the subnet object definition            ##
+##  Future improvements: Still missing comments...                                          ##
+##  Comments: ALL FEEDBACK IS APPRICIATED - PLEASE READ THE README FILE...                  ##
+##                                                                                          ##
+##------------------------------------------------------------------------------------------##
+##                                                                                          ##                                                                                     
+##  Date: 20-11-2023                                                                        ## 
+##  State: Ready for production, version 1.0                                                ##
+##  Missing: Being able to parse a kv_resource_id, to use existing key vault for vm secrets ##
+##  Improvements (1): Many small bugs has been fixed during final testing...                ##                                                                     
+##  =||= (2): Multiple different "nice-to-have" features added via object parameters...     ## 
+##  =||= (3): N/A                                                                           ##
+##  Future improvements: Still missing comments...                                          ##
+##  Comments: Module is pretty far at this stage, around 99% done...                        ##
+##                                                                                          ##   
 ##------------------------------------------------------------------------------------------##
 ##                                                                                          ##
-##  Date: 08-11-2023                                                                        ## 
-##  State: Linux VMs has been defined & fixed a bug in the PS script attached to the code   ##
-##  Missing: Create a resource definition for nsgs to set on subnets & extensive tests      ##
-##  Improvements (1): Since last update the solution for json payload scenarios are added   ##                                                                     
-##  =||= (2): Wont be solved, if TF needs to read a file, let it                            ## 
-##  =||= (3): Need to decide whether I should allow custom json payloads                    ##
-##  Future improvements: Clean up the locals block & add comment sections in code           ##
-##  Comments: Module is pretty far at this stage, around 80% done                           ##
-##------------------------------------------------------------------------------------------##
+##  Date: 15-11-2023                                                                        ## 
+##  State: Had huge issues with storage accounts today, should now be stable...             ##
+##  Missing: Create KV                                                                      ##
+##  Improvements (1): Solved many different bugs, module is stable...                       ##                                                                     
+##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
+##  =||= (3): Extensive tests has been done with many different scenarios...                ##
+##  Future improvements: Clean up the locals block & add comment sections in code...        ##
+##  Comments: Module is pretty far at this stage, around 92% done...                        ##
+##                                                                                          ##
+##------------------------------------------------------------------------------------------##   
+##                                                                                          ##
+##  Date: 13-11-2023                                                                        ## 
+##  State: Storage account & customized output has been defined...                          ##
+##  Missing: Create KV                                                                      ##
+##  Improvements (1): Solved many different bugs, module is stable...                       ##                                                                     
+##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
+##  =||= (3): Extensive tests has been done with many different scenarios...                ##
+##  Future improvements: Clean up the locals block & add comment sections in code...        ##
+##  Comments: Module is pretty far at this stage, around 90% done...                        ##
+##------------------------------------------------------------------------------------------##                                                                                           
 ##                                                                                          ##
 ##  Date: 09-11-2023                                                                        ## 
 ##  State: All resources was though to defined and extensive testing has begun, but turns   ##
@@ -54,35 +78,26 @@ terraform {
 ##  Comments: Module is pretty far at this stage, around 80% done                           ##      
 ##------------------------------------------------------------------------------------------##                                                                                        
 ##                                                                                          ##
-##  Date: 13-11-2023                                                                        ## 
-##  State: Storage account & customized output has been defined...                          ##
-##  Missing: Create KV                                                                      ##
-##  Improvements (1): Solved many different bugs, module is stable...                       ##                                                                     
-##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
-##  =||= (3): Extensive tests has been done with many different scenarios...                ##
-##  Future improvements: Clean up the locals block & add comment sections in code...        ##
-##  Comments: Module is pretty far at this stage, around 90% done...                        ##
-##------------------------------------------------------------------------------------------##                                                                                        
+##  Date: 08-11-2023                                                                        ## 
+##  State: Linux VMs has been defined & fixed a bug in the PS script attached to the code   ##
+##  Missing: Create a resource definition for nsgs to set on subnets & extensive tests      ##
+##  Improvements (1): Since last update the solution for json payload scenarios are added   ##                                                                     
+##  =||= (2): Wont be solved, if TF needs to read a file, let it                            ## 
+##  =||= (3): Need to decide whether I should allow custom json payloads                    ##
+##  Future improvements: Clean up the locals block & add comment sections in code           ##
+##  Comments: Module is pretty far at this stage, around 80% done                           ##
 ##                                                                                          ##
-##  Date: 15-11-2023                                                                        ## 
-##  State: Had huge issues with storage accounts today, should now be stable...             ##
-##  Missing: Create KV                                                                      ##
-##  Improvements (1): Solved many different bugs, module is stable...                       ##                                                                     
-##  =||= (2): Need to write the readme, maybe use chatgpt...                                ## 
-##  =||= (3): Extensive tests has been done with many different scenarios...                ##
-##  Future improvements: Clean up the locals block & add comment sections in code...        ##
-##  Comments: Module is pretty far at this stage, around 92% done...                        ##
-##------------------------------------------------------------------------------------------##                                                                                        
+##------------------------------------------------------------------------------------------##                                                                                     
 ##                                                                                          ##
-##  Date: 20-11-2023                                                                        ## 
-##  State: Ready for production, version 1.0                                                ##
-##  Missing: Being able to parse a kv_resource_id, to use existing key vault for vm secrets ##
-##  Improvements (1): Many small bugs has been fixed during final testing...                ##                                                                     
-##  =||= (2): Multiple different "nice-to-have" features added via object parameters...     ## 
-##  =||= (3): N/A                                                                           ##
-##  Future improvements: Still missing comments...                                          ##
-##  Comments: Module is pretty far at this stage, around 99% done...                        ##
-##                                                                                          ##
+##  Date: 30-10-2023                                                                        ##    
+##  State: All bugs are fixed for all working compontents including creating win vm's       ##
+##  Missing: Define the block for linux vm´s and test many different deployment scenarios   ##
+##  Improvements (1): Find solution for when JSON payload contain invalid image             ##
+##  =||= (2): Make it dynamically possible to not run the file data block                   ## 
+##  =||= (3): To (2), make it possible to parse a filepath for custom JSON payloads         ##
+##  Future improvements: Clean up the locals block & add comment sections in code           ##
+##  Comments: First entry                                                                   ##
+##                                                                                          ##                                                                                                                                                       
 ##############################################################################################
 ##############################################################################################
 
