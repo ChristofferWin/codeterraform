@@ -885,7 +885,7 @@ resource "azurerm_role_assignment" "kv_role_assignment_object" {
 }
 
 resource "azurerm_key_vault_secret" "kv_vm_secret_object" {
-  count = var.create_kv_for_vms || var.kv_object != null ? length(local.vm_objects) : 0
+  count = var.create_kv_for_vms || var.kv_object != null || var.kv_resource_id != null ? length(local.vm_objects) : 0
   name = "${values(local.vm_objects)[count.index].name}-secret"
   value = values(local.vm_objects)[count.index].admin_password
   key_vault_id = azurerm_key_vault.vm_kv_object["kv_object"].id
