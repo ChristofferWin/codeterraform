@@ -10,6 +10,12 @@ variable "rg_id" {
   default = null
 }
 
+variable "rg_tags" {
+  description = "a map of string tags to configure for the resource group"
+  type = map(string)
+  default = null
+}
+
 variable "location" {
   description = "name of the location to put the resources. defaults to 'westeurope'"
   type = string

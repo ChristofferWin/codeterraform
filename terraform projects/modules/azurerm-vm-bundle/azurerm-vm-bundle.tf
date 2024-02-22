@@ -389,6 +389,7 @@ resource "azurerm_resource_group" "rg_object" {
   count = local.rg_object.create_rg ? 1 : 0
   name = local.rg_object.name
   location = var.location
+  tags = var.rg_tags
 }
 
 resource "azurerm_virtual_network" "vnet_object"{
