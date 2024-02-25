@@ -111,7 +111,7 @@ locals {
   }] : each.name => each} : null
 
   vnet_object_pre2 = local.vnet_object_pre == null && var.vnet_object != null ? {for each in [var.vnet_object] : each.name => each} : null
-  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
+  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : var.vnet_resource_id
 
   subnet_objects_pre = var.subnet_objects != null ? {for each in [for x, y in range(length(var.subnet_objects)) : {
       name = x == 1 || var.subnet_objects[x].name == null ? "AzureBastionSubnet" : var.subnet_objects[x].name
@@ -464,7 +464,7 @@ resource "azurerm_network_interface" "nic_object" {
   
   ip_configuration {
     name = each.value.ip_configuration_name
-    subnet_id = can([for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][1]) ? [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][1] : [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][0]
+    subnet_id = can([for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][1]) ? [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][1] : var.subnet_resource_id != null ? var.subnet_resource_id : [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][0]
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address = each.value.private_ip_address
     public_ip_address_id = each.value.pip_resource_id
