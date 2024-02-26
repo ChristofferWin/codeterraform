@@ -16,7 +16,7 @@ run "unit_test_2_check_vnet_and_sub_id" {
 
   assert {
     condition = length([for each in flatten(values(module.unit_test_1_using_existing_resources.nic_object).*.ip_configuration) : true if length(regexall(var.vnet_resource_id, replace(each.subnet_id, "resourceGroups", "resourcegroups"))) == 1  && each.subnet_id == var.subnet_resource_id]) > 0
-    error_message = "Either the virtual network used for the deployment, which is:  not match the vnet resouce id or the subnet used which is: ${values(module.unit_test_1_using_existing_resources.nic_object)[0].ip_configuration[0].subnet_id} not match"
+    error_message = "Either the virtual network used for the deployment, which is: ${split("/subnets/", values(module.unit_test_1_using_existing_resources.nic_object)[0].ip_configuration[0].subnet_id)[0]} not match the vnet resouce id or the subnet used which is: ${values(module.unit_test_1_using_existing_resources.nic_object)[0].ip_configuration[0].subnet_id} not match"
   }
 }
 
