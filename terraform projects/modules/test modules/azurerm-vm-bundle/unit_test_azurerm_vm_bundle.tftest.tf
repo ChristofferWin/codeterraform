@@ -24,7 +24,7 @@ provider "azurerm" { //Will use command-line context, typically az cli login
 }
 
 module "unit_test_1_using_existing_resources" {
-  source = "../../../../modules/azurerm-vm-bundle/"
+  source = "../../../modules/azurerm-vm-bundle/"
   rg_id = var.rg_id
   vnet_resource_id = var.vnet_resource_id
   subnet_resource_id = var.subnet_resource_id
