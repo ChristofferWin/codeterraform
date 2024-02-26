@@ -28,6 +28,7 @@ module "unit_test_1_using_existing_resources" {
   rg_id = var.rg_id
   vnet_resource_id = var.vnet_resource_id
   subnet_resource_id = var.subnet_resource_id
+
   vm_windows_objects = [
     {
       name = "test-win-vm"
