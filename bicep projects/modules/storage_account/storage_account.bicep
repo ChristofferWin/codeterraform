@@ -5,16 +5,17 @@
   'test'
   'dev'
   ]
+
 )
 param env_name string
 
 @description('Provide a valid location, defaults to \'westeurope\'')
 param location string = 'westeurope'
 
-@description('To create a resource group for the storage account, use in case the param \'rg_name\' is set and the resource group is already created')
+@description('To create a resource group for the storage account, use in case the param \'rg_name\' is set and the resource group is not created')
 param create_rg bool = false
 
-@description('Provide a valid resource group name in case \'create_rg\' is set to true, defaults to env_name + random string of length 5')
+@description('Provide a valid resource group name defaults to env_name + random string of length 5')
 param resource_group_name string = '${env_name}-${uniqueString('random')}-rg'
 
 @description('Provide a storage account name, defaults to env_name + random string of length 5')
