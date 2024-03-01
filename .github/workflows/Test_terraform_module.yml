@@ -76,7 +76,7 @@ jobs:
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      run: cd '${{ env.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform init
+      run: ls; cd '${{ env.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform init
 
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
