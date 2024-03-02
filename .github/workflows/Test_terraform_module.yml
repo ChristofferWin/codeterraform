@@ -46,7 +46,7 @@ name: 'Test_terraform_module.yml'
 
 on:
   push:
-    branches: main
+    branches: [main]
     
   pull_request:
 
@@ -72,7 +72,7 @@ jobs:
     - name: Find_module_path
       shell: pwsh
       run: | 
-              git show HEAD
+              git diff --name-only HEAD^ HEAD
               cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
               foreach($Item in $Items){
               Write-Output $Item
