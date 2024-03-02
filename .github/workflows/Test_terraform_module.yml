@@ -46,7 +46,9 @@ name: 'Test_terraform_module.yml'
 
 on:
   push:
-    branches: [ "main" ]
+    paths:
+    - ${{ vars.TERRAFOM_FILE_PATH_ROOT }}$
+    
   pull_request:
 
 permissions:
@@ -71,8 +73,15 @@ jobs:
     - name: Find_module_path
       shell: pwsh
       run: | 
-          pwsh #Get access to Powershell 7
-          Write-Output "Hello world"
+              cd .\terraform projects\modules\test modules
+              $Items = Get-Item *
+              foreach($Item in $Items){
+              if(($Item | gm).TypeName[0] -eq 'System.IO.DirectoryInfo'){
+              $ModuleNames += $Item.Name
+              }}
+              
+              
+          
  
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
