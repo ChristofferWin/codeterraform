@@ -78,7 +78,7 @@ jobs:
               if($Item -like "*.tftest.hcl" -or $Item -like "*.tf"){
               $ModuleNames += $Item.Split("/")[-2]
               }}
-              ###set-env name=MODULENAMES::$ModuleNames
+              ##vso[task.setvariable variable=MODULENAMES;isOutput=true]$ModuleNames
               
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
@@ -90,7 +90,7 @@ jobs:
     - name: Terraform Init
       shell: pwsh
       run: |
-              foreach($Item in ${{ vars.$MODULENAMES }}){
+              foreach($Item in ${{ env:$MODULENAMES }}){
               cd .\$Item
               terraform init
               cd ..
