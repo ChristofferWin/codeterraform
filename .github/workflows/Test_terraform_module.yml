@@ -75,7 +75,7 @@ jobs:
               cd .\terraform projects\modules\test modules
               $Items = git diff --name-only
               foreach($Item in $Items){
-              if($Item -like "*.tftest.hcl -or $Item -like "*.tf"
+              if($Item -like "*.tftest.hcl" -or $Item -like "*.tf"
               $ModuleNames += $Item.Split("/")[-2]
               }}
               ###set-env name=MODULENAMES::$ModuleNames
