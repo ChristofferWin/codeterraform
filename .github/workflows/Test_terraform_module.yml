@@ -79,6 +79,7 @@ jobs:
               $ModuleNames += $Item.Split("/")[-2]
               }}
               ##vso[task.setvariable variable=MODULENAMES;isOutput=true]$ModuleNames
+              Write-Output $ModuleNames
               
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
