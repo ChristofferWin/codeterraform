@@ -74,15 +74,13 @@ jobs:
       shell: pwsh
       run: | 
               cd .\terraform projects\modules\test modules
-              $Items = Get-Item *
+              $Items = git diff --name-only
               foreach($Item in $Items){
-              if(($Item | gm).TypeName[0] -eq 'System.IO.DirectoryInfo'){
-              $ModuleNames += $Item.Name
+              if($Item -like "*.tftest.hcl -or $Item -like "*.tf"
+              $ModuleNames += $Item.Split("/")[-2]
               }}
+              ###set-env name=MODULENAMES::$ModuleNames
               
-              
-          
- 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
@@ -91,8 +89,13 @@ jobs:
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      run: ls; cd '${{ vars.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform init
-
+      shell: pwsh
+      run: |
+              foreach($Item in ${{ env.MODULENAMES }}){
+              cd .\$Item
+              terraform init
+              cd ..
+              }
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       run: cd '${{ vars.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform fmt -check
