@@ -73,7 +73,7 @@ jobs:
       shell: pwsh
       run: | 
               cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
-              $Items = git diff --name-only
+              git diff --name-only
               foreach($Item in $Items){
               Write-Output $Item
               if($Item -like "*.tftest.hcl" -or $Item -like "*.tf"){
