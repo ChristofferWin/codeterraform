@@ -90,7 +90,7 @@ jobs:
     - name: Terraform Init
       shell: pwsh
       run: |
-              foreach($Item in ${{ env.MODULENAMES }}){
+              foreach($Item in ${{ $MODULENAMES }}){
               cd .\$Item
               terraform init
               cd ..
