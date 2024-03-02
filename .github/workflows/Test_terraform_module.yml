@@ -72,7 +72,7 @@ jobs:
     - name: Find_module_path
       shell: pwsh
       run: | 
-              git status
+              git show HEAD
               cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
               foreach($Item in $Items){
               Write-Output $Item
