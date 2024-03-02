@@ -46,8 +46,7 @@ name: 'Test_terraform_module.yml'
 
 on:
   push:
-    paths:
-    - ${{ vars.TERRAFOM_FILE_PATH_ROOT }}$
+    branches: main
     
   pull_request:
 
