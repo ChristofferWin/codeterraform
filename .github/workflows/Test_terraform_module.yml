@@ -72,8 +72,8 @@ jobs:
     - name: Find_module_path
       shell: pwsh
       run: | 
-              cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
               git diff --name-only
+              cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
               foreach($Item in $Items){
               Write-Output $Item
               if($Item -like "*.tftest.hcl" -or $Item -like "*.tf"){
