@@ -1,7 +1,3 @@
-provider "azurerm" {
-  features{}
-}
-
 run "unit_test_1_check_rg_id" {
   command = plan
 
@@ -28,12 +24,11 @@ run "unit_test_3_check_vm_count" {
     error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects, var.vm_windows_objects]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
   }
 }
-/*
-run "unit_test_4_check_vm_count_apply" {
+
+run "unit_test_4_check_vm_count_applys" {
   //Default command is apply
   assert {
     condition = length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects])) == length(flatten([var.vm_linux_objects, var.vm_windows_objects]))
     error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects, var.vm_windows_objects]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
   }
 }
-*/
