@@ -83,11 +83,12 @@ jobs:
       shell: pwsh
       run: |
           $env:ALL_CHANGED_FILES
-          echo $ALL_FILTERED_AND_CHANGED_FILES >> $env:GITHUB_OUTPUT
+          echo $ALL_FILTERED_AND_CHANGED_FILES >> $env:TEST1337
 
     - name: TEST-VARIABLES
+      shell: pwsh
       run: |
-          echo $GITHUB_OUTPUT
+          Write-Output $env:TEST1337
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
