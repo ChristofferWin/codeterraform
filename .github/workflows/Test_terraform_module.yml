@@ -78,6 +78,7 @@ jobs:
         since_last_remote_commit: true
     
     - name: List all changed files
+      id: filtered-changed-files
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       shell: pwsh
@@ -86,6 +87,8 @@ jobs:
           Write-Output ::set-output name=TEST1337::$env:ALL_CHANGED_FILES
 
     - name: TEST-VARIABLES
+      env:
+        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs.TEST1337 }}
       shell: pwsh
       run: |
           Write-Output $env:TEST1337
