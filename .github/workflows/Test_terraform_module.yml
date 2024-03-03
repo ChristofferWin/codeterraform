@@ -76,9 +76,13 @@ jobs:
       with:
         since_last_remote_commit: true
     
-    - name: Show_names
-      run: ${{ steps.changed-files.outputs.all_changed_files }}
-              
+    - name: List all changed files
+      env:
+        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      run: |
+          for file in ${ALL_CHANGED_FILES}; do
+          echo "$file was changed"
+          done
               
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
