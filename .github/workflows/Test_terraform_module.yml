@@ -80,13 +80,18 @@ jobs:
     - name: List all changed files
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      shell: pwsh
       run: |
-          echo "::set-env name=ALL_CHANGED_FILES::${ALL_CHANGED_FILES}"
-          echo "All changed files: ${ALL_CHANGED_FILES}"
+          [array]$ALL_FILTERED_AND_CHANGED_FILES = @() //run: echo "test=Hello world" >> $env:GITHUB_OUTPUT
+          foreach($Path in $env:ALL_CHANGED_FILES){
+          if($Path -like "*.tftest.hcl -or $Path -like "*.tf"){
+          $ALL_FILTERED_AND_CHANGED_FILES += $Path
+          }}
+          echo $ALL_FILTERED_AND_CHANGED_FILES >> $env:GITHUB_OUTPUT
 
     - name: TEST-VARIABLES
       run: |
-          echo "Accessing ALL_CHANGED_FILES in TEST-VARIABLES step: ${ALL_CHANGED_FILES}"
+          echo $GITHUB_OUTPUT
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
