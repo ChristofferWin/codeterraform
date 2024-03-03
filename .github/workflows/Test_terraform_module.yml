@@ -72,7 +72,7 @@ jobs:
     - name: Find_module_path
       shell: pwsh
       run: | 
-              git status -v -v
+              git diff-tree --no-commit-id --name-only -r ${{ env.GITHUB_SHA }}
               cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
               foreach($Item in $Items){
               Write-Output $Item
