@@ -91,7 +91,7 @@ jobs:
         ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs.TEST1337 }}
       shell: pwsh
       run: |
-          Write-Output $env:ALL_FILTERED_FILES
+          Write-Output $env:ALL_FILTERED_FILES.Length()
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
