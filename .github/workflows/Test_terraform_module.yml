@@ -68,18 +68,17 @@ jobs:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
 
     - name: Find_module_path
-      shell: pwsh
-      run: | 
-              git diff-tree --no-commit-id --name-only -r ${{ env.GITHUB_REF }}
-              cd "${{ vars.TERRAFOM_FILE_PATH_ROOT }}"
-              foreach($Item in $Items){
-              Write-Output $Item
-              if($Item -like "*.tftest.hcl" -or $Item -like "*.tf"){
-              $ModuleNames += $Item.Split("/")[-2]
-              }}
-              ##vso[task.setvariable variable=MODULENAMES;isOutput=true]$ModuleNames
+      uses: tj-actions/changed-files@v42
+      with:
+        since_last_remote_commit: true
+    
+    - name: Show_names
+      run: ${{ steps.changed-files.outputs.all_changed_files }}
+              
               
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
