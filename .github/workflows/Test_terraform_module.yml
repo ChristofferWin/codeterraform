@@ -83,7 +83,7 @@ jobs:
       shell: pwsh
       run: |
           $env:ALL_CHANGED_FILES
-          echo $ALL_FILTERED_AND_CHANGED_FILES >> $env:TEST1337
+          Write-Output ::set-output name=TEST1337::$env:ALL_CHANGED_FILES
 
     - name: TEST-VARIABLES
       shell: pwsh
