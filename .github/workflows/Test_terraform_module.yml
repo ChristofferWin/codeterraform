@@ -86,9 +86,8 @@ jobs:
           done
 
     - name: TEST-VARIABLES
-      shell: pwsh
       run: |
-          Get-ChildItem Env:
+          echo ${ALL_CHANGED_FILES}
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
