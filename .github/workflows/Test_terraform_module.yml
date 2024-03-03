@@ -87,7 +87,9 @@ jobs:
 
     - name: TEST-VARIABLES
       run: |
-          echo ${ALL_CHANGED_FILES}
+           for file in ${ALL_CHANGED_FILES}; do
+           echo "$file was changed"
+           done
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
