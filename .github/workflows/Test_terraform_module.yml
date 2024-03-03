@@ -86,6 +86,7 @@ jobs:
           done
 
     - name: TEST-VARIABLES
+      shell: pwsh
       run: |
           Write-Output $env:ALL_CHANGED_FILES
 
