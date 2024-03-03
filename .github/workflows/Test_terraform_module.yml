@@ -82,11 +82,14 @@ jobs:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       shell: pwsh
       run: |
+         /*
           [array]$ALL_FILTERED_AND_CHANGED_FILES = @()
           foreach($Path in $env:ALL_CHANGED_FILES){
           if($Path -like '*.tftest.hcl' -or $Path -like '*.tf'){
           $ALL_FILTERED_AND_CHANGED_FILES += $Path
           }}
+          */
+          $env:ALL_CHANGED_FILES
           echo $ALL_FILTERED_AND_CHANGED_FILES >> $env:GITHUB_OUTPUT
 
     - name: TEST-VARIABLES
