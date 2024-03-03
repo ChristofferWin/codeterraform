@@ -72,6 +72,7 @@ jobs:
         fetch-depth: 0
 
     - name: Find_module_path
+      id: changed-files
       uses: tj-actions/changed-files@v42
       with:
         since_last_remote_commit: true
