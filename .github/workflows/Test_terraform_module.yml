@@ -82,16 +82,14 @@ jobs:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
           for file in ${ALL_CHANGED_FILES}; do
-          echo "$file was changed"
+            echo "$file was changed"
           done
 
     - name: TEST-VARIABLES
-      env:
-        ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-           for file in ${ALL_CHANGED_FILES}; do
-           echo "$file was changed"
-           done
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed"
+          done
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
