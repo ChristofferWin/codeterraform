@@ -82,7 +82,10 @@ jobs:
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-          echo "Test-results=$(ALL_CHANGED_FILES)" >> $GITHUB_OUTPUT
+          {
+            echo "$ALL_CHANGED_FILES<<EOF"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
     - name: TEST-VARIABLES
       env:
