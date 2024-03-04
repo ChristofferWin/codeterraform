@@ -89,7 +89,7 @@ jobs:
 
     - name: TEST-VARIABLES
       env:
-        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs}}
+        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs.ALL_CHANGED_FILES}}
       shell: pwsh
       run: |
          $env:ALL_FILTERED_FILES.Length
