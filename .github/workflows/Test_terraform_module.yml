@@ -88,11 +88,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
     - name: TEST-VARIABLES
-      env:
-        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs.ALL_CHANGED_FILES}}
       shell: pwsh
       run: |
-         $env:ALL_FILTERED_FILES.Length
+         $env:GITHUB_OUTPUT.length
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
