@@ -100,11 +100,7 @@ jobs:
               }
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
-          {
-            echo "$FinalPaths<<EOF"
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
-          echo "$GITHUB_OUTPUT"
+            echo "{FinalPaths}={$FinalPaths}" >> $GITHUB_OUTPUT
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
