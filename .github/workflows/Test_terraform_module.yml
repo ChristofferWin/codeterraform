@@ -93,7 +93,7 @@ jobs:
                 foreach($File in $Files){
                   $Content = Get-Content -Path $($File.FullName)
                   foreach($Line in $Content){
-                    if($Line -like "*source*$($Path.Split("\")[-2])*"){
+                    if($Line -like "*source*$($Path.Split("\\")[-2])*"){
                     $FinalPaths += $($File.DirectoryName)
                   }
                 }
