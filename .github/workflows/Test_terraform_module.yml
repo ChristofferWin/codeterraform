@@ -82,7 +82,7 @@ jobs:
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-          $Command = '
+          Command = '
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf"){
