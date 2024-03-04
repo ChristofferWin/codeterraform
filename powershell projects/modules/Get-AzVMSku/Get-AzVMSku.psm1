@@ -412,21 +412,3 @@ function Get-AzVMSKU {
     return $FinalOutput
 }
 Export-ModuleMember Get-AzVMSKU
-
-
-foreach($Path in $($env:ALL_CHANGED_FILES)){
-    if($Path -like '*.tftest.hcl'){
-      $FinalPaths += $Path
-    }
-    elseif($Path -like '*.tf' -and $Path -like '*modules*'){
-      $Files = Get-ChildItem -Path '../test modules/' -Recurse | ? {$_.Name -like '*.tf'}
-      foreach($File in $Files){
-        $Content = Get-Content -Path $($File.FullName)
-        foreach($Line in $Content){
-          if($Line -like 'source*$($Path.Split("\")[-2])*'){
-          $FinalPaths += $File.PSParentPath
-        }
-      }
-    }
-  }
-}
