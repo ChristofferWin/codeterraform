@@ -81,8 +81,8 @@ jobs:
       id: filtered-changed-files
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+      shell: pwsh
       run: |
-          cat > "$COMMAND" <<- EOM
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf"){
@@ -100,10 +100,8 @@ jobs:
               }
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
-            return $FinalPaths
-          EOM
           {
-            echo "$ALL_CHANGED_FILES<<EOF"
+            echo "$FinalPaths<<EOF"
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
