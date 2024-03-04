@@ -102,7 +102,7 @@ jobs:
             $FinalPaths = $FinalPaths | Select-Object -Unique
             return $FinalPaths
           EOM
-          pwsh -command (cat $COMMAND)
+          pwsh -command (cat > $COMMAND)
           {
             echo "$ALL_CHANGED_FILES<<EOF"
             echo EOF
