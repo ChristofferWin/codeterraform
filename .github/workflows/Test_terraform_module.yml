@@ -82,7 +82,7 @@ jobs:
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-          read -r -d '' COMMAND << EOM
+          cat > $COMMAND <<- EOM
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf"){
@@ -93,16 +93,16 @@ jobs:
                 foreach($File in $Files){
                   $Content = Get-Content -Path $($File.FullName)
                   foreach($Line in $Content){
-                    if($Line -like "*source*$($Path.Split("/")[-2])*"){
+                    if($Line -like "*source*$($Path.Split("\")[-2])*"){
                     $FinalPaths += $($File.DirectoryName)
                   }
                 }
               }
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
-            return $FinalPaths'
+            return $FinalPaths
           EOM
-       
+          pwsh -command $COMMAND
           {
             echo "$ALL_CHANGED_FILES<<EOF"
             echo EOF
