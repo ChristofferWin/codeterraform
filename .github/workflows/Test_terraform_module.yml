@@ -82,7 +82,7 @@ jobs:
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
       run: |
-          Command = '
+          read -r -d '' COMMAND << EOM
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf"){
@@ -101,6 +101,8 @@ jobs:
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
             return $FinalPaths'
+          EOM
+       
           {
             echo "$ALL_CHANGED_FILES<<EOF"
             echo EOF
