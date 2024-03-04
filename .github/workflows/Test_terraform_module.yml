@@ -101,7 +101,7 @@ jobs:
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
             return $FinalPaths'
-            $ALL_CHANGED_FILES = pwsh -Command $Command
+            $ALL_CHANGED_FILES = pwsh.exe -Command $Command
           {
             echo "$ALL_CHANGED_FILES<<EOF"
             echo EOF
