@@ -84,11 +84,10 @@ jobs:
       shell: pwsh
       run: |
           $env:ALL_CHANGED_FILES
-          Write-Output ::set-output name=TEST1337::$env:ALL_CHANGED_FILES
 
     - name: TEST-VARIABLES
       env:
-        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs.ALL_CHANGED_FILES }}
+        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs. }}
       shell: pwsh
       run: |
           Write-Output $env:ALL_FILTERED_FILES.Length
