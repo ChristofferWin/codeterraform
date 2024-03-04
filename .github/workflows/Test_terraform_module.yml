@@ -81,13 +81,12 @@ jobs:
       id: filtered-changed-files
       env:
         ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
-      shell: pwsh
       run: |
-          $env:ALL_CHANGED_FILES
+          echo "${ALL_CHANGED_FILES}\n" >> $GITHUB_OUTPUT
 
     - name: TEST-VARIABLES
       env:
-        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs.ALL_CHANGED_FILES }}
+        ALL_FILTERED_FILES: ${{ steps.filtered-changed-files.outputs}}
       shell: pwsh
       run: |
           Write-Output $env:ALL_FILTERED_FILES.Length
