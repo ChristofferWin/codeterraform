@@ -110,11 +110,11 @@ jobs:
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      env: 
-        PATHS: ${{ steps.filtered-changed-files.outputs.FinalPaths  }}
       shell: pwsh
+      env:
+        TEST: ${{ env.GITHUB_OUTPUT }}
       run: |
-              foreach($Item in $env:PATHS){
+              foreach($Item in $env:GITHUB_OUTPUT){
               cd .\$Item
               terraform init
               cd ..
