@@ -25,7 +25,7 @@ run "unit_test_3_check_vm_count" {
   }
 }
 
-run "unit_test_4_check_vm_count_applys" {
+run "unit_test_4_check_vm_count_apply" {
   //Default command is apply
   assert {
     condition = length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects])) == length(flatten([var.vm_linux_objects, var.vm_windows_objects]))
