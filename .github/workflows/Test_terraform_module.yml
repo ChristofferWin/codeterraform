@@ -119,9 +119,7 @@ jobs:
       run: |
             foreach($Item in $env:TF_PATH){
             cd $Item
-            $env:TF_DATA_DIR = $env:TF_PATH
-            terraform init
-            cd "/home/runner/work/codeterraform/"
+            terraform init var
             }
 
     # Generates an execution plan for Terraform
@@ -132,7 +130,6 @@ jobs:
       run: |
             foreach($Item in $env:TF_PATH){
             cd $Item
-            $env:TF_DATA_DIR = $env:TF_PATH
+            ls
             terraform test
-            cd "/home/runner/work/codeterraform/"
             }
