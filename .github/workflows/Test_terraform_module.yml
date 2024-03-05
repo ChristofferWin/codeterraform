@@ -119,18 +119,8 @@ jobs:
       run: |
             foreach($Item in $env:TF_PATH){
             cd $Item
+            $env:TF_DATA_DIR = $env:TF_PATH
             terraform init
-            cd "/home/runner/work/codeterraform/"
-            }
-    # Checks that all Terraform configuration files adhere to a canonical format
-    - name: Terraform Format
-      shell: pwsh
-      env:
-        TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
-      run: |
-            foreach($Item in $env:TF_PATH){
-            cd $Item
-            terraform fmt
             cd "/home/runner/work/codeterraform/"
             }
 
@@ -142,6 +132,7 @@ jobs:
       run: |
             foreach($Item in $env:TF_PATH){
             cd $Item
+            $env:TF_DATA_DIR = $env:TF_PATH
             terraform test
             cd "/home/runner/work/codeterraform/"
             }
