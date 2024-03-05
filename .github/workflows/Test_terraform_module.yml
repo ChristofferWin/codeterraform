@@ -113,23 +113,31 @@ jobs:
     - name: Terraform Init
       shell: pwsh
       env:
-        TEST: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
+        TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
-              foreach($Item in $env:TEST){
-              cd $($Item)
-              terraform init
-              cd "/home/runner/work/codeterraform/"
-              }
+            foreach($Item in $env:TF_PATH){
+            cd $($Item)
+            terraform init
+            cd "/home/runner/work/codeterraform/"
+            }
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
-      run: cd '${{ vars.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform fmt -check
+      env:
+        TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
+      run: |
+            reach($Item in $env:TF_PATH){
+            cd $($Item)
+            terraform fmt
+            cd "/home/runner/work/codeterraform/"
+            }
 
     # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: cd '${{ vars.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform plan 
-
-      # On push to "main", build or change infrastructure according to Terraform configuration files
-      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
-      run: cd '${{ vars.TERRAFOM_FILE_PATH_ROOT }}${{ env.GITHUB_REF_NAME }}' ; terraform test
+    - name: Terraform Test
+      env:
+        TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
+      run: |
+            foreach($Item in $env:TF_PATH){
+            cd $($Item)
+            terraform test
+            cd "/home/runner/work/codeterraform/"
+            }
