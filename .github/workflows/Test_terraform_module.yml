@@ -88,6 +88,8 @@ jobs:
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf" -or $Path -like "*.yml"){
                 $FinalPaths += (Get-ChildItem -Path $Path).DirectoryName
               }
+              Write-Output "OUTPUT 1"
+              Write-Output $FinalPaths 
               elseif($Path -like "*.tf"){
                 $Files = Get-ChildItem -Path ".\terraform projects\modules\test modules" -Recurse | ? {$_.Name -like "*.tf"}
                 foreach($File in $Files){
@@ -100,6 +102,7 @@ jobs:
               }
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
+            Write-Output "OUTPUT 2"
             Write-Output $FinalPaths
             echo "::set-output name=FinalPaths::$FinalPaths"
 
