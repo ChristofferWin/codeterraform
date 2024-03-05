@@ -100,7 +100,7 @@ jobs:
               }
             }}
             $FinalPaths = $FinalPaths | Select-Object -Unique
-            echo "{FinalPaths}={$FinalPaths}" >> $GITHUB_OUTPUT
+            echo "::set-output name=FinalPaths::$FinalPaths"
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
@@ -112,9 +112,9 @@ jobs:
     - name: Terraform Init
       shell: pwsh
       env:
-        TEST: ${{ env.GITHUB_OUTPUT }}
+        TEST: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
-              foreach($Item in $env:GITHUB_OUTPUT){
+              foreach($Item in $env:TEST){
               cd .\$Item
               terraform init
               cd ..
