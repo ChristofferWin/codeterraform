@@ -119,7 +119,7 @@ jobs:
       run: |
             foreach($Item in $env:TF_PATH){
             cd $Item
-            terraform init var
+            terraform init
             }
 
     # Generates an execution plan for Terraform
