@@ -47,9 +47,9 @@ name: 'Test_terraform_module.yml'
 on:
   push:
     branches: 
-      main
+      -  main
     paths:
-      - "*terraform projects/modules/**.tf"
+      - 'terraform projects/modules/**'
 
 env: 
   ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID}}
