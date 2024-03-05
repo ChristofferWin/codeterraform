@@ -85,7 +85,7 @@ jobs:
       run: |
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
-              if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf"){
+              if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf" -or $Path -like "*.yml"){
                 $FinalPaths += (Get-ChildItem -Path $Path).DirectoryName
               }
               elseif($Path -like "*.tf"){
