@@ -119,6 +119,7 @@ jobs:
       run: |
             foreach($Item in $env:TF_PATH){
             cd $Item
+            ls
             terraform init
             }
 
