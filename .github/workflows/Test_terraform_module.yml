@@ -115,7 +115,8 @@ jobs:
         TEST: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
               foreach($Item in $env:TEST){
-              cd .\$Item
+              ls
+              Write-Output "$($env:TEST)"
               terraform init
               cd ..
               }
