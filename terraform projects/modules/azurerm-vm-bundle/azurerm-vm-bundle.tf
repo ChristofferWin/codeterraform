@@ -353,7 +353,7 @@ resource "null_resource" "download_script" {
   provisioner "local-exec" {
     command     = <<-EOT
       $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
-      $outputPath = "./Get-AzVMSKu.ps1"
+      $outputPath = "${var.script_name}"
       Invoke-WebRequest -Uri $url -OutFile $outputPath
     EOT
     interpreter = ["pwsh", "-Command"]

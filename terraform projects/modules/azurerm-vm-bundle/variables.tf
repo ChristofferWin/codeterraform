@@ -461,5 +461,5 @@ variable "kv_object" {
 variable "script_name" {
   description = "define a custom path for the powershell script that will retrieve sku information"
   type        = string
-  default     = null
+  default     = "./Get-AzVMSKu.ps1"
 }
