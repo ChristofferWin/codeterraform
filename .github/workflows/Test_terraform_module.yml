@@ -118,7 +118,8 @@ jobs:
               foreach($Item in $env:TEST){
               cd $($Item)
               terraform init
-              cd ..
+              ls
+              cd "/home/runner/work/"
               }
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
