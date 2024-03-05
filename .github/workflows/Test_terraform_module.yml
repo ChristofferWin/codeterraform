@@ -132,5 +132,5 @@ jobs:
             foreach($Item in $env:TF_PATH){
             cd $Item
             ls
-            terraform test -var="script_name=/home/runner/work/codeterraform/terraform projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
+            terraform test -var="script_name=$Item/Get-AzVMSKu.ps1"
             }
