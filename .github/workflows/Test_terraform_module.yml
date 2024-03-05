@@ -86,7 +86,7 @@ jobs:
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf" -or $Path -like "*.yml"){
-                $FinalPaths += $(Get-ChildItem -Path $Path).DirectoryName) -Replace ".*\\codeterraform", "."
+                $FinalPaths += $(Get-ChildItem -Path $Path).DirectoryName)
               }
               elseif($Path -like "*.tf"){
                 $Files = Get-ChildItem -Path ".\terraform projects\modules\test modules" -Recurse | ? {$_.Name -like "*.tf"}
@@ -94,12 +94,12 @@ jobs:
                   $Content = Get-Content -Path $($File.FullName)
                   foreach($Line in $Content){
                     if($Line -like "*source*$($Path.Split("\")[-2])*"){
-                    $FinalPaths += $($File.DirectoryName) -Replace ".*\\codeterraform", "."
+                    $FinalPaths += $($File.DirectoryName)
                   }
                 }
               }
             }}
-            $FinalPaths = $FinalPaths | % {$_.Replace("codeterraform/codeterraform", "codeterraform")} | Select-Object -Unique
+            $FinalPaths = $FinalPaths | % {$_ -Replace ".*\\codeterraform", "."} | Select-Object -Unique
             echo "::set-output name=FinalPaths::$FinalPaths"
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
