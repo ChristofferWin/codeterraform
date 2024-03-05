@@ -120,7 +120,9 @@ jobs:
       env:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
-            foreach($Item in ($env:TF_PATH.split(" .") | % {".$_"})){
+            $Paths = $env:TF_PATH
+            $Paths = $Paths.split(" .") | % {".$_"}
+            foreach($Item in $Paths){
             cd $Item
             ls
             terraform init
