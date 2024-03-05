@@ -86,7 +86,7 @@ jobs:
           $FinalPaths = @()
           foreach($Path in $($env:ALL_CHANGED_FILES)){
               if($Path -like "*.tftest.hcl" -or $Path -like "*\modules\test*.tf" -or $Path -like "*.yml"){
-                $FinalPaths += "$((Get-ChildItem -Path $Path).DirectoryName)`n"
+                $FinalPaths += $(Get-ChildItem -Path $Path).DirectoryName) -Replace ".*\\codeterraform", "."
               }
               elseif($Path -like "*.tf"){
                 $Files = Get-ChildItem -Path ".\terraform projects\modules\test modules" -Recurse | ? {$_.Name -like "*.tf"}
@@ -94,7 +94,7 @@ jobs:
                   $Content = Get-Content -Path $($File.FullName)
                   foreach($Line in $Content){
                     if($Line -like "*source*$($Path.Split("\")[-2])*"){
-                    $FinalPaths += "$($File.DirectoryName)"
+                    $FinalPaths += $($File.DirectoryName) -Replace ".*\\codeterraform", "."
                   }
                 }
               }
@@ -115,7 +115,7 @@ jobs:
         TEST: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
               foreach($Item in $env:TEST){
-              cd "./$($Item)"
+              cd $($Item)
               terraform init
               cd ..
               }
