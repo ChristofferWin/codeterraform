@@ -23,7 +23,7 @@ terraform {
 ##############################################################################################
 ######################################### NOTES ##############################################
 ##                                                                                          ##
-##  Date: 09-01-2024 -                                                                        ## 
+##  Date: 09-01-2024                                                                        ## 
 ##  State: Bumped to version 1.2 - skipping 1.1 due to bad release...                       ##
 ##  Missing: Continue to improve the functionallity of the module...                        ##
 ##  Improvements (1): Made it possible to create mgmt resources then use them in other calls##                                                                                
