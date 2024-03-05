@@ -122,6 +122,7 @@ jobs:
             }
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
+      shell: pwsh
       env:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
@@ -133,6 +134,7 @@ jobs:
 
     # Generates an execution plan for Terraform
     - name: Terraform Test
+      shell: pwsh
       env:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
