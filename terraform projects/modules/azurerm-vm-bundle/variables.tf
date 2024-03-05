@@ -1,89 +1,89 @@
 variable "rg_name" {
   description = "the name of resource group to put the vm bundle in. use this variable to create a new resource group to put the vm bundle in. either rg_id or this variable must be specified"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "rg_id" {
   description = "the resource id of the resource group of which to put the vm bundle in. either rg_name or this variable must be specified."
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "rg_tags" {
   description = "a map of string tags to configure for the resource group"
-  type = map(string)
-  default = null
+  type        = map(string)
+  default     = null
 }
 
 variable "location" {
   description = "name of the location to put the resources. defaults to 'westeurope'"
-  type = string
-  default = "westeurope"
+  type        = string
+  default     = "westeurope"
 }
 
 variable "env_name" {
   description = "the name of the environment. can be any string value, will be used as a prefix in every resource name that does not have an explicit name defined"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "create_bastion" {
   description = "switch to determine whether the module shall deploy bastion"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "create_nsg" {
   description = "switch to determine whether the module shall deploy default nsgs for vm subnet"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "create_public_ip" {
   description = "switch to determine whether the module shall deploy a public ip for the vm"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "create_diagnostic_settings" {
   description = "switch to determine whether the module shall deploy a storage account and configure diag settings"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "create_kv_for_vms" {
   description = "create a kv containing all vm secrets which are deployed by the module"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "create_kv_role_assignment" {
   description = "switch to determine whether to automatically create a role assignment of 'key vault administrator' on the kv for the user in the tf context, defaults to 'true', user must be 'user access administrator or owner on the subscription'"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "vnet_object" {
   description = "an object defining the vnet address spaces in format [x.x.x.x/x] and its name. must be at least /24 in case bastion or vpn is also enabled"
   type = object({
-    name = string
+    name          = string
     address_space = list(string)
-    tags = optional(map(string))
+    tags          = optional(map(string))
   })
   default = null
 }
 
 variable "vnet_resource_id" {
   description = "in case the module is not to create a new vnet, specify the id of vnet of which to use. if this is specified, the subnet id must also be specified"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "subnet_objects" {
   description = "define up to 2 subnets. 1 for the vm(s), another for bastion. index 0 will always be the vm subnet. name is not required and will be 'vm-subnet' by default. note, the bastion subnet name cannot be changed"
   type = list(object({
-    name = optional(string)
+    name             = optional(string)
     address_prefixes = list(string)
   }))
   default = null
@@ -91,19 +91,19 @@ variable "subnet_objects" {
 
 variable "subnet_resource_id" {
   description = "in case the module is not to create a new subnet, specify the id of the subnet of which to use. if this is specified, the vnet id must also be specified"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "bastion_object" {
   description = "define a custom bastion configuration"
   type = object({
-    name = string
+    name               = string
     copy_paste_enabled = optional(bool)
-    file_copy_enabled = optional(bool)
-    sku = optional(string)
-    scale_units = optional(number)
-    tags = optional(map(string))
+    file_copy_enabled  = optional(bool)
+    sku                = optional(string)
+    scale_units        = optional(number)
+    tags               = optional(map(string))
   })
   default = null
 }
@@ -111,22 +111,22 @@ variable "bastion_object" {
 variable "nsg_objects" {
   description = "a list of objects representing network security groups for subnets"
   type = list(object({
-    name = string
+    name      = string
     subnet_id = optional(string)
-    tags = optional(map(string))
-    no_rules = optional(bool)
+    tags      = optional(map(string))
+    no_rules  = optional(bool)
 
     security_rules = optional(list(object({
-      name = string
-      priority = optional(number)
-      direction = optional(string)
-      access = optional(string)
-      protocol = optional(string)
-      source_port_range = optional(any)
-      source_port_ranges = optional(any)
-      destination_port_range = optional(any)
-      destination_port_ranges = optional(any)
-      source_address_prefix = optional(any)
+      name                       = string
+      priority                   = optional(number)
+      direction                  = optional(string)
+      access                     = optional(string)
+      protocol                   = optional(string)
+      source_port_range          = optional(any)
+      source_port_ranges         = optional(any)
+      destination_port_range     = optional(any)
+      destination_port_ranges    = optional(any)
+      source_address_prefix      = optional(any)
       destination_address_prefix = optional(any)
     })))
   }))
@@ -136,65 +136,65 @@ variable "nsg_objects" {
 variable "vm_windows_objects" {
   description = "a list of objects representing a windows vm configuration"
   type = list(object({
-    name = string
-    admin_username = optional(string)
-    admin_password = optional(string)
-    allow_null_version = optional(bool)
-    size = optional(string)
-    size_pattern = optional(string)
-    allow_extension_operations = optional(bool)
-    availability_set_id = optional(string)
+    name                                                   = string
+    admin_username                                         = optional(string)
+    admin_password                                         = optional(string)
+    allow_null_version                                     = optional(bool)
+    size                                                   = optional(string)
+    size_pattern                                           = optional(string)
+    allow_extension_operations                             = optional(bool)
+    availability_set_id                                    = optional(string)
     bypass_platform_safety_checks_on_user_schedule_enabled = optional(bool)
-    capacity_reservation_group_id = optional(string)
-    computer_name = optional(string)
-    custom_data = optional(string)
-    dedicated_host_id = optional(string)
-    dedicated_host_group_id = optional(string)
-    edge_zone = optional(string)
-    enable_automatic_updates = optional(bool)
-    encryption_at_host_enabled = optional(bool)
-    eviction_policy = optional(string)
-    extensions_time_budget = optional(string)
-    hotpatching_enabled = optional(bool)
-    license_type = optional(string)
-    max_bid_price = optional(number)
-    os_name = string
-    patch_assessment_mode = optional(string)
-    patch_mode = optional(string)
-    platform_fault_domain = optional(number)
-    priority = optional(string)
-    provisioning_vm_agent = optional(bool)
-    proximity_placement_group_id = optional(string)
-    reboot_setting = optional(string)
-    source_image_id = optional(string)
-    tags = optional(map(string))
-    timezone = optional(string)
-    virtual_machine_scale_set_id = optional(string)
-    vtpm_enabled = optional(bool)
-    zone = optional(string)
-    secure_boot_enabled = optional(bool)
-  
+    capacity_reservation_group_id                          = optional(string)
+    computer_name                                          = optional(string)
+    custom_data                                            = optional(string)
+    dedicated_host_id                                      = optional(string)
+    dedicated_host_group_id                                = optional(string)
+    edge_zone                                              = optional(string)
+    enable_automatic_updates                               = optional(bool)
+    encryption_at_host_enabled                             = optional(bool)
+    eviction_policy                                        = optional(string)
+    extensions_time_budget                                 = optional(string)
+    hotpatching_enabled                                    = optional(bool)
+    license_type                                           = optional(string)
+    max_bid_price                                          = optional(number)
+    os_name                                                = string
+    patch_assessment_mode                                  = optional(string)
+    patch_mode                                             = optional(string)
+    platform_fault_domain                                  = optional(number)
+    priority                                               = optional(string)
+    provisioning_vm_agent                                  = optional(bool)
+    proximity_placement_group_id                           = optional(string)
+    reboot_setting                                         = optional(string)
+    source_image_id                                        = optional(string)
+    tags                                                   = optional(map(string))
+    timezone                                               = optional(string)
+    virtual_machine_scale_set_id                           = optional(string)
+    vtpm_enabled                                           = optional(bool)
+    zone                                                   = optional(string)
+    secure_boot_enabled                                    = optional(bool)
+
     boot_diagnostics = optional(object({
       storage_account = optional(object({
-      name = string
-      access_tier = optional(string)
-      public_network_access_enabled = optional(bool)
-      account_tier = optional(string)
-      account_replication_type = optional(string)
+        name                          = string
+        access_tier                   = optional(string)
+        public_network_access_enabled = optional(bool)
+        account_tier                  = optional(string)
+        account_replication_type      = optional(string)
 
-      network_rules = optional(object({
-        default_action = optional(string)
-        bypass = optional(set(string))
-        virtual_network_subnet_ids = optional(set(string))
-        ip_rules = optional(set(string))
+        network_rules = optional(object({
+          default_action             = optional(string)
+          bypass                     = optional(set(string))
+          virtual_network_subnet_ids = optional(set(string))
+          ip_rules                   = optional(set(string))
 
-        private_link_access = optional(list(object({
-          endpoint_resource_id = string
-          endpoint_tenant_id = optional(string)
-        })))
+          private_link_access = optional(list(object({
+            endpoint_resource_id = string
+            endpoint_tenant_id   = optional(string)
+          })))
+        }))
       }))
     }))
-  }))
 
     additional_capabilities = optional(object({
       ultra_ssd_enabled = bool
@@ -206,30 +206,30 @@ variable "vm_windows_objects" {
     })))
 
     gallery_application = optional(list(object({
-      version_id = string
+      version_id             = string
       configuration_blob_uri = optional(string)
-      order = optional(number)
-      tag = optional(string)
+      order                  = optional(number)
+      tag                    = optional(string)
     })))
 
     identity = optional(object({
-      type = string
+      type         = string
       identity_ids = optional(set(string))
     }))
 
     os_disk = optional(object({
-      caching = string
-      storage_account_type = optional(string)
-      disk_encryption_set_id = optional(string)
-      disk_size_gb = optional(number)
-      name = optional(string)
+      caching                          = string
+      storage_account_type             = optional(string)
+      disk_encryption_set_id           = optional(string)
+      disk_size_gb                     = optional(number)
+      name                             = optional(string)
       source_vm_disk_encryption_set_id = optional(string)
-      security_encryption_type = optional(string)
+      security_encryption_type         = optional(string)
       secure_vm_disk_encryption_set_id = optional(string)
-      write_accelerator_enabled = optional(bool)
+      write_accelerator_enabled        = optional(bool)
 
       diff_disk_settings = optional(object({
-        option = string
+        option    = string
         placement = optional(string)
       }))
     }))
@@ -239,15 +239,15 @@ variable "vm_windows_objects" {
 
       certificate = optional(list(object({
         store = string
-        url = string
+        url   = string
       })))
     })))
 
     source_image_reference = optional(object({
       publisher = string
-      offer = string
-      sku = string
-      version = string
+      offer     = string
+      sku       = string
+      version   = string
     }))
 
     termination_notification = optional(object({
@@ -256,27 +256,27 @@ variable "vm_windows_objects" {
     }))
 
     winrm_listener = optional(list(object({
-      protocol = string
+      protocol        = string
       certificate_url = optional(string)
     })))
 
     public_ip = optional(object({
-      name = string
+      name              = string
       allocation_method = string
-      sku = optional(string)
-      tags = optional(map(string))
+      sku               = optional(string)
+      tags              = optional(map(string))
     }))
 
     nic = optional(object({
-      name = string
-      dns_servers = optional(list(string))
+      name                 = string
+      dns_servers          = optional(list(string))
       enable_ip_forwarding = optional(bool)
-      edge_zone = optional(string)
-      tags = optional(map(string))
+      edge_zone            = optional(string)
+      tags                 = optional(map(string))
       ip_configuration = optional(object({
-        name = string
-        private_ip_address_version = optional(string)
-        private_ip_address = string
+        name                          = string
+        private_ip_address_version    = optional(string)
+        private_ip_address            = string
         private_ip_address_allocation = optional(string)
       }))
     }))
@@ -287,43 +287,43 @@ variable "vm_windows_objects" {
 variable "vm_linux_objects" {
   description = "a list of objects representing a linux vm configuration"
   type = list(object({
-    name = optional(string)
-    admin_username = optional(string)
-    admin_password = optional(string)
-    allow_null_version = optional(bool)
-    license_type = optional(string)
-    size = optional(string)
-    size_pattern = optional(string)
-    allow_extension_operations = optional(bool)
-    availability_set_id = optional(string)
+    name                                                   = optional(string)
+    admin_username                                         = optional(string)
+    admin_password                                         = optional(string)
+    allow_null_version                                     = optional(bool)
+    license_type                                           = optional(string)
+    size                                                   = optional(string)
+    size_pattern                                           = optional(string)
+    allow_extension_operations                             = optional(bool)
+    availability_set_id                                    = optional(string)
     bypass_platform_safety_checks_on_user_schedule_enabled = optional(bool)
-    capacity_reservation_group_id = optional(string)
-    computer_name = optional(string)
-    custom_data = optional(string)
-    dedicated_host_id = optional(string)
-    dedicated_host_group_id = optional(string)
-    disable_password_authentication = optional(bool)
-    edge_zone = optional(string)
-    encryption_at_host_enabled = optional(bool)
-    eviction_policy = optional(string)
-    extensions_time_budget = optional(string)
-    patch_assessment_mode = optional(string)
-    patch_mode = optional(string)
-    max_bid_price = optional(number)
-    os_name = string
-    platform_fault_domain = optional(number)
-    priority = optional(string)
-    provisioning_vm_agent = optional(bool)
-    proximity_placement_group_id = optional(string)
-    reboot_setting = optional(string)
-    secure_boot_enabled = optional(bool)
-    source_image_id = optional(string)
-    tags = optional(map(string))
-    user_data = optional(string)
-    vtpm_enabled = optional(bool)
-    virtual_machine_scale_set_id = optional(string)
-    zone = optional(string)
-    boot_diagnostic = optional(bool)
+    capacity_reservation_group_id                          = optional(string)
+    computer_name                                          = optional(string)
+    custom_data                                            = optional(string)
+    dedicated_host_id                                      = optional(string)
+    dedicated_host_group_id                                = optional(string)
+    disable_password_authentication                        = optional(bool)
+    edge_zone                                              = optional(string)
+    encryption_at_host_enabled                             = optional(bool)
+    eviction_policy                                        = optional(string)
+    extensions_time_budget                                 = optional(string)
+    patch_assessment_mode                                  = optional(string)
+    patch_mode                                             = optional(string)
+    max_bid_price                                          = optional(number)
+    os_name                                                = string
+    platform_fault_domain                                  = optional(number)
+    priority                                               = optional(string)
+    provisioning_vm_agent                                  = optional(bool)
+    proximity_placement_group_id                           = optional(string)
+    reboot_setting                                         = optional(string)
+    secure_boot_enabled                                    = optional(bool)
+    source_image_id                                        = optional(string)
+    tags                                                   = optional(map(string))
+    user_data                                              = optional(string)
+    vtpm_enabled                                           = optional(bool)
+    virtual_machine_scale_set_id                           = optional(string)
+    zone                                                   = optional(string)
+    boot_diagnostic                                        = optional(bool)
 
     additional_capabilities = optional(object({
       ultra_ssd_enabled = bool
@@ -331,64 +331,64 @@ variable "vm_linux_objects" {
 
     admin_ssh_key = optional(list(object({
       public_key = string
-      username = string
+      username   = string
     })))
 
     boot_diagnostics = optional(object({
       storage_account = optional(object({
-        name = string
-        access_tier = optional(string)
+        name                          = string
+        access_tier                   = optional(string)
         public_network_access_enabled = optional(bool)
-        account_tier = optional(string)
-        account_replication_type = optional(string)
+        account_tier                  = optional(string)
+        account_replication_type      = optional(string)
 
         network_rules = optional(object({
-          default_action = optional(string)
-          bypass = optional(set(string))
+          default_action             = optional(string)
+          bypass                     = optional(set(string))
           virtual_network_subnet_ids = optional(set(string))
-          ip_rules = optional(set(string))
+          ip_rules                   = optional(set(string))
 
           private_link_access = optional(list(object({
             endpoint_resource_id = string
-            endpoint_tenant_id = optional(string)
+            endpoint_tenant_id   = optional(string)
           })))
         }))
       }))
     }))
 
     gallery_application = optional(list(object({
-      version_id = string
+      version_id             = string
       configuration_blob_uri = optional(string)
-      order = optional(number)
-      tag = optional(string)
+      order                  = optional(number)
+      tag                    = optional(string)
     })))
 
     identity = optional(object({
-      type = string
+      type         = string
       identity_ids = optional(set(string))
     }))
 
     os_disk = optional(object({
-      name = optional(string)
-      caching = optional(string)
-      storage_account_type = optional(string)
-      disk_encryption_set_id = optional(string)
-      disk_size_gb = optional(number)
+      name                             = optional(string)
+      caching                          = optional(string)
+      storage_account_type             = optional(string)
+      disk_encryption_set_id           = optional(string)
+      disk_size_gb                     = optional(number)
       secure_vm_disk_encryption_set_id = optional(string)
-      security_encryption_type = optional(string)
-      write_accelerator_enabled = optional(bool)
+      security_encryption_type         = optional(string)
+      write_accelerator_enabled        = optional(bool)
 
       diff_disk_settings = optional(object({
-        option = string
+        option    = string
         placement = optional(string)
       }))
     }))
 
-   plan = optional(object({
-      name = string
-      product = string
+    plan = optional(object({
+      name      = string
+      product   = string
       publisher = string
-   }))
+    }))
 
     secret = optional(object({
       key_vault_id = string
@@ -400,9 +400,9 @@ variable "vm_linux_objects" {
 
     source_image_reference = optional(object({
       publisher = string
-      offer = string
-      sku = string
-      version = string
+      offer     = string
+      sku       = string
+      version   = string
     }))
 
     termination_notification = optional(object({
@@ -411,18 +411,18 @@ variable "vm_linux_objects" {
     }))
 
     public_ip = optional(object({
-      name = string
+      name              = string
       allocation_method = string
-      sku = optional(string)
-      tags = optional(map(string))
+      sku               = optional(string)
+      tags              = optional(map(string))
     }))
 
     nic = optional(object({
-      name = string
-      dns_servers = optional(list(string))
+      name                 = string
+      dns_servers          = optional(list(string))
       enable_ip_forwarding = optional(bool)
-      edge_zone = optional(string)
-      tags = optional(map(string))
+      edge_zone            = optional(string)
+      tags                 = optional(map(string))
     }))
   }))
   default = null
@@ -430,29 +430,29 @@ variable "vm_linux_objects" {
 
 variable "kv_resource_id" {
   description = "the resource id of the key vault to add all vm admin password secrets"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "kv_object" {
   description = "an object representation of a customized kv configuration. use variable 'create_kv_for_vms' to deploy one with default settings"
   type = object({
-    name = optional(string)
-    sku_name = optional(string)
-    enabled_for_deployment = optional(bool)
-    enabled_for_disk_encryption = optional(bool)
+    name                            = optional(string)
+    sku_name                        = optional(string)
+    enabled_for_deployment          = optional(bool)
+    enabled_for_disk_encryption     = optional(bool)
     enabled_for_template_deployment = optional(bool)
-    purge_protection_enabled = optional(bool)
-    public_network_access_enabled = optional(bool)
-    soft_delete_retention_days = optional(number)
-    tags = optional(map(string))
+    purge_protection_enabled        = optional(bool)
+    public_network_access_enabled   = optional(bool)
+    soft_delete_retention_days      = optional(number)
+    tags                            = optional(map(string))
 
     network_acls = optional(object({
-      bypass = optional(string)
-      default_action = optional(string)
-      ip_rules = optional(set(string))
+      bypass                     = optional(string)
+      default_action             = optional(string)
+      ip_rules                   = optional(set(string))
       virtual_network_subnet_ids = optional(set(string))
-      add_vm_subnet_id = optional(bool)
+      add_vm_subnet_id           = optional(bool)
     }))
   })
   default = null
@@ -460,6 +460,6 @@ variable "kv_object" {
 
 variable "script_name" {
   description = "define a custom path for the powershell script that will retrieve sku information"
-  type = string
-  default = null
+  type        = string
+  default     = null
 }
