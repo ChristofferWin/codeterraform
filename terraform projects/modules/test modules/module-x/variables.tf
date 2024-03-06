@@ -1,16 +1,16 @@
 variable "rg_id" {
   type = string
-  default = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/test-rg"
+  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg"
 }
 
 variable "vnet_resource_id" {
   type = string
-  default = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourcegroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet-1337"
+  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourcegroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet"
 }
 
 variable "subnet_resource_id" {
   type = string
-  default = "/subscriptions/d519214d-1363-451a-a24a-234b92d5642b/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet-1337/subnets/default"
+  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default"
 }
 
 variable "vm_windows_objects" {
