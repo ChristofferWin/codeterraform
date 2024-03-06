@@ -121,8 +121,6 @@ jobs:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
             $Paths = $env:TF_PATH
-            Write-Output $Paths
-            $Paths = $Paths.split(" .") | % {".$_"}
             foreach($Item in $Paths){
             cd $Item
             ls
