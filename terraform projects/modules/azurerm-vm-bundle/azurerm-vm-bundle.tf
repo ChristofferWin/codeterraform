@@ -164,8 +164,8 @@ locals {
   bastion_object_pre2 = local.bastion_object_pre == null && var.bastion_object != null ? { for each in [var.bastion_object] : each.name => each } : null
   bastion_object      = local.bastion_object_pre2 != null || local.bastion_object_pre != null ? [for a in flatten([local.bastion_object_pre, local.bastion_object_pre2]) : a if a != null][0] : null
 
-  vm_os_names = distinct(flatten([[for each in local.vm_windows_objects : each.os_name if each.source_image_reference == null], [for each in local.vm_linux_objects : each.os_name if each.source_image_reference == null]]))
-  vm_sizes    = can(jsondecode(data.local_file.vmskus_objects[0].content).VMSizes) ? jsondecode(data.local_file.vmskus_objects[0].content).VMSizes : null
+  vm_os_names = distinct(flatten([[for each in local.vm_windows_objects : each.os_name if can(each.source_image_reference)], [for each in local.vm_linux_objects : each.os_name if can(each.source_image_reference)]]))
+  vm_sizes    = jsondecode(data.local_file.vmskus_objects[0].content).VMSizes
 
   vm_linux_objects   = var.vm_linux_objects == null ? [] : var.vm_linux_objects
   vm_windows_objects = var.vm_windows_objects == null ? [] : var.vm_windows_objects
@@ -261,7 +261,7 @@ locals {
 
   script_commands = length(local.vm_os_names) > 0 ? flatten([for a, b in range(length(local.vm_os_names)) : [
     length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.script_path}${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.script_path}${local.vm_os_names[a]}-skus.json"
-  ]]) : null
+  ]]) : null                                                                                                                                                                                                        
 
   rg_resource_id      = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
   vnet_resource_id    = length(azurerm_virtual_network.vnet_object) > 0 ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
