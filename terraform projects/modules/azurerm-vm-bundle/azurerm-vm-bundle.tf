@@ -111,7 +111,7 @@ locals {
   }] : each.name => each } : null
 
   vnet_object_pre2   = local.vnet_object_pre == null && var.vnet_object != null ? { for each in [var.vnet_object] : each.name => each } : null
-  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : var.vnet_resource_id
+  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
   subnet_objects_pre = var.subnet_objects != null ? { for each in [for x, y in range(length(var.subnet_objects)) : {
     name              = x == 1 || var.subnet_objects[x].name == null ? "AzureBastionSubnet" : var.subnet_objects[x].name
