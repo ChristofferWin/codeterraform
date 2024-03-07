@@ -164,7 +164,7 @@ locals {
   bastion_object_pre2 = local.bastion_object_pre == null && var.bastion_object != null ? { for each in [var.bastion_object] : each.name => each } : null
   bastion_object      = local.bastion_object_pre2 != null || local.bastion_object_pre != null ? [for a in flatten([local.bastion_object_pre, local.bastion_object_pre2]) : a if a != null][0] : null
 
-  vm_os_names = distinct(flatten([[for each in local.vm_windows_objects : each.os_name if can(each.source_image_reference)], [for each in local.vm_linux_objects : each.os_name if can(each.source_image_reference)]]))
+  vm_os_names = distinct(flatten([[for each in local.vm_windows_objects : each.os_name if !can(each.source_image_reference)], [for each in local.vm_linux_objects : each.os_name if !can(each.source_image_reference)]]))
   vm_sizes    = jsondecode(data.local_file.vmskus_objects[0].content).VMSizes
 
   vm_linux_objects   = var.vm_linux_objects == null ? [] : var.vm_linux_objects
