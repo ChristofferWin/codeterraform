@@ -405,7 +405,7 @@ resource "azurerm_virtual_network" "vnet_object" {
 }
 
 resource "azurerm_subnet" "subnet_object" {
-  for_each             = var.create_bastion && var.subnet_resource_id != null ? {for each in [for each in local.subnet_objects : each if each.name != "placeholder"] : each.name => each} : var.subnet_objects != null ? local.subnet_objects : {}
+  for_each             = var.subnet_resource_id == null ? local.subnet_objects : {}
   name                 = each.value.name
   resource_group_name  = local.rg_object.name
   virtual_network_name = can(local.vnet_object_helper.name) ? local.vnet_object_helper.name : split("/", var.vnet_resource_id)[8]
