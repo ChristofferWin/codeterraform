@@ -118,7 +118,7 @@ locals {
   
   subnet_objects_pre =  { for each in [for x, y in range(local.subnet_creation_count) : {
     name              = var.create_bastion ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : var.subnet_objects[x].name
-    address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.var.subnet_objects[x].address_prefixes : var.create_bastion ? [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes if each.name == "AzureBastion"][0] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes if each.name != "AzureBastion"][0]
+    address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : var.create_bastion ? [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes if each.name == "AzureBastion"][0] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes if each.name != "AzureBastion"][0]
     service_endpoints = x != 1 && var.create_bastion == false  ? ["Microsoft.KeyVault"] : null
   }] : each.name => each }
 
