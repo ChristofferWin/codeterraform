@@ -95,6 +95,12 @@ variable "subnet_resource_id" {
   default     = null
 }
 
+variable "subnet_bastion_resource_id" {
+  description = "in case the module is not to create a new subnet for a given bastion deployment, parse a subnet resource id - the subnet must have the name 'AzureBastion' and be at least the size of /26"
+  type = string
+  default = null
+}
+
 variable "bastion_object" {
   description = "define a custom bastion configuration"
   type = object({
