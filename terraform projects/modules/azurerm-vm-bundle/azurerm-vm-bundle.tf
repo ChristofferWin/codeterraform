@@ -353,7 +353,7 @@ locals {
 }
 
 data "azurerm_subnet" "data_subnet_object" {
-  count = var.subnet_resource_id != null && var.subnet_resource_id != null ? 2 : var.subnet_resource_id != null || var.subnet_bastion_resource_id != null ? 1 : 0
+  count = var.subnet_resource_id != null && var.subnet_bastion_resource_id != null ? 2 : var.subnet_resource_id != null || var.subnet_bastion_resource_id != null ? 1 : 0
   name = split("/", local.subnet_data_helper[count.index])[10]
   virtual_network_name = split("/", local.subnet_data_helper[count.index])[8]
   resource_group_name = local.rg_object.name
