@@ -142,7 +142,7 @@ locals {
       destination_port_range     = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
       destination_port_ranges    = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
       source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
-      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : [for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("vm", each.name)) > 0][0]
+      destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : can([for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("vm", each.name)) > 0][0]) ? can([for each in local.subnet_objects : each.address_prefixes[0] if length(regexall("vm", each.name)) > 0][0]) : [for each in data.subnet_data_object : each.address_prefixes if each.name != "AzureBastion"][0]
     }] : uuid() => d }
   }] : a.name => a } : {}
 
@@ -475,7 +475,7 @@ resource "azurerm_network_interface" "nic_object" {
 
   ip_configuration {
     name                          = each.value.ip_configuration_name
-    subnet_id                     = can([for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][1]) ? [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][1] : var.subnet_resource_id != null ? var.subnet_resource_id : [for each in local.subnet_resource_id : each if length(regexall("vm", lower(each))) > 0][0]
+    subnet_id                     = [for each in local.subnet_resource_id : each.id if each.name != "AzureBastion"][0]
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address            = each.value.private_ip_address
     public_ip_address_id          = each.value.pip_resource_id
