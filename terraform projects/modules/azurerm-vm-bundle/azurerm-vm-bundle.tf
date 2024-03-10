@@ -111,7 +111,7 @@ locals {
   }] : each.name => each } : null
 
   vnet_object_pre2   = local.vnet_object_pre == null && var.vnet_object != null ? { for each in [var.vnet_object] : each.name => each } : null
-  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
+  vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : data.azurerm_virtual_network.data_vnet_object[0]
 
   subnet_creation_count = var.subnet_objects != null && var.create_bastion ? 2 : 0
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
@@ -350,6 +350,12 @@ locals {
       }
     }] : null
   }
+}
+
+data "azurerm_virtual_network" "data_vnet_object" {
+  count = var.vnet_resource_id != null ? 1 : 0
+  name = split("/", var.vnet_resource_id)[8]
+  resource_group_name = local.rg_object.name
 }
 
 data "azurerm_subnet" "data_subnet_object" {
