@@ -117,7 +117,7 @@ locals {
 
   subnet_objects_pre =  { for each in [for x, y in range(local.subnet_creation_count) : {
     name              = x == 1 ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : var.subnet_objects[x].name
-    address_prefixes  = x == 1 && !can(cidrsubnet(var.subnet_objects[x].address_prefixes[0], 6, 0)) && can(var.subnet_objects[x].address_prefixes) ? ["${split("/", var.subnet_objects[x].address_prefixes[0])[0]}/${split("/", var.subnet_objects[x].address_prefixes[0])[1] - (6 - (32 - split("/", var.subnet_objects[x].address_prefixes[0])[1]))}"] : x == 1 ? [for each in values(data.data.azurerm_subnet.data_subnet_object) : each.address_prefixes if each.name == "AzureBastion"][0].address_prefixes ? var.subnet_resource_id != null : [for each in values(data.data.azurerm_subnet.data_subnet_object) : each.address_prefixes if each.name != "AzureBastion"][0].address_prefixes : var.subnet_objects[x].address_prefixes
+    address_prefixes  = x == 1 && !can(cidrsubnet(var.subnet_objects[x].address_prefixes[0], 6, 0)) && can(var.subnet_objects[x].address_prefixes) ? ["${split("/", var.subnet_objects[x].address_prefixes[0])[0]}/${split("/", var.subnet_objects[x].address_prefixes[0])[1] - (6 - (32 - split("/", var.subnet_objects[x].address_prefixes[0])[1]))}"] : x == 1 ? [for each in values(data.azurerm_subnet.data_subnet_object) : each.address_prefixes if each.name == "AzureBastion"][0].address_prefixes ? var.subnet_resource_id != null : [for each in values(data.azurerm_subnet.data_subnet_object) : each.address_prefixes if each.name != "AzureBastion"][0].address_prefixes : var.subnet_objects[x].address_prefixes
     service_endpoints = x != 1 ? ["Microsoft.KeyVault"] : null
   }] : each.name => each }
 
