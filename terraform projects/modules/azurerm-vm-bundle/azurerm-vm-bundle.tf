@@ -114,7 +114,8 @@ locals {
   vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
   subnet_creation_count = var.subnet_objects != null && var.create_bastion ? 2 : var.subnet_resource_id != null && var.create_bastion == false ? 1 : 0
-
+  subnet_data_helper = flatten([var.subnet_resource_id, var.subnet_bastion_resource_id])
+  
   subnet_objects_pre =  { for each in [for x, y in range(local.subnet_creation_count) : {
     name              = x == 1 ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : var.subnet_objects[x].name
     address_prefixes  = x == 1 && !can(cidrsubnet(var.subnet_objects[x].address_prefixes[0], 6, 0)) && can(var.subnet_objects[x].address_prefixes) ? ["${split("/", var.subnet_objects[x].address_prefixes[0])[0]}/${split("/", var.subnet_objects[x].address_prefixes[0])[1] - (6 - (32 - split("/", var.subnet_objects[x].address_prefixes[0])[1]))}"] : x == 1 ? [for each in values(data.azurerm_subnet.data_subnet_object) : each.address_prefixes if each.name == "AzureBastion"][0].address_prefixes ? var.subnet_resource_id != null : [for each in values(data.azurerm_subnet.data_subnet_object) : each.address_prefixes if each.name != "AzureBastion"][0].address_prefixes : var.subnet_objects[x].address_prefixes
@@ -353,8 +354,8 @@ locals {
 
 data "azurerm_subnet" "data_subnet_object" {
   count = var.subnet_resource_id != null && var.subnet_resource_id != null ? 2 : var.subnet_resource_id != null || var.subnet_bastion_resource_id != null ? 1 : 0
-  name = split("/", flatten([var.subnet_resource_id, var.subnet_bastion_resource_id])[count.index])[10]
-  virtual_network_name = split("/", flatten([var.subnet_resource_id, var.subnet_bastion_resource_id])[count.index])[8]
+  name = split("/", local.subnet_data_helper[count.index])[10]
+  virtual_network_name = split("/", local.subnet_data_helper[count.index])[8]
   resource_group_name = local.rg_object.name
 }
 
