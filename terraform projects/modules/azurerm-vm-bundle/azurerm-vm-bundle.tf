@@ -206,6 +206,7 @@ locals {
 
   nic_objects = { for each in [for x, y in local.merge_objects : {
     name                          = can(local.merge_objects[x].nic.name) ? local.merge_objects[x].nic.name : "${local.merge_objects[x].name}-nic"
+    subnet_id                     = [for each in local.subnet_resource_id : each if !contains(split("/", each), "AzureBastionSubnet")][0]
     dns_servers                   = can(local.merge_objects[x].nic.dns_servers) ? local.merge_objects[x].nic.dns_servers : null
     enable_ip_forwarding          = can(local.merge_objects[x].nic.enable_ip_forwarding) ? local.merge_objects[x].nic.enable_ip_forwarding : null
     edge_zone                     = can(local.merge_objects[x].nic.edge_zone) ? local.merge_objects[x].nic.edge_zone : null
@@ -482,6 +483,7 @@ resource "azurerm_network_interface" "nic_object" {
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address            = each.value.private_ip_address
     public_ip_address_id          = each.value.pip_resource_id
+    subnet_id = 
   }
 
   lifecycle {
