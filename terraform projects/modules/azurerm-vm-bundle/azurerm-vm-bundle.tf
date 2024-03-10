@@ -117,7 +117,7 @@ locals {
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
   
   subnet_objects = {for each in [for x, y in range(local.subnet_creation_count) : {
-    name              = x == 1 && var.create_bastion || x == 0 && var.subnet_resource_id == null ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : var.subnet_objects[x].name
+    name              = x == 1 && var.create_bastion || x == 0 && local.subnet_creation_count == 1 ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : var.subnet_objects[x].name
     address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : null
     service_endpoints = x != 1 && var.create_bastion == false  ? ["Microsoft.KeyVault"] : null
   }] : each.name => each}
