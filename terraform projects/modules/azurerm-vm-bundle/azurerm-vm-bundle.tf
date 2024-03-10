@@ -475,7 +475,7 @@ resource "azurerm_network_interface" "nic_object" {
 
   ip_configuration {
     name                          = each.value.ip_configuration_name
-    subnet_id                     = [for each in local.subnet_resource_id : each.id if each.name != "AzureBastion"][0]
+    subnet_id                     = [for each in local.subnet_return_object : each.id if each.name != "AzureBastion" > 0][0]
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address            = each.value.private_ip_address
     public_ip_address_id          = each.value.pip_resource_id
