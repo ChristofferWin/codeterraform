@@ -483,7 +483,7 @@ resource "azurerm_network_interface" "nic_object" {
     private_ip_address_allocation = each.value.private_ip_address_allocation
     private_ip_address            = each.value.private_ip_address
     public_ip_address_id          = each.value.pip_resource_id
-    subnet_id = 
+    subnet_id                     = each.value.subnet_id
   }
 
   lifecycle {
