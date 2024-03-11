@@ -5,17 +5,17 @@ variable "rg_id" {
 
 variable "vnet_resource_id" {
   type = string
-  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourcegroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet"
+  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourcegroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-rg"
 }
 
 variable "subnet_resource_id" {
   type = string
-  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/vm-tester"
+  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-rg/subnets/vm-tester"
 }
 
 variable "subnet_bastion_resource_id" {
   type = string
-  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/AzureBastion"
+  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-rg/subnets/AzureBastion"
 }
 
 variable "vm_windows_objects" {
@@ -38,12 +38,10 @@ variable "vm_linux_objects" {
     {
         name = "test-linux-vm01"
         os_name = "DeBiAn10"
-        vm_size = "D1"
     },
     {
         name = "test-linux-vm02"
         os_name = "DeBiaN11"
-        vm_size = "D1"
     }
 ]
 }
@@ -55,7 +53,7 @@ variable "script_name" {
 
 variable "location" {
   type = string
-  default = "westeurope"
+  default = "northeurope"
 }
 
 variable "subnet_object" {
