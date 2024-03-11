@@ -38,10 +38,12 @@ variable "vm_linux_objects" {
     {
         name = "test-linux-vm01"
         os_name = "DeBiAn10"
+        vm_size = "D1"
     },
     {
         name = "test-linux-vm02"
         os_name = "DeBiaN11"
+        vm_size = "D1"
     }
 ]
 }
@@ -54,4 +56,18 @@ variable "script_name" {
 variable "location" {
   type = string
   default = "westeurope"
+}
+
+variable "subnet_object" {
+  type = any
+  default = [
+    {
+      name = "tester-subnet"
+      address_prefixes = ["10.0.3.0/24"]
+    },
+    {
+      name = "asdasdasd"
+      address_prefixes = ["10.0.4.0/24"]
+    }
+  ]
 }

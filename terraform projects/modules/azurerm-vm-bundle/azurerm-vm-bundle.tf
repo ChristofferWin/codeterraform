@@ -511,7 +511,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
       destination_port_range     = security_rule.value.destination_port_range
       destination_port_ranges    = security_rule.value.destination_port_ranges
       source_address_prefix      = security_rule.value.source_address_prefix
-      destination_address_prefix = security_rule.value.destination_address_prefix
+      destination_address_prefix = security_rule.value.destination_address_prefix[0]
     }
   }
 
