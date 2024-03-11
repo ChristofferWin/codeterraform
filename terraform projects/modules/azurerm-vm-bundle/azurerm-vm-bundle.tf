@@ -113,7 +113,7 @@ locals {
   vnet_object_pre2   = local.vnet_object_pre == null && var.vnet_object != null ? { for each in [var.vnet_object] : each.name => each } : null
   vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
-  subnet_creation_count = var.subnet_objects != null && var.create_bastion ? 2 : var.subnet_bastion_resource_id == null && var.create_bastion ? 1 : 0
+  subnet_creation_count = var.subnet_objects != null && var.create_bastion ? 2 : var.subnet_bastion_resource_id == null && var.create_bastion && var.subnet_resource_id == null ? 1 : 0
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
   
   subnet_objects = {for each in [for x, y in range(local.subnet_creation_count) : {
