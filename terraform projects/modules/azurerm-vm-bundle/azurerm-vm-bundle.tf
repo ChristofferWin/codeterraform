@@ -117,7 +117,7 @@ locals {
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
   
   subnet_objects = {for each in [for x, y in range(local.subnet_creation_count) : {
-    name              = x == 1 && var.create_bastion || x == 0 && local.subnet_creation_count == 1 ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : var.subnet_objects[x].name
+    name              = x == 1 && var.create_bastion || x == 0 && local.subnet_creation_count == 1 ? "AzureBastionSubnet" : var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : "vm-subnet"
     address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : null
     service_endpoints = x != 1 && var.create_bastion == false  ? ["Microsoft.KeyVault"] : null
   }] : each.name => each}
@@ -206,7 +206,7 @@ locals {
 
   nic_objects = { for each in [for x, y in local.merge_objects : {
     name                          = can(local.merge_objects[x].nic.name) ? local.merge_objects[x].nic.name : "${local.merge_objects[x].name}-nic"
-    subnet_id                     = local.subnet_return_object != null ? [for each in values(local.subnet_return_object) : each.id if each.name != "AzureBastionSubnet"][0] : [for each in local.subnet_resource_id : each if !contains(split("/", each), "AzureBastionSubnet")][0]
+    subnet_id                     = local.subnet_return_object != null ? [for each in local.subnet_return_object : each.id if each.name != "AzureBastionSubnet"][0] : [for each in local.subnet_resource_id : each if !contains(split("/", each), "AzureBastionSubnet")][0]
     dns_servers                   = can(local.merge_objects[x].nic.dns_servers) ? local.merge_objects[x].nic.dns_servers : null
     enable_ip_forwarding          = can(local.merge_objects[x].nic.enable_ip_forwarding) ? local.merge_objects[x].nic.enable_ip_forwarding : null
     edge_zone                     = can(local.merge_objects[x].nic.edge_zone) ? local.merge_objects[x].nic.edge_zone : null
