@@ -113,12 +113,12 @@ locals {
   vnet_object_pre2   = local.vnet_object_pre == null && var.vnet_object != null ? { for each in [var.vnet_object] : each.name => each } : null
   vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
-  subnet_creation_count = var.subnet_objects != null && var.create_bastion || var.subnet_bastion_resource_id == null && var.create_bastion && var.subnet_resource_id == null ? 2 : var.subnet_objects != null || var.subnet_resource_id != null && var.create_bastion ? 1 : 0
+  subnet_creation_count = var.subnet_objects != null && var.create_bastion && var.subnet_resource_id == null || var.subnet_bastion_resource_id == null && var.create_bastion && var.subnet_resource_id == null ? 2 : var.subnet_objects != null || var.subnet_resource_id != null && var.create_bastion ? 1 : 0
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
   
   subnet_objects = {for each in [for x, y in range(local.subnet_creation_count) : {
     name              = x == 0 && var.create_bastion ? "AzureBastionSubnet" :  var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : "vm-subnet"
-    address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : null
+    address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : data.azurerm_virtual_network.data_vnet_object.address_space[0]
     service_endpoints = x != 0 && var.create_bastion == false  ? ["Microsoft.KeyVault"] : null
   }] : each.name => each}
 
