@@ -115,10 +115,11 @@ locals {
 
   subnet_creation_count = var.subnet_objects != null && var.create_bastion && var.subnet_resource_id == null || var.subnet_bastion_resource_id == null && var.create_bastion && var.subnet_resource_id == null ? 2 : var.subnet_objects != null || var.subnet_resource_id != null && var.create_bastion ? 1 : 0
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
+  vnet_address_space = can(local.vnet_data_object.address_space[0]) ? local.vnet_data_object.address_space[0] : null
   
   subnet_objects = {for each in [for x, y in range(local.subnet_creation_count) : {
     name              = x == 0 && var.create_bastion ? "AzureBastionSubnet" :  var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : "vm-subnet"
-    address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : data.azurerm_virtual_network.data_vnet_object.address_space[0]
+    address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : can(cidrsubnet(local.vnet_address_space, 1, 1)) ? cidrsubnet(local.vnet_address_space, 26 - tonumber(split("/", local.vnet_address_space)[1]), pow(26 - tonumber(split("/", local.vnet_address_space)[1]) - 1)) : null
     service_endpoints = x != 0 && var.create_bastion == false  ? ["Microsoft.KeyVault"] : null
   }] : each.name => each}
 
@@ -284,6 +285,10 @@ locals {
   linux_return_object   = length(azurerm_linux_virtual_machine.vm_linux_object) > 0 ? azurerm_linux_virtual_machine.vm_linux_object : null
   storage_return_object = length(azurerm_storage_account.vm_storage_account_object) > 0 ? azurerm_storage_account.vm_storage_account_object : null
   kv_return_object      = length(azurerm_key_vault.vm_kv_object) > 0 ? azurerm_key_vault.vm_kv_object : null
+
+  //Data objects
+  vnet_data_object = length(data.azurerm_virtual_network.data_vnet_object) > 0 ? data.azurerm_virtual_network.data_vnet_object[0] : null
+  subnet_data_object = length(data.azurerm_subnet.data_subnet_object) > 0 ? data.azurerm_subnet.data_subnet_object : null
 
   summary_of_deployment = {
     prefix_for_names_used   = var.env_name != null ? true : false
