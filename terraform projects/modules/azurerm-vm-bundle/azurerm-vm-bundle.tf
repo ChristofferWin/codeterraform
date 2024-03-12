@@ -267,7 +267,7 @@ locals {
 
   rg_resource_id      = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
   vnet_resource_id    = length(azurerm_virtual_network.vnet_object) > 0 ? flatten(values(azurerm_virtual_network.vnet_object))[0].id : var.vnet_resource_id
-  subnet_resource_id  = length(azurerm_subnet.subnet_object) > 0 ? flatten(values(azurerm_subnet.subnet_object).*.id) : flatten(data.azurerm_subnet.data_subnet_object.*.id)
+  subnet_resource_id  = length(azurerm_subnet.subnet_object) > 1 ? flatten(values(azurerm_subnet.subnet_object).*.id) : local.subnet_data_helper
   pip_resource_id     = length(azurerm_public_ip.pip_object) > 0 ? flatten(values(azurerm_public_ip.pip_object).*.id) : []
   nic_resource_id     = length(azurerm_network_interface.nic_object) > 0 ? flatten(values(azurerm_network_interface.nic_object).*.id) : []
   nsg_resource_id     = length(azurerm_network_security_group.vm_nsg_object) > 0 ? flatten(values(azurerm_network_security_group.vm_nsg_object).*.id) : []
