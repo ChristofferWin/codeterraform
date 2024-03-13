@@ -505,7 +505,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
   tags                = each.value.tags
 
   dynamic "security_rule" {
-    for_each = can(length(each.value.security_rules)) ? [{for each in each.value.security_rules : each.name => each}] : [{}]
+    for_each = can(length(each.value.security_rules)) ? {for each in each.value.security_rules : each.name => each} : {}
     content {
       name                       = security_rule.value.name
       priority                   = security_rule.value.priority
