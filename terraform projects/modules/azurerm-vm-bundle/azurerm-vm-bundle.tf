@@ -888,7 +888,7 @@ resource "azurerm_key_vault" "vm_kv_object" {
   tags                            = each.value.tags
 
   dynamic "network_acls" {
-    for_each = can(length(var.kv_object.network_acls.bypass)) ? [{ for each in var.kv_object.network_acls : "acl" => each }] : can(local.kv_object.network_acls) ? [{ for each in [local.kv_object.network_acls] : "acl" => each }] : {}
+    for_each = can(length(var.kv_object.network_acls.bypass)) ? [{ for each in var.kv_object.network_acls : "acl" => each }][0] : can(local.kv_object.network_acls) ? [{ for each in local.kv_object.network_acls : "acl" => each }] : {}
     content {
       bypass                     = network_acls.value.bypass
       default_action             = network_acls.value.default_action
