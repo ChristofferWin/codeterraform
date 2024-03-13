@@ -458,6 +458,7 @@ resource "azurerm_bastion_host" "bastion_object" {
   copy_paste_enabled  = each.value.copy_paste_enabled
   file_copy_enabled   = each.value.file_copy_enabled
   sku                 = each.value.sku
+  scale_units         = each.value.scale_units
   tags                = can(each.value.tags) ? each.value.tags : null
 
   ip_configuration {
