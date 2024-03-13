@@ -505,7 +505,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
   tags                = each.value.tags
 
   dynamic "security_rule" {
-    for_each = can(length(each.value.security_rules)) ? each.value.security_rules : {}
+    for_each = can(length(each.value.security_rules)) ? [each.value.security_rules] : []
     content {
       name                       = security_rule.value.name
       priority                   = security_rule.value.priority
@@ -891,9 +891,9 @@ resource "azurerm_key_vault" "vm_kv_object" {
     for_each = can(length(var.kv_object.network_acls.bypass)) ? { for each in [var.kv_object.network_acls] : uuid()  => each } : can(local.kv_object.network_acls) ? { for each in [local.kv_object.network_acls] : uuid() => each } : {}
     content {
       bypass                     = network_acls.value.bypass
-      default_action             = network_acls.value[0].default_action
-      ip_rules                   = network_acls.value[0].ip_rules
-      virtual_network_subnet_ids = network_acls.value[0].virtual_network_subnet_ids
+      default_action             = network_acls.value.default_action
+      ip_rules                   = network_acls.value.ip_rules
+      virtual_network_subnet_ids = network_acls.value.virtual_network_subnet_ids
     }
   }
 
