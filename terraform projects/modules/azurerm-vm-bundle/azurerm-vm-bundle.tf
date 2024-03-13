@@ -140,7 +140,7 @@ locals {
       source_port_ranges         = can(var.nsg_objects[b].security_rules[e].source_port_ranges) ? var.nsg_objects[b].security_rules[e].source_port_ranges : null
       destination_port_range     = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
       destination_port_ranges    = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
-      source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
+      source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : ["*"]
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : var.subnet_resource_id == null ? [for each in local.subnet_return_object : each.address_prefixes[0] if each.name != "AzureBastion"] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes[0] if each.name != "AzureBastion"][0]
     }] : uuid() => d }
   }] : a.name => a } : {}
@@ -888,7 +888,7 @@ resource "azurerm_key_vault" "vm_kv_object" {
   tags                            = each.value.tags
 
   dynamic "network_acls" {
-    for_each = can(length(var.kv_object.network_acls.bypass)) ? { for each in var.kv_object.network_acls : "network_acls" => each } : can(local.kv_object.network_acls) ? { for each in [local.kv_object.network_acls] : "network_acls" => each } : {}
+    for_each = can(length(var.kv_object.network_acls.bypass)) ? { for each in var.kv_object.network_acls : uuid() => each } : can(local.kv_object.network_acls) ? { for each in [local.kv_object.network_acls] : uuid() => each } : {}
     content {
       bypass                     = network_acls.value.bypass
       default_action             = network_acls.value.default_action
