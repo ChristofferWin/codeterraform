@@ -529,7 +529,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
 
 resource "azurerm_subnet_network_security_group_association" "vm_nsg_link_object" {
   for_each                  = local.nsg_objects
-  subnet_id                 = [for a in local.subnet_resource_id : a if length(regexall("vm", a)) > 0][0]
+  subnet_id                 = [for a in local.subnet_resource_id : a if length(regexall("bastion", lower(a))) == 0][0]
   network_security_group_id = [for a in local.nsg_resource_id : a if length(regexall(each.key, a)) > 0][0]
 
   lifecycle {
