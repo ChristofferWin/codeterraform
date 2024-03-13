@@ -118,7 +118,7 @@ locals {
   vnet_address_space = can(local.vnet_data_object.address_space[0]) ? local.vnet_data_object.address_space[0] : null
   
   subnet_objects = {for each in [for x, y in range(local.subnet_creation_count) : {
-    name              = x == 0 && var.create_bastion ? "AzureBastionSubnet" :  var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : "vm-subnet"
+    name              = x == 0 && var.create_bastion ? "AzureBastionSubnet" :  var.subnet_resource_id != null ? split("/",var.subnet_resource_id)[10] : !can(var.subnet_objects[x].name) ? "vm-subnet" : length(regexall("bastion",lower(var.subnet_objects[x].name))) == 0 ? var.subnet_objects[x].name : null
     address_prefixes  = can(var.subnet_objects[x].address_prefixes) ? var.subnet_objects[x].address_prefixes : can(cidrsubnet(local.vnet_address_space, 1, 1)) ? [cidrsubnet(local.vnet_address_space, 26 - tonumber(split("/", local.vnet_address_space)[1]), pow(2, 26 - tonumber(split("/", local.vnet_address_space)[1])) -1)] : x == 0 && var.create_bastion ? [cidrsubnet(local.vnet_object_helper.address_space[1], 2, 0)] : [cidrsubnet(local.vnet_object_helper.address_space[0], 1, 0)]
     service_endpoints = x != 0 && var.create_bastion == false  ? ["Microsoft.KeyVault"] : null
   }] : each.name => each}
