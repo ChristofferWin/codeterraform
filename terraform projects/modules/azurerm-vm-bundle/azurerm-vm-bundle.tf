@@ -113,7 +113,7 @@ locals {
   vnet_object_pre2   = local.vnet_object_pre == null && var.vnet_object != null ? { for each in [var.vnet_object] : each.name => each } : null
   vnet_object_helper = can(values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0]) ? values(flatten([for each in [local.vnet_object_pre, local.vnet_object_pre2] : each if each != null])[0])[0] : null
 
-  subnet_creation_count = var.subnet_objects != null && var.create_bastion && var.subnet_resource_id == null || var.subnet_bastion_resource_id == null && var.create_bastion && var.subnet_resource_id == null ? 2 : var.subnet_objects != null || var.subnet_resource_id != null && var.create_bastion || var.subnet_resource_id == null ? 1 : 0
+  subnet_creation_count = var.subnet_objects != null && (var.create_bastion || var.bastion_object != null) && var.subnet_resource_id == null || var.subnet_bastion_resource_id == null && var.create_bastion && var.subnet_resource_id == null ? 2 : var.subnet_objects != null || var.subnet_resource_id != null && var.create_bastion || var.subnet_resource_id == null ? 1 : 0
   subnet_data_helper = compact([var.subnet_resource_id, var.subnet_bastion_resource_id])
   vnet_address_space = can(local.vnet_data_object.address_space[0]) ? local.vnet_data_object.address_space[0] : null
   
@@ -143,7 +143,7 @@ locals {
       source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : ["*"]
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : var.subnet_resource_id == null ? [for each in local.subnet_return_object : each.address_prefixes[0] if each.name != "AzureBastion"] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes[0] if each.name != "AzureBastion"][0]
     }] : uuid() => d }
-  }] : a.name => a } : {}
+  }] : a.name => a } : null
 
   pip_objects = can(length(local.merge_objects_pip)) ? { for each in [for each in local.merge_objects_pip : {
     name              = each.name == "bastion" && var.env_name != null ? "${var.env_name}-bastion-pip" : each.name == "bastion" ? "bastion-pip" : each.public_ip != null ? each.public_ip.name : var.env_name != null ? "${var.env_name}-${each.name}-pip" : "${each.name}-pip"
