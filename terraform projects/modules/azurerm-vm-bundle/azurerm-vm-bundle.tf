@@ -128,7 +128,7 @@ locals {
 
   nsg_objects = local.nsg_objects_pre > 0 ? { for a in [for b, c in range(local.nsg_objects_pre) : {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
-    tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : {}
+    tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
 
     security_rules = can(length(var.nsg_objects[b].no_rules)) || var.subnet_resource_id != null ? null : { for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
       name                       = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
@@ -143,7 +143,7 @@ locals {
       source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : var.subnet_resource_id == null ? [for each in local.subnet_return_object : each.address_prefixes[0] if each.name != "AzureBastion"][0] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes[0] if each.name != "AzureBastion"][0]
     }] : uuid() => d }
-  }] : a.name => a } : null
+  }] : a.name => a } : {}
 
   pip_objects = can(length(local.merge_objects_pip)) ? { for each in [for each in local.merge_objects_pip : {
     name              = each.name == "bastion" && var.env_name != null ? "${var.env_name}-bastion-pip" : each.name == "bastion" ? "bastion-pip" : each.public_ip != null ? each.public_ip.name : var.env_name != null ? "${var.env_name}-${each.name}-pip" : "${each.name}-pip"
