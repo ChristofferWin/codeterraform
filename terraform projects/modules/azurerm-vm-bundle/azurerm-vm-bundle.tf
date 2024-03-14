@@ -128,7 +128,7 @@ locals {
 
   nsg_objects = local.nsg_objects_pre > 0 ? { for a in [for b, c in range(local.nsg_objects_pre) : {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
-    tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
+    tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : {}
 
     security_rules = can(length(var.nsg_objects[b].no_rules)) || var.subnet_resource_id != null ? null : { for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
       name                       = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
