@@ -430,6 +430,7 @@ resource "azurerm_subnet" "subnet_object" {
   resource_group_name  = local.rg_object.name
   virtual_network_name = can(local.vnet_object_helper.name) ? local.vnet_object_helper.name : split("/", var.vnet_resource_id)[8]
   address_prefixes     = each.value.address_prefixes
+  service_endpoints = each.value.service_endpoints
 
   depends_on = [azurerm_virtual_network.vnet_object]
 }
