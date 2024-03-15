@@ -689,7 +689,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   }
 
   lifecycle {
-    ignore_changes = [source_image_reference, boot_diagnostics, admin_password, network_interface_ids]
+    ignore_changes = [source_image_reference, boot_diagnostics, admin_password, network_interface_ids, identity]
   }
 
   depends_on = [ azurerm_storage_account.vm_storage_account_object ]
@@ -871,7 +871,7 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
   }
 
   lifecycle {
-    ignore_changes = [name, access_tier]
+    ignore_changes = [name, access_tier, network_rules]
   }
 }
 
