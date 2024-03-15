@@ -506,7 +506,7 @@ resource "azurerm_network_security_group" "vm_nsg_object" {
   tags                = each.value.tags
 
   dynamic "security_rule" {
-    for_each = each[0].value.security_rules
+    for_each = each.value.security_rules
     content {
       name                       = security_rule.value.name
       priority                   = security_rule.value.priority
