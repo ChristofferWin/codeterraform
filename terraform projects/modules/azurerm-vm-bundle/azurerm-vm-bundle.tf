@@ -143,7 +143,7 @@ locals {
       source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : var.subnet_resource_id == null ? [for each in local.subnet_return_object : each.address_prefixes[0] if each.name != "AzureBastion"][0] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes[0] if each.name != "AzureBastion"][0]
     }] : uuid() => d }
-  }] : a.name => a } : {}
+  }] : a.name => a } : null
 
   pip_objects = can(length(local.merge_objects_pip)) ? { for each in [for each in local.merge_objects_pip : {
     name              = each.name == "bastion" && var.env_name != null ? "${var.env_name}-bastion-pip" : each.name == "bastion" ? "bastion-pip" : each.public_ip != null ? each.public_ip.name : var.env_name != null ? "${var.env_name}-${each.name}-pip" : "${each.name}-pip"
@@ -499,7 +499,7 @@ resource "azurerm_network_interface" "nic_object" {
 }
 
 resource "azurerm_network_security_group" "vm_nsg_object" {
-  for_each            = local.nsg_objects
+  for_each            = can(length(local.nsg_objects)) ? local.nsg_objects : {}
   name                = each.key
   resource_group_name = local.rg_object.name
   location            = var.location
