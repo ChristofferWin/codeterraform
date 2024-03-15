@@ -835,7 +835,7 @@ resource "azurerm_linux_virtual_machine" "vm_linux_object" {
   }
 
   lifecycle {
-    ignore_changes = [admin_password, boot_diagnostics, admin_ssh_key]
+    ignore_changes = [admin_password, boot_diagnostics, admin_ssh_key, identity]
   }
 
   depends_on = [ azurerm_storage_account.vm_storage_account_object ]
