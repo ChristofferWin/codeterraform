@@ -126,7 +126,7 @@ locals {
   nsg_objects_pre       = !can(length(var.nsg_objects)) && var.create_nsg ? 1 : can(length(var.nsg_objects)) ? length(var.nsg_objects) : 0
   nsg_objects_rules_pre = can(var.nsg_objects.*.security_rules) ? length(flatten(var.nsg_objects.*.security_rules)) : 1
 
-  nsg_objects = local.nsg_objects_pre > 0 ? {for a in [for b, c in range(local.nsg_objects_pre) : {
+  nsg_objects = {for a in [for b, c in range(local.nsg_objects_pre) : {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
     subnet_id = can(var.nsg_objects[b].subnet_id) ? var.nsg_objects[b].subnet_id : var.subnet_resource_id != null ? var.subnet_resource_id : var.subnet_objects != null ? [for a in local.subnet_resource_id : a if length(regexall("Bastion", a)) == 0][0] : [for each in local.subnet_resource_id : each if length(regexall("vm", each)[0]) > 0][0]
     tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
@@ -144,7 +144,7 @@ locals {
       source_address_prefix = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : var.subnet_resource_id == null ? [for each in local.subnet_return_object : each.address_prefixes[0] if each.name != "AzureBastion"][0] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes[0] if each.name != "AzureBastion"][0]
     }] : uuid() => d} 
-  }] : a.name => a} : {}
+  }] : a.name => a}
 
   pip_objects = can(length(local.merge_objects_pip)) ? { for each in [for each in local.merge_objects_pip : {
     name              = each.name == "bastion" && var.env_name != null ? "${var.env_name}-bastion-pip" : each.name == "bastion" ? "bastion-pip" : each.public_ip != null ? each.public_ip.name : var.env_name != null ? "${var.env_name}-${each.name}-pip" : "${each.name}-pip"
