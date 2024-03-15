@@ -126,24 +126,25 @@ locals {
   nsg_objects_pre       = !can(length(var.nsg_objects)) && var.create_nsg ? 1 : can(length(var.nsg_objects)) ? length(var.nsg_objects) : 0
   nsg_objects_rules_pre = can(var.nsg_objects.*.security_rules) ? length(flatten(var.nsg_objects.*.security_rules)) : 1
 
-  nsg_objects = local.nsg_objects_pre > 0 ? { for a in [for b, c in range(local.nsg_objects_pre) : {
+  nsg_objects = local.nsg_objects_pre > 0 ? {for a in [for b, c in range(local.nsg_objects_pre) : {
     name = can(var.nsg_objects[b].name) ? var.nsg_objects[b].name : var.env_name != null ? "${var.env_name}-vm-nsg" : "vm-nsg"
+    subnet_id = can(var.nsg_objects[b].subnet_id) ? var.nsg_objects[b].subnet_id : var.subnet_resource_id != null ? var.subnet_resource_id : var.subnet_objects != null ? [for a in local.subnet_resource_id : a if length(regexall("Bastion", a)) == 0][0] : [for each in local.subnet_resource_id : each if length(regexall("vm", each)[0]) > 0][0]
     tags = can(var.nsg_objects[b].tags) ? var.nsg_objects[b].tags : null
 
-    security_rules = can(length(var.nsg_objects[b].no_rules)) || var.subnet_resource_id != null ? null : { for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
-      name                       = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
-      priority                   = can(var.nsg_objects[b].security_rules[e].priority) ? var.nsg_objects[b].security_rules[e].priority : 100
-      direction                  = can(var.nsg_objects[b].security_rules[e].direction) ? var.nsg_objects[b].security_rules[e].direction : "Inbound"
-      access                     = can(var.nsg_objects[b].security_rules[e].access) ? var.nsg_objects[b].security_rules[e].access : "Allow"
-      protocol                   = can(var.nsg_objects[b].security_rules[e].protocol) ? var.nsg_objects[b].security_rules[e].protocol : "Tcp"
-      source_port_range          = can(var.nsg_objects[b].security_rules[e].source_port_range) ? var.nsg_objects[b].security_rules[e].source_port_range : "*"
-      source_port_ranges         = can(var.nsg_objects[b].security_rules[e].source_port_ranges) ? var.nsg_objects[b].security_rules[e].source_port_ranges : null
-      destination_port_range     = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
-      destination_port_ranges    = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
-      source_address_prefix      = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
+    security_rules = {for d in [for e, f in range(local.nsg_objects_rules_pre) : { //
+      name = can(var.nsg_objects[b].security_rules[e].name) ? var.nsg_objects[b].security_rules[e].name : "ALLOW-3389_22-INBOUND-FROM-ANY"
+      priority = can(var.nsg_objects[b].security_rules[e].priority) ? var.nsg_objects[b].security_rules[e].priority : 100
+      direction = can(var.nsg_objects[b].security_rules[e].direction) ? var.nsg_objects[b].security_rules[e].direction : "Inbound"
+      access = can(var.nsg_objects[b].security_rules[e].access) ? var.nsg_objects[b].security_rules[e].access : "Allow"
+      protocol = can(var.nsg_objects[b].security_rules[e].protocol) ? var.nsg_objects[b].security_rules[e].protocol : "Tcp"
+      source_port_range = can(var.nsg_objects[b].security_rules[e].source_port_range) ? var.nsg_objects[b].security_rules[e].source_port_range : "*"
+      source_port_ranges = can(var.nsg_objects[b].security_rules[e].source_port_ranges) ? var.nsg_objects[b].security_rules[e].source_port_ranges : null
+      destination_port_range = can(var.nsg_objects[b].security_rules[e].destination_port_range) ? var.nsg_objects[b].security_rules[e].destination_port_range : null
+      destination_port_ranges = can(var.nsg_objects[b].security_rules[e].destination_port_ranges) ? var.nsg_objects[b].security_rules[e].destination_port_ranges : [22, 3389]
+      source_address_prefix = can(var.nsg_objects[b].security_rules[e].source_address_prefix) ? var.nsg_objects[b].security_rules[e].source_address_prefix : "*"
       destination_address_prefix = can(var.nsg_objects[b].security_rules[e].destination_address_prefix) ? var.nsg_objects[b].security_rules[e].destination_address_prefix : var.subnet_resource_id == null ? [for each in local.subnet_return_object : each.address_prefixes[0] if each.name != "AzureBastion"][0] : [for each in data.azurerm_subnet.data_subnet_object : each.address_prefixes[0] if each.name != "AzureBastion"][0]
-    }] : uuid() => d }
-  }] : a.name => a } : null
+    }] : uuid() => d} 
+  }] : a.name => a} : {}
 
   pip_objects = can(length(local.merge_objects_pip)) ? { for each in [for each in local.merge_objects_pip : {
     name              = each.name == "bastion" && var.env_name != null ? "${var.env_name}-bastion-pip" : each.name == "bastion" ? "bastion-pip" : each.public_ip != null ? each.public_ip.name : var.env_name != null ? "${var.env_name}-${each.name}-pip" : "${each.name}-pip"
@@ -499,7 +500,7 @@ resource "azurerm_network_interface" "nic_object" {
 }
 
 resource "azurerm_network_security_group" "vm_nsg_object" {
-  for_each            = can(length(local.nsg_objects)) ? [local.nsg_objects] : [0]
+  for_each            = local.nsg_objects
   name                = each.key
   resource_group_name = local.rg_object.name
   location            = var.location
