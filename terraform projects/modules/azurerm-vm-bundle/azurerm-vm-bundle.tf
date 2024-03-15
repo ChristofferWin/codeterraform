@@ -499,14 +499,14 @@ resource "azurerm_network_interface" "nic_object" {
 }
 
 resource "azurerm_network_security_group" "vm_nsg_object" {
-  for_each            = can(length(local.nsg_objects)) ? local.nsg_objects : {}
-  name                = each.key
+  for_each            = can(length(local.nsg_objects)) ? [local.nsg_objects] : [0]
+  name                = each[0].key
   resource_group_name = local.rg_object.name
   location            = var.location
-  tags                = each.value.tags
+  tags                = each[0].value.tags
 
   dynamic "security_rule" {
-    for_each = each.value.security_rules
+    for_each = each[0].value.security_rules
     content {
       name                       = security_rule.value.name
       priority                   = security_rule.value.priority
