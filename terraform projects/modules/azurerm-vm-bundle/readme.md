@@ -310,7 +310,7 @@ env_name_7 = "tst" = test
 2. subnet_objects = a list of objects defining:
     - name
     - address_prefixes (bastion must be at least /26)
-    - The structure must be created in a specific order, see the examples for an explanation
+    - The order of defining the objects are defining the bastion subnet first, then the vm subnet - See the examples for a more detailed explanation
 3. bastion_object = an object defining:
     - name
     - copy_paste_enabled
@@ -336,23 +336,24 @@ env_name_7 = "tst" = test
 ```hcl
 //We will only define some simple object configurations here. For more information, see the advanced examples
 vnet_object = {
-  address_space = ["192.168.0.0/20"]
+  address_space = ["172.16.0.0/16"]
   name = "custom-vnet"
   tags = {
     "environment" = "prod"
   }
 }
 
-//You need define 2 subnets in case 'create_bastion = true' The module will always use index 0 for the vm's
+//You need define 2 subnets in case 'create_bastion = true' The module will always use index 0 for bastion
 //Name is not required and for the bastion subnet it will always be 'AzureBastionSubnet' Regardless of user defined name
 subnet_objects = [
-  {
-    name = "custom-vm-subnet"
-    address_prefixes = ["192.168.0.0/22"]
-  },
-  {
-    address_prefixes = ["192.168.10.0/24"]
-  }
+ {
+  name = "WILL BE REPLACED BY 'AzureBastionSubnet'"
+  address_prefixes = ["172.16.99.0/26"]
+ },
+ {
+  name = "myvm-subnet"
+  address_prefixes = ["172.16.0.0/24"]
+ }
 ]
 
 create_bastion = true
@@ -392,8 +393,8 @@ The below list also contain resource types default value in case the user adds a
     - any other environment name = ["192.168.0.0/24", "192.168.99.0/24"] (can be used for environments like dev)
 4. Subnet(s)
   - The address prefixes of each subnet, bastion subnet wont be created unless the resource is to be deployed
-    - vm subnet = /25 (123 host addresses)
     - bastion subnet = /26 (as per required by Azure)
+    - vm subnet = /25 (123 host addresses)
 5. Bastion
   - Configured to work for most use-cases
     - copy_paste_enabled = true
@@ -836,19 +837,15 @@ module "custom_advanced_settings" {
 
   subnet_objects = [
     {
+      //Name wont matter as it will always be forced to be "AzureBastionSubnet" because we have defined that we also want a bastion host
+      address_prefixes = ["10.0.10.0/26"]
+    },
+    {
       name = "custom-vm-subnet"
       address_prefixes = ["10.0.0.0/24"]
 
       tags = {
         "environment" = "prod"
-      }
-    },
-    {
-      //Name wont matter, it will be overwritten as the bastion subnet must have a specific name
-      address_prefixes = ["10.0.10.0/26"]
-
-      tags = {
-        "environment" = "mgmt"
       }
     }
   ]
@@ -876,7 +873,7 @@ output "custom_advanced_settings" {
 */
 ```
 How it looks in Azure:
-<img src="" />
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/8th-vm-black.png" />
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 ### (2) Use of default settings combined with specialized vm configurations on multiple vms

@@ -81,7 +81,7 @@ variable "vnet_resource_id" {
 }
 
 variable "subnet_objects" {
-  description = "define up to 2 subnets. 1 for the vm(s), another for bastion. index 0 will always be the vm subnet. name is not required and will be 'vm-subnet' by default. note, the bastion subnet name cannot be changed"
+  description = "define up to 2 subnets. 1 for the vm(s), another for bastion. index 0 will always be the bastion subnet. name is not required and will be 'vm-subnet' by default. note, the bastion subnet name cannot be changed"
   type = list(object({
     name             = optional(string)
     address_prefixes = list(string)
