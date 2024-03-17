@@ -60,7 +60,7 @@ az login //Web browser interactive prompt.
 4. Define the module definition
 ```hcl
 module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0" //Always use a specific version of the module
 
   rg_name = "vm-rg" //Creating a new rg
 
@@ -100,7 +100,7 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 7. To easily establish a connection, include the following code in your module.
 ```hcl
 module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.0.0" //Always use a specific version of the module
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0" //Always use a specific version of the module
 
   rg_name = "vm-rg" //Creating a new rg
 
@@ -207,7 +207,8 @@ The below lists showcases all possible parameters. For default values go to <a h
 1. rg_id = resource id of a resource group to deploy resources to
 2. vnet_resource_id = resource id of virtual network to deploy subnet to
 3. subnet_resource_id = resource id of the vm subnet where the module shall deploy vms to
-4. kv_resource_id = resource id of the key vault to add vm admin password secret to
+4. subnet_bastion_resource_id = resource id of the subnet of which to place bastion in
+5. kv_resource_id = resource id of the key vault to add vm admin password secret to
 
 #### Example of each resource id type
 ```hcl
@@ -662,7 +663,7 @@ How it looks in Azure:
 ### (4) Use attributes like 'size_pattern' and defining a custom 'os_disk' configuration 
 ```hcl
 module "vm_specific_config" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0"
 
   rg_name = "vm-specific-config-rg"
   
@@ -789,7 +790,7 @@ How it looks in Azure:
 ### (1) Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object
 ```hcl
 module "custom_advanced_settings" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0"
 
   rg_name = "custom-advanced-settings-rg"
 
@@ -881,7 +882,7 @@ How it looks in Azure:
 ### (2) Use of default settings combined with specialized vm configurations on multiple vms
 ```hcl
 module "custom_combined_with_default" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0"
 
   rg_id = module.custom_advanced_settings.rg_object.id
 
@@ -975,13 +976,5 @@ module "custom_combined_with_default" {
 output "custom_combined_with_default" {
   value = module.custom_combined_with_default
 }
-
-Sample output:
-/*
-
-*/
-```
-How it looks in Azure:
-<img src="" />
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
