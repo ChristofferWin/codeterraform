@@ -873,6 +873,7 @@ output "custom_advanced_settings" {
 */
 ```
 How it looks in Azure:
+
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/8th-vm-black.png" />
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
