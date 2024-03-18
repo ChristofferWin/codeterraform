@@ -106,7 +106,9 @@ jobs:
                 }
             }
         }
+        Write-Output $FinalPaths 
         $FinalPaths = $FinalPaths | % {$_ -Replace ".*/codeterraform", "."} | Select-Object -Unique
+        Write-Output $FinalPaths
         echo "::set-output name=FinalPaths::$FinalPaths"
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
@@ -119,7 +121,9 @@ jobs:
       env:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
+
             $Paths = $env:TF_PATH
+            $Paths = $Paths
             foreach($Item in $Paths){
             cd $Item
             ls
