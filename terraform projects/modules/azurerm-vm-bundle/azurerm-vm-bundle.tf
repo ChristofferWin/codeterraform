@@ -23,7 +23,7 @@ terraform {
 ################################################################################################
 ######################################### NOTES ################################################
 ##                                                                                            ##
-##  Date: 17-03-2024        -                                                                  ## 
+##  Date: 17-03-2024                                                                          ## 
 ##  State: Version 1.3                                                                        ##
 ##  Missing: Refactoring / Clean up, create more effective variables.                         ##
 ##  Improvements (1): Solved a huge sub-set of bugs. New logic to further stabilize the code  ##                                                                                
