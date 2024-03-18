@@ -48,8 +48,7 @@ on:
   push:
     branches: 
       -  main
-    paths:
-      - 'terraform projects/modules/**'
+
 
 env: 
   ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID}}
