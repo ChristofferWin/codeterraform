@@ -120,7 +120,8 @@ jobs:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
 
-          $env:TF_PATH.Split("./")
+          $Try = $env:TF_PATH.Split("./")
+          $Try
 
     # Generates an execution plan for Terraform
     - name: Terraform Test
