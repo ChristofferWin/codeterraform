@@ -36,7 +36,7 @@ variable "vm_linux_objects" {
     },
     {
         name = "test-linux-vm02"
-        os_name = "DeBiaN11"
+        os_name = "DeBiaN11" 
     }
 ]
 }
