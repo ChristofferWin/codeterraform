@@ -273,7 +273,7 @@ locals {
 
   script_path = flatten((regexall("^(.*\\/)?([^\\/]+)\\.ps1$",var.script_name)))[0]
                                                                                                                                                                                                                                        
-  script_commands = length(local.vm_os_names) > 0 ? flatten([for a, b in range(length(local.vm_os_names)) : [                                                                                                                                                                                     
+  script_commands = length(local.vm_os_names) > 0 ? flatten([for a, b in range(length(local.vm_os_names)) : [                                                                                                                                                                                                                                                                                  
     length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${var.script_output_path}${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${var.script_output_path}$${local.vm_os_names[a]}-skus.json"
   ]]) : null                                                                                                                                                                                                        
 
@@ -405,7 +405,7 @@ resource "null_resource" "ps_object" {
 
 data "local_file" "vmskus_objects" {
   count    = length(local.vm_os_names)
-  filename = "${local.vm_os_names[count.index]}-skus.json"
+  filename = "${var.script_output_path}${local.vm_os_names[count.index]}-skus.json"
 
   depends_on = [null_resource.ps_object]
 }
