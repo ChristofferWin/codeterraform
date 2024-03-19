@@ -126,6 +126,7 @@ jobs:
             $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
               ls
+              Echo $Path
               cd $Path -Verbose
               terraform init
               cd $BaseDirectory -Verbose
