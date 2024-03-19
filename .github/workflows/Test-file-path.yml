@@ -36,5 +36,6 @@ jobs:
       shell: bash
       run: |
             cd ..
+            cd /codeterraform/
             ls
            
