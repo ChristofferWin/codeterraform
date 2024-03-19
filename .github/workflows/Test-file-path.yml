@@ -35,7 +35,6 @@ jobs:
     - name: Terraform
       shell: bash
       run: |
-            cd ..
-            cd ./codeterraform/terraform\ projects/modules/azurerm-vm-bundle/test/
+            cd ./terraform\ projects/modules/azurerm-vm-bundle/test/
             terraform init
            
