@@ -405,7 +405,7 @@ resource "null_resource" "ps_object" {
 
 data "local_file" "vmskus_objects" {
   count    = length(local.vm_os_names)
-  filename = "${var.script_output_path}${local.vm_os_names[count.index]}-skus.json"
+  filename = "{local.vm_os_names[count.index]}-skus.json"
 
   depends_on = [null_resource.ps_object]
 }
