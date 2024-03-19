@@ -36,6 +36,6 @@ jobs:
       shell: bash
       run: |
             cd ..
-            cd ./codeterraform/terraform\ projects/
+            cd ./codeterraform/terraform\ projects/modules/azurerm-vm-bundle/test\ 2/
             ls
            
