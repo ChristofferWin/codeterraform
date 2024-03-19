@@ -58,7 +58,7 @@ terraform {
 ##                                                                                            ##
 ##  Date: 15-11-2023                                                                          ## 
 ##  State: Had huge issues with storage accounts today, should now be stable...               ##
-##  Missing: Create KV                                                                        ##
+##  Missing: Create KV                                                                         ##
 ##  Improvements (1): Solved many different bugs, module is stable...                         ##                                                                     
 ##  =||= (2): Need to write the readme, maybe use chatgpt...                                  ## 
 ##  =||= (3): Extensive tests has been done with many different scenarios...                  ##
