@@ -10,7 +10,6 @@ env:
   ARM_CLIENT_SECRET: ${{secrets.ARM_CLIENT_SECRET}}
   ARM_SUBSCRIPTION_ID: ${{vars.ARM_SUBSCRIPTION_ID}}
   ARM_TENANT_ID: ${{vars.ARM_TENANT_ID}}
-  TEST: '/terraform projects/'
 
 permissions:
   contents: read
@@ -37,6 +36,6 @@ jobs:
       shell: bash
       run: |
             ls
-            cd "$TEST"
+            cd "/terraform projects/"
             terraform apply
            
