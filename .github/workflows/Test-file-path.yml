@@ -37,6 +37,6 @@ jobs:
       shell: bash
       run: |
             ls
-            cd '$TEST'
+            cd "$TEST"
             terraform apply
            
