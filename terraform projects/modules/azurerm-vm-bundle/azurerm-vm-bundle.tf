@@ -26,7 +26,7 @@ terraform {
 ##  Date: 17-03-2024                                                                          ## 
 ##  State: Version 1.3                                                                        ##
 ##  Missing: Refactoring / Clean up, create more effective variables.                         ##
-##  Improvements (1): Solved a huge sub-set of bugs. New logic to further stabilize the code  ##                                                                                
+##  Improvements (1): Solved a huge sub-set of bugs. New logic to further stabilize the code   ##                                                                                
 ##  =||= (2): Dynamically able to pull information about existing vnet & subnets              ## 
 ##  =||= (3): N/A                                                                             ##
 ##  Future improvements: Working on allowing the use of a custom script path                  ##
