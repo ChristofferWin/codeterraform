@@ -110,10 +110,7 @@ jobs:
         foreach($Path in $FinalPaths){
 
         }
-        foreach($Element in $FinalPaths){
-          echo "::set-output name=FinalPaths::$Element"
-        }
-        
+        echo "::set-output name=FinalPaths::$FinalPaths"
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
@@ -125,7 +122,13 @@ jobs:
       env:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
-           echo $env:TF_PATH
+            $BaseDirectory = (Get-Location).Path
+            $Paths = $env:TF_PATH -split '(?<=\S)(?=\s*\./)'
+            foreach($Path in $Paths){
+              cd $Path
+              terraform init
+              cd $BaseDirectory
+            }
 
     # Generates an execution plan for Terraform
     - name: Terraform Test
@@ -133,8 +136,14 @@ jobs:
       env:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
-            foreach($Item in $env:TF_PATH){
-            cd $Item
-            ls
-            terraform test -var="script_name=$Item/Get-AzVMSKu.ps1"
+            $BaseDirectory = (Get-Location).Path
+            $Paths = $env:TF_PATH -split '(?<=\S)(?=\s*\./)'
+            foreach($Path in $Paths){
+              cd $Path
+              terraform test -var="script_name=$Path/Get-AzVMSKu.ps1"
+              cd $BaseDirectory
             }
+
+
+
+           
