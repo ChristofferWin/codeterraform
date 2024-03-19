@@ -34,9 +34,9 @@ jobs:
         fetch-depth: 0
 
     - name: Terraform
-      shell: pwsh
+      shell: bash
       run: |
             ls
-            cd $env:TEST
+            cd $TEST
             terraform apply
            
