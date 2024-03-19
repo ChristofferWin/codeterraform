@@ -107,7 +107,13 @@ jobs:
             }
         }
         $FinalPaths = $FinalPaths | % {$_ -Replace ".*/codeterraform", "."} | Select-Object -Unique
-        echo "::set-output name=FinalPaths::$FinalPaths"
+        foreach($Path in $FinalPaths){
+
+        }
+        foreach($Element in $FinalPaths){
+          echo "::set-output name=FinalPaths::$Element"
+        }
+        
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
