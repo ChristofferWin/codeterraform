@@ -35,6 +35,6 @@ jobs:
     - name: Terraform
       shell: bash
       run: |
-            cd "$GITHUB_WORKSPACE/terraform  projects/"
-            terraform apply
+            cd ..
+            ls
            
