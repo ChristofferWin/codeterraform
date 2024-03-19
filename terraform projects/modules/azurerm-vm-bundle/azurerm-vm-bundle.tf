@@ -77,7 +77,7 @@ terraform {
 ##  Comments: Module is pretty far at this stage, around 90% done...                          ##
 ##--------------------------------------------------------------------------------------------##                                                                                           
 ##                                                                                            ##
-##  Date: 09-11-2023                                                                          ## 
+##  Date: 09-11-2023                                                                           ## 
 ##  State: All resources was though to defined and extensive testing has begun, but turns     ##
 ##  out I need to define all possible resources directly in the module to avoid error:        ##
 ##  'The "for_each" map includes keys derived from resource attributes...                     ##
