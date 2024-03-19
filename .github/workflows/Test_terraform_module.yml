@@ -141,6 +141,7 @@ jobs:
             foreach($Path in $Paths){
               cd $Path -Verbose
               terraform test -var="script_name=$Path/Get-AzVMSKu.ps1"
+              ls
               cd $BaseDirectory -Verbose
             }
 
