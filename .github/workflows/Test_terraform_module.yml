@@ -123,9 +123,9 @@ jobs:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
             $BaseDirectory = (Get-Location).Path
-            $Paths = $env:TF_PATH -split '(?<=\S)(?=\s*\./)'
-            Echo $Paths
+            $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
+              ls
               cd $Path -Verbose
               terraform init
               cd $BaseDirectory -Verbose
@@ -138,8 +138,9 @@ jobs:
         TF_PATH: ${{ steps.filtered-changed-files.outputs.FinalPaths }}
       run: |
             $BaseDirectory = (Get-Location).Path
-            $Paths = $env:TF_PATH -split '(?<=\S)(?=\s*\./)'
+            $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
+              ls
               cd $Path -Verbose
               terraform test -var="script_name=$Path/Get-AzVMSKu.ps1"
               cd $BaseDirectory -Verbose
