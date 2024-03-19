@@ -35,6 +35,6 @@ jobs:
     - name: Terraform
       shell: pwsh
       run: |
-            cd "terraform projects/modules/azurerm-vm-bundle/test 2/"
+            cd "/terraform projects/modules/azurerm-vm-bundle/test 2/"
             terraform apply
            
