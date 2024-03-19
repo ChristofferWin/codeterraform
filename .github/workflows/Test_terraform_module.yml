@@ -124,10 +124,11 @@ jobs:
       run: |
             $BaseDirectory = (Get-Location).Path
             $Paths = $env:TF_PATH -split '(?<=\S)(?=\s*\./)'
+            Echo $Paths
             foreach($Path in $Paths){
-              cd $Path
+              cd $Path -Verbose
               terraform init
-              cd $BaseDirectory
+              cd $BaseDirectory -Verbose
             }
 
     # Generates an execution plan for Terraform
@@ -139,9 +140,9 @@ jobs:
             $BaseDirectory = (Get-Location).Path
             $Paths = $env:TF_PATH -split '(?<=\S)(?=\s*\./)'
             foreach($Path in $Paths){
-              cd $Path
+              cd $Path -Verbose
               terraform test -var="script_name=$Path/Get-AzVMSKu.ps1"
-              cd $BaseDirectory
+              cd $BaseDirectory -Verbose
             }
 
 
