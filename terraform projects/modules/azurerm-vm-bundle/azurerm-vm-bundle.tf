@@ -69,7 +69,7 @@ terraform {
 ##                                                                                            ##
 ##  Date: 13-11-2023                                                                          ## 
 ##  State: Storage account & customized output has been defined...                            ##
-##  Missing: Create KV                                                                         ##
+##  Missing: Create KV                                                                        ##
 ##  Improvements (1): Solved many different bugs, module is stable...                         ##                                                                     
 ##  =||= (2): Need to write the readme, maybe use chatgpt...                                  ## 
 ##  =||= (3): Extensive tests has been done with many different scenarios...                  ##
