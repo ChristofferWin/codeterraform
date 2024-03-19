@@ -35,7 +35,7 @@ jobs:
     - name: Terraform
       shell: bash
       run: |
-            ls
-            cd "/terraform projects"
+            cwd=$(pwd)
+            echo "Current working directory: $cwd"
             terraform apply
            
