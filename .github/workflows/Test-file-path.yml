@@ -10,6 +10,7 @@ env:
   ARM_CLIENT_SECRET: ${{secrets.ARM_CLIENT_SECRET}}
   ARM_SUBSCRIPTION_ID: ${{vars.ARM_SUBSCRIPTION_ID}}
   ARM_TENANT_ID: ${{vars.ARM_TENANT_ID}}
+  TEST: './terraform projects/modules/azurerm-vm-bundle/test 2/'
 
 permissions:
   contents: read
@@ -36,6 +37,6 @@ jobs:
       shell: pwsh
       run: |
             ls
-            cd './terraform projects/modules/azurerm-vm-bundle/test 2/'
+            cd $env:TEST
             terraform apply
            
