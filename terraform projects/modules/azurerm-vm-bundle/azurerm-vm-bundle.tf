@@ -45,7 +45,7 @@ terraform {
 ##                                                                                            ##
 ##--------------------------------------------------------------------------------------------##
 ##                                                                                            ##                                                                                     
-##  Date: 20-11-2023                                                                          ## 
+##  Date: 20-11-2023                                                                           ## 
 ##  State: Ready for production, version 1.0                                                  ##
 ##  Missing: Being able to parse a kv_resource_id, to use existing key vault for vm secrets   ##
 ##  Improvements (1): Many small bugs has been fixed during final testing...                  ##                                                                     
