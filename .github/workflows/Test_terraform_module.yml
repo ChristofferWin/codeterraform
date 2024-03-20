@@ -139,12 +139,8 @@ jobs:
             $BaseDirectory = (Get-Location).Path
             $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
+              $env:TF_LOG = "DEBUG"
               cd $Path -Verbose
-              terraform test
+              terraform apply --auto-approve=true
               cd $BaseDirectory -Verbose
             }
-            Get-ChildItem -Path ./ -Recurse -Filter "*.json"
-
-
-
-           
