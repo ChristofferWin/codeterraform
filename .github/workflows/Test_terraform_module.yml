@@ -141,6 +141,7 @@ jobs:
             foreach($Path in $Paths){
               $env:TF_LOG = "DEBUG"
               cd $Path -Verbose
+              Install-Module -Name Get-AzVMSku -Force
               [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
               $Credential = New-Object -TypeName System.Management.Automation.PSCredential ($env:ARM_CLIENT_ID, $secStringPassword)
               Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential -Verbose

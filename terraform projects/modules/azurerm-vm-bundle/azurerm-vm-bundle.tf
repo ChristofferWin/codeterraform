@@ -418,7 +418,7 @@ resource "random_password" "vm_password_object" {
   depends_on = [azurerm_key_vault.vm_kv_object]
 }
 
-resource "azurerm_resource_group" "rg_object" { 
+resource "azurerm_resource_group" "rg_object" {  
   count    = local.rg_object.create_rg ? 1 : 0   
   name     = local.rg_object.name
   location = var.location
