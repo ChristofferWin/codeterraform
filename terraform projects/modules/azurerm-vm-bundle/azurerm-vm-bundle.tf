@@ -419,7 +419,7 @@ resource "random_password" "vm_password_object" {
 }
 
 resource "azurerm_resource_group" "rg_object" { 
-  count    = local.rg_object.create_rg ? 1 : 0 
+  count    = local.rg_object.create_rg ? 1 : 0  
   name     = local.rg_object.name
   location = var.location
   tags     = var.rg_tags
