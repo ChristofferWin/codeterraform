@@ -397,7 +397,7 @@ resource "null_resource" "ps_object" {
   count = local.script_commands != null ? length(local.script_commands) : 0
   provisioner "local-exec" {
     command     = local.script_commands[count.index]
-    interpreter = ["pwsh", "-Command"]
+    interpreter = ["pwsh", "-Command"] 
   }
 
   depends_on = [null_resource.download_script]
