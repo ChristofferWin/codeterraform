@@ -141,8 +141,9 @@ jobs:
             foreach($Path in $Paths){
               $env:TF_LOG = "DEBUG"
               cd $Path -Verbose
-              $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $env:ARM_CLIENT_ID, $env:ARM_CLIENT_SECRET
+              [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
+              $Credential = New-Object -TypeName System.Management.Automation.PSCredential ($env:ARM_CLIENT_ID, $secStringPassword)
               Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential -Verbose
               terraform apply --auto-approve=true
               cd $BaseDirectory -Verbose
-            }
+            }½
