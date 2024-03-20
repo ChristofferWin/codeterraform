@@ -889,7 +889,7 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "vm_kv_object" {
-  for_each                        = local.kv_object != null ? local.kv_object : {}
+  for_each                        = local.kv_object != null ? local.kv_object : {} 
   name                            = each.value.name
   resource_group_name             = local.rg_object.name
   location                        = var.location
