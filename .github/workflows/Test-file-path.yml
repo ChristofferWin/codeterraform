@@ -33,7 +33,7 @@ jobs:
         fetch-depth: 0
 
     - name: Terraform
-      shell: bash
+      shell: pwsh
       run: |
             ls
             cd "./terraform projects/modules/azurerm-vm-bundle/test 2/"
