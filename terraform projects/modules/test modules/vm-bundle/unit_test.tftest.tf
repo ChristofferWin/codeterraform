@@ -18,7 +18,7 @@ terraform {
   }
 }
 
-provider "azurerm" { //Will use command-line context, typically az cli login
+provider "azurerm" { //Will use command-line context, typically az cli login 
   features {
   }
 }
