@@ -139,7 +139,6 @@ jobs:
             $BaseDirectory = (Get-Location).Path
             $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
-              $env:TF_LOG = "DEBUG"
               cd $Path -Verbose
               Install-Module -Name Get-AzVMSku -Force
               [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
@@ -147,4 +146,4 @@ jobs:
               Connect-AzAccount -ServicePrincipal -TenantId $env:ARM_TENANT_ID -Credential $Credential -Subscription $env:ARM_SUBSCRIPTION_ID -Verbose
               terraform apply --auto-approve=true
               cd $BaseDirectory -Verbose
-            }½
+            }
