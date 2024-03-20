@@ -144,7 +144,7 @@ jobs:
               Install-Module -Name Get-AzVMSku -Force
               [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
               $Credential = New-Object -TypeName System.Management.Automation.PSCredential ($env:ARM_CLIENT_ID, $secStringPassword)
-              Connect-AzAccount -ServicePrincipal -TenantId $TenantId -Credential $Credential -Verbose
+              Connect-AzAccount -ServicePrincipal -TenantId $env:ARM_TENANT_ID -Credential $Credential -Subscription $env:ARM_SUBSCRIPTION_ID -Verbose
               terraform apply --auto-approve=true
               cd $BaseDirectory -Verbose
             }½
