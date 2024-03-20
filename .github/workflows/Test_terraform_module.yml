@@ -140,7 +140,7 @@ jobs:
             $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
               cd $Path -Verbose
-              terraform test -var="script_name=$Path/Get-AzVMSKu.ps1" -var="script_output_path=$Path/"
+              terraform test
               cd $BaseDirectory -Verbose
             }
             Get-ChildItem -Path ./ -Recurse -Filter "*.json"
