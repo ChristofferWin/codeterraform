@@ -22,7 +22,7 @@ variable "vm_windows_objects" {
     },
     {
         name = "test-win-vm02"
-        os_name = "windows11"
+        os_name = "windows11" 
     }
 ]
 }
