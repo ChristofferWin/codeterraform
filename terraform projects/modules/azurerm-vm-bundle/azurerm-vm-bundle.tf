@@ -58,7 +58,7 @@ terraform {
 ##                                                                                            ##
 ##  Date: 15-11-2023                                                                          ## 
 ##  State: Had huge issues with storage accounts today, should now be stable...               ##
-##  Missing: Create KV                                                                         ##
+##  Missing: Create KV                                                                        ##
 ##  Improvements (1): Solved many different bugs, module is stable...                         ##                                                                     
 ##  =||= (2): Need to write the readme, maybe use chatgpt...                                  ## 
 ##  =||= (3): Extensive tests has been done with many different scenarios...                  ##
@@ -77,7 +77,7 @@ terraform {
 ##  Comments: Module is pretty far at this stage, around 90% done...                          ##
 ##--------------------------------------------------------------------------------------------##                                                                                           
 ##                                                                                            ##
-##  Date: 09-11-2023                                                                           ## 
+##  Date: 09-11-2023                                                                          ## 
 ##  State: All resources was though to defined and extensive testing has begun, but turns     ##
 ##  out I need to define all possible resources directly in the module to avoid error:        ##
 ##  'The "for_each" map includes keys derived from resource attributes...                     ##
@@ -272,9 +272,9 @@ locals {
   }] : "kv_object" => each } : null
 
   script_path = flatten((regexall("^(.*\\/)?([^\\/]+)\\.ps1$",var.script_name)))[0]
-                                                                                                                                                                                                                                       
-  script_commands = length(local.vm_os_names) > 0 ? flatten([for a, b in range(length(local.vm_os_names)) : [                                                                                                                                                                                                                                                                                  
-    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${var.script_output_path}${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${var.script_output_path}$${local.vm_os_names[a]}-skus.json"
+
+  script_commands = length(local.vm_os_names) > 0 ? flatten([for a, b in range(length(local.vm_os_names)) : [
+    length([for c in local.merge_objects : c if c.allow_null_version != null && c.os_name == local.vm_os_names[a]]) > 0 ? "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json -AllowNoVersions" : "${var.script_name} -Location ${var.location} -OS ${local.vm_os_names[a]} -OutputFileName ${local.vm_os_names[a]}-skus.json"
   ]]) : null                                                                                                                                                                                                        
 
   rg_resource_id      = can(azurerm_resource_group.rg_object[0].id) ? azurerm_resource_group.rg_object[0].id : var.rg_id
@@ -397,7 +397,7 @@ resource "null_resource" "ps_object" {
   count = local.script_commands != null ? length(local.script_commands) : 0
   provisioner "local-exec" {
     command     = local.script_commands[count.index]
-    interpreter = ["pwsh", "-Command"] 
+    interpreter = ["pwsh", "-Command"]
   }
 
   depends_on = [null_resource.download_script]
@@ -405,7 +405,7 @@ resource "null_resource" "ps_object" {
 
 data "local_file" "vmskus_objects" {
   count    = length(local.vm_os_names)
-  filename = "{local.vm_os_names[count.index]}-skus.json"
+  filename = "${local.vm_os_names[count.index]}-skus.json"
 
   depends_on = [null_resource.ps_object]
 }
@@ -418,8 +418,8 @@ resource "random_password" "vm_password_object" {
   depends_on = [azurerm_key_vault.vm_kv_object]
 }
 
-resource "azurerm_resource_group" "rg_object" {   
-  count    = local.rg_object.create_rg ? 1 : 0   
+resource "azurerm_resource_group" "rg_object" {
+  count    = local.rg_object.create_rg ? 1 : 0
   name     = local.rg_object.name
   location = var.location
   tags     = var.rg_tags
