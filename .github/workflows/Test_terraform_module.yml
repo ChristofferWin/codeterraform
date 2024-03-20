@@ -48,6 +48,8 @@ on:
   push:
     branches: 
       -  main
+    paths:
+      - 'terraform projects/modules/**'
 
 
 env: 
@@ -143,7 +145,7 @@ jobs:
             [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
             $Credential = New-Object -TypeName System.Management.Automation.PSCredential ($env:ARM_CLIENT_ID, $secStringPassword)
             Connect-AzAccount -ServicePrincipal -TenantId $env:ARM_TENANT_ID -Credential $Credential -Subscription $env:ARM_SUBSCRIPTION_ID -Verbose
-            
+
             foreach($Path in $Paths){
               cd $Path -Verbose
               terraform test
