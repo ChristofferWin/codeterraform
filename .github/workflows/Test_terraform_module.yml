@@ -138,12 +138,14 @@ jobs:
       run: |
             $BaseDirectory = (Get-Location).Path
             $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
+
+            Install-Module -Name Get-AzVMSku -Force
+            [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
+            $Credential = New-Object -TypeName System.Management.Automation.PSCredential ($env:ARM_CLIENT_ID, $secStringPassword)
+            Connect-AzAccount -ServicePrincipal -TenantId $env:ARM_TENANT_ID -Credential $Credential -Subscription $env:ARM_SUBSCRIPTION_ID -Verbose
+            
             foreach($Path in $Paths){
               cd $Path -Verbose
-              Install-Module -Name Get-AzVMSku -Force
-              [securestring]$secStringPassword = ConvertTo-SecureString $env:ARM_CLIENT_SECRET -AsPlainText -Force
-              $Credential = New-Object -TypeName System.Management.Automation.PSCredential ($env:ARM_CLIENT_ID, $secStringPassword)
-              Connect-AzAccount -ServicePrincipal -TenantId $env:ARM_TENANT_ID -Credential $Credential -Subscription $env:ARM_SUBSCRIPTION_ID -Verbose
               terraform test
               cd $BaseDirectory -Verbose
             }
