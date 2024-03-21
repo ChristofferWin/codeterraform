@@ -109,8 +109,9 @@ jobs:
             }
         }
         $FinalPaths = $FinalPaths | % {$_ -Replace ".*/codeterraform", "."} | Select-Object -Unique
+        Write-Output "The following files will be run by the pipeline to test:"
         foreach($Path in $FinalPaths){
-
+          $Path
         }
         echo "::set-output name=FinalPaths::$FinalPaths"
 
@@ -128,6 +129,7 @@ jobs:
             $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
             foreach($Path in $Paths){
               cd $Path -Verbose
+              Write-Output "At location: $Path"
               terraform init
               cd $BaseDirectory -Verbose
             }
@@ -148,6 +150,7 @@ jobs:
 
             foreach($Path in $Paths){
               cd $Path -Verbose
+              Write-Output "At location: $Path"
               terraform test
               cd $BaseDirectory -Verbose
             }
