@@ -1,6 +1,10 @@
 run "pre_deployment_for_apply" {
   command = apply
 
+    plan_options {
+        target = "module.pre_deployment"
+    }
+
     module {
       source = "./pre-deployment"
     }
@@ -9,6 +13,16 @@ run "pre_deployment_for_apply" {
       rg_name = "vm-bundle-integration-test-rg"
       location = "northeurope"
     }
+}
+
+run "pre_deployment_for_apply_2" {
+  command = apply
+
+  module {
+    source = "./pre_deployment"
+  }
+
+
 }
 
 run "unit_test_1_check_rg_id" {
