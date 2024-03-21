@@ -19,7 +19,7 @@ run "pre_deployment_for_apply_2" {
   command = apply
 
   module {
-    source = "./pre_deployment"
+    source = "./pre-deployment"
   }
 
 
