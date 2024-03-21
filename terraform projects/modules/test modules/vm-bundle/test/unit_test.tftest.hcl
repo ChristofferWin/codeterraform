@@ -7,7 +7,7 @@ run "unit_test_1_check_rg_id" {
   }
 }
 
-run "unit_test_2_check_vnet_and_sub_id" {
+run "unit_test_2_check_vnet_and_sub_id" { 
   command = plan
 
   assert {
