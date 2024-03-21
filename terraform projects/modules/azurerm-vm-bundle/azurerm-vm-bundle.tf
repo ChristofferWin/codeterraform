@@ -882,7 +882,7 @@ resource "azurerm_storage_account" "vm_storage_account_object" {
   }
 
   lifecycle {
-    ignore_changes = [name, access_tier, network_rules]
+    ignore_changes = [name, access_tier, network_rules] 
   }
 }
 
