@@ -50,7 +50,7 @@ variable "vm_windows_objects_simple" {
 
 variable "vm_linux_objects_simple" {
   type = any
-  default = any
+  default = null
 }
 
 variable "vm_windows_objects_custom_config" {
