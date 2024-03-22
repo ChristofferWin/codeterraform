@@ -2,7 +2,7 @@ run "pre_deployment_for_apply" {
   command = apply
 
     plan_options {
-        target = ["module.pre_deployment"]
+      target = [pre_deployment_vnet_subnet]
     }
 
     module {
@@ -11,8 +11,19 @@ run "pre_deployment_for_apply" {
 
     variables {
       rg_name = "vm-bundle-integration-test-rg"
-      location = "northeurope"
     }
+}
+
+run "pre_deployment_for_apply2" {
+  command = apply
+
+  plan_options {
+    target = [pre_deployment_mgmt_resources]
+  }
+
+  variables {
+    rg_name = "vm-bundle-mgmt-test-rg"
+  }
 }
 
 run "unit_test_1_check_rg_id" {
@@ -45,6 +56,10 @@ run "unit_test_3_check_vm_count" {
 run "integration_test_1_check_vm_count_apply" {
   command = apply
 
+  plan_options {
+    target = [unit_test_1_using_existing_resources]
+  }
+
   variables {
     rg_id = run.pre_deployment_for_apply.rg_id
     vnet_resource_id = run.pre_deployment_for_apply.vnet_resource_id
@@ -56,3 +71,5 @@ run "integration_test_1_check_vm_count_apply" {
     error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects, var.vm_windows_objects]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
   }
 }
+
+run "integration_test_2_"
