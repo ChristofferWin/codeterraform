@@ -26,9 +26,19 @@ provider "azurerm" { //Will use command-line context, typically az cli login
 module "unit_test_1_using_existing_resources" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main" 
   rg_id = var.rg_id
-  location = "northeurope"
+  location = var.location
   vnet_resource_id = var.vnet_resource_id
   subnet_resource_id = var.subnet_resource_id
   vm_windows_objects = var.vm_windows_objects
   vm_linux_objects = var.vm_linux_objects
+}
+
+module "unit_and_integration_test_2" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
+  rg_name = var.rg_name
+  location = var.location
+  vnet_object = var.vnet_object
+  subnet_bastion_resource_id = var.subnet_bastion_resource_id
+  vm_windows_objects = var.vm_windows_objects_custom_config
+  vm_linux_objects = var.vm_linux_objects_custom_config
 }

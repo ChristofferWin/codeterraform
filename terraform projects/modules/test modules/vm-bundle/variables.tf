@@ -1,42 +1,74 @@
+variable "rg_name" {
+  type = string
+  default = null
+}
+
+variable "location" {
+  type = string
+  default = null
+}
+
 variable "rg_id" {
   type = string
-  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg"
+  default = null
 }
 
 variable "vnet_resource_id" {
   type = string
-  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourcegroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet"
+  default = null
 }
 
 variable "subnet_resource_id" {
   type = string
-  default = "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test-rg/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default"
+  default = null
 }
 
-variable "vm_windows_objects" {
-  type = any
-  default = [
-    {
-        name = "test-win-vm01"
-        os_name = "windows10"
-    },
-    {
-        name = "test-win-vm02"
-        os_name = "windows11"
-    }
-]
+variable "subnet_bastion_resource_id" {
+  type = string
+  default = null
 }
 
-variable "vm_linux_objects" {
+variable "vnet_object" {
   type = any
-  default = [
-    {
-        name = "test-linux-vm01"
-        os_name = "DeBiAn10"
-    },
-    {
-        name = "test-linux-vm02"
-        os_name = "DeBiaN11"
-    }
-]
+  default = null
+}
+
+variable "subnet_objects" {
+  type = any
+  default = null
+}
+
+variable "subnet_objects_with_bastion" {
+  type = any
+  default = null
+}
+
+variable "vm_windows_objects_simple" {
+  type = any
+  default = null
+}
+
+variable "vm_linux_objects_simple" {
+  type = any
+  default = any
+}
+
+variable "vm_windows_objects_custom_config" {
+  type = any
+  default = null
+}
+
+variable "vm_linux_objects_custom_config" {
+  type = any
+  default = null
+}
+
+variable "vm_windows_objects_mix" {
+  type = any
+  default = null
+}
+
+variable "vm_linux_objects_mix" {
+  type = any
+  default = null
 }
