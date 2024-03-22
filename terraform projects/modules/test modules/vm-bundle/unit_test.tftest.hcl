@@ -72,4 +72,15 @@ run "integration_test_1_check_vm_count_apply" {
   }
 }
 
-run "integration_test_2_"
+run "integration_test_2_check_using_existing_resources" {
+  command = apply
+
+  plan_options {
+    target = [unit_and_integration_test_2]
+  }
+
+  variables {
+    rg_name = "vm-bundle-integration-test2-rg"
+    subnet_bastion_resource_id = run.pre_deployment_for_apply2.subnet_bastion_resource_id
+  }
+}
