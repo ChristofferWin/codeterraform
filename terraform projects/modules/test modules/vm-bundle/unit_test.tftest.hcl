@@ -2,7 +2,7 @@ run "pre_deployment_for_apply" {
   command = apply
 
     plan_options {
-      target = [pre_deployment_vnet_subnet]
+      target = [module.pre_deployment_vnet_subnet]
     }
 
     module {
@@ -21,7 +21,7 @@ run "pre_deployment_for_apply2" {
   command = apply
 
   plan_options {
-    target = [pre_deployment_mgmt_resources]
+    target = [module.pre_deployment_mgmt_resources]
   }
 
   variables {
