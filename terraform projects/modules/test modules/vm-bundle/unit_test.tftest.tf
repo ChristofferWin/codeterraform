@@ -29,8 +29,8 @@ module "unit_test_1_using_existing_resources" {
   location = var.location
   vnet_resource_id = var.vnet_resource_id
   subnet_resource_id = var.subnet_resource_id
-  vm_windows_objects = var.vm_windows_objects
-  vm_linux_objects = var.vm_linux_objects
+  vm_windows_objects = var.vm_windows_objects_simple
+  vm_linux_objects = var.vm_linux_objects_simple
 }
 
 module "unit_and_integration_test_2" {
