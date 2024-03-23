@@ -32,7 +32,17 @@ variable "kv_id" {
   default = null
 }
 
+variable "vnet_object" {
+  type = any
+  default = null
+}
+
 variable "subnet_objects" {
   type = any
   default = null 
+}
+
+variable "subnet_objects_with_bastion" {
+  type = any
+  default = null
 }
