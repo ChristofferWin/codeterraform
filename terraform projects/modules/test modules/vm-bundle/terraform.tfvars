@@ -1,5 +1,7 @@
 location = "northeurope"
 
+rg_name = "simple-test-vm-rg"
+
 vnet_object = {
   name = "vm-bundle-vnet"
   address_space = ["172.20.0.0/20"]

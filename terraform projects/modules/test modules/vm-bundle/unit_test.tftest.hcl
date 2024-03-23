@@ -53,6 +53,11 @@ run "unit_test_2_check_vnet_and_sub_id" {
 run "unit_test_3_check_vm_count" { 
   command = plan
 
+  variables {
+    rg_name = var.rg_name
+    location = var.location
+  }
+
   assert {
     condition = length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects])) == length(flatten([var.vm_linux_objects, var.vm_windows_objects]))
     error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects, var.vm_windows_objects]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
