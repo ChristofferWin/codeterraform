@@ -52,7 +52,7 @@ vm_windows_objects_custom_config = [
     os_name = "windowS10"
     admin_username = "testeradmin"
     admin_password = "DoESNoTMaTTer!123"
-    size_pattern = "D4"
+    size = "Standard_D4_v3"
     allow_extension_operations = true
     secure_boot_enabled = true
     
@@ -73,7 +73,7 @@ vm_windows_objects_custom_config = [
 
     os_disk = {
       name = "customdisk"
-      caching = "Read"
+      caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
     }
@@ -116,7 +116,7 @@ vm_windows_objects_custom_config = [
     os_name = "windowS11"
     admin_username = "testeradmin"
     admin_password = "DoESNoTMaTTer!123"
-    size_pattern = "D4"
+    size = "Standard_D4_v3"
     allow_extension_operations = true
     secure_boot_enabled = true
     
@@ -137,7 +137,7 @@ vm_windows_objects_custom_config = [
 
     os_disk = {
       name = "customdisk"
-      caching = "Read"
+      caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
     }
@@ -181,7 +181,7 @@ vm_linux_objects_custom_config = [
   {
     name = "customlinux1"
     os_name = "DeBiAn10"
-    size_pattern = "B1"
+    size = "Standard_B1ms"
     allow_extension_operations = true
     secure_boot_enabled = true
     
@@ -202,7 +202,7 @@ vm_linux_objects_custom_config = [
 
     os_disk = {
       name = "customdisk"
-      caching = "Read"
+      caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
     }
@@ -250,7 +250,7 @@ vm_linux_objects_custom_config = [
   {
     name = "customlinux2"
     os_name = "DeBiAn11"
-    size_pattern = "B1"
+    size = "Standard_B1ms"
     allow_extension_operations = true
     secure_boot_enabled = true
     
@@ -271,7 +271,7 @@ vm_linux_objects_custom_config = [
 
     os_disk = {
       name = "customdisk"
-      caching = "Read"
+      caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
     }
