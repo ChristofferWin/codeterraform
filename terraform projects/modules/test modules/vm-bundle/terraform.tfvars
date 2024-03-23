@@ -102,7 +102,7 @@ vm_windows_objects_custom_config = [
       }
 
       ip_configuration = {
-        name                          = custom-config
+        name                          = "custom-config"
         private_ip_address_version    = "IPv4"
         private_ip_address            = "172.20.0.100"
         private_ip_address_allocation = "Static"
@@ -166,7 +166,7 @@ vm_windows_objects_custom_config = [
       }
 
       ip_configuration = {
-        name                          = custom-config
+        name                          = "custom-config"
         private_ip_address_version    = "IPv4"
         private_ip_address            = "172.20.0.101"
         private_ip_address_allocation = "Static"
@@ -231,7 +231,7 @@ vm_linux_objects_custom_config = [
       }
 
       ip_configuration = {
-        name                          = custom-config
+        name                          = "custom-config"
         private_ip_address_version    = "IPv4"
         private_ip_address            = "172.20.0.102"
         private_ip_address_allocation = "Static"
@@ -298,7 +298,7 @@ vm_linux_objects_custom_config = [
       }
 
       ip_configuration = {
-        name                          = custom-config
+        name                          = "custom-config"
         private_ip_address_version    = "IPv4"
         private_ip_address            = "172.20.0.103"
         private_ip_address_allocation = "Static"
