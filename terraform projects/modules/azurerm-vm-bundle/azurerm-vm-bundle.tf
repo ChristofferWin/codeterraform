@@ -229,7 +229,7 @@ locals {
     private_ip_address_allocation = can(local.merge_objects[x].nic.ip_configuration.private_ip_address_allocation) ? local.merge_objects[x].nic.ip_configuration.private_ip_address_allocation : "Dynamic"
     tags                          = can(local.merge_objects[x].nic.tags) ? local.merge_objects[x].nic.tags : null
     pip_resource_id               = can([for a in local.pip_resource_id : a if length(regexall(([for b in local.pip_objects_clean : b.name if b.vm_name == local.merge_objects[index(local.vm_names, local.merge_objects[x].name)].name][0]), a)) > 0][0]) ? [for a in local.pip_resource_id : a if length(regexall(([for b in local.pip_objects_clean : b.name if b.vm_name == local.merge_objects[index(local.vm_names, local.merge_objects[x].name)].name][0]), a)) > 0][0] : null
-    vm_name                       = local.merge_objects[x].name
+    vm_name                       = local.merge_objects[x].name 
   }] : each.name => each }
 
   storage_counter             = length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) != 0 && var.create_diagnostic_settings ? length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))]) + 1 : var.create_diagnostic_settings ? 1 : length([for each in flatten(local.merge_objects.*.boot_diagnostics) : each if can(length(each))])
