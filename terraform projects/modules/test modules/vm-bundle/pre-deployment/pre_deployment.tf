@@ -15,6 +15,7 @@ module "pre_deployment_vnet_subnet" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
   rg_name = var.rg_name
   location = var.location
+  vnet_object = var.vnet_object
   subnet_objects = var.subnet_objects
 }
 

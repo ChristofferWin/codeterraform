@@ -11,6 +11,9 @@ run "pre_deployment_for_apply" {
 
     variables {
       rg_name = "vm-bundle-integration-test-rg"
+      location = var.location
+      vnet_object = var.vnet_object
+      subnet_objects = var.subnet_objects
     }
 }
 
@@ -22,7 +25,10 @@ run "pre_deployment_for_apply2" {
   }
 
   variables {
-    rg_name = "vm-bundle-mgmt-test-rg"   
+    rg_name = "vm-bundle-mgmt-test-rg"
+    location = var.location
+    vnet_object = var.vnet_object
+    subnet_objects = var.subnet_objects_with_bastion
   }
 }
 
