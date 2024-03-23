@@ -64,7 +64,7 @@ run "unit_test_3_check_vm_count" {
   }
 }
 
-run "integration_test_1_check_vm_count_apply" {
+run "integration_test_1_check_vm_count_apply" { 
   command = apply
 
   plan_options {
