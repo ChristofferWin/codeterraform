@@ -34,5 +34,5 @@ variable "kv_id" {
 
 variable "subnet_objects" {
   type = any
-  default = null
+  default = null 
 }
