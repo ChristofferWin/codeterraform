@@ -73,7 +73,7 @@ vm_windows_objects_custom_config = [
       name = "customdisk"
       caching = "Read"
       disk_size_gb = 1024
-      write_accelerator_enableb = true
+      write_accelerator_enabled = true
     }
 
     source_image_reference = {
@@ -137,7 +137,7 @@ vm_windows_objects_custom_config = [
       name = "customdisk"
       caching = "Read"
       disk_size_gb = 1024
-      write_accelerator_enableb = true
+      write_accelerator_enabled = true
     }
 
     source_image_reference = {
@@ -202,7 +202,7 @@ vm_linux_objects_custom_config = [
       name = "customdisk"
       caching = "Read"
       disk_size_gb = 1024
-      write_accelerator_enableb = true
+      write_accelerator_enabled = true
     }
 
     source_image_reference = {
@@ -238,10 +238,12 @@ vm_linux_objects_custom_config = [
       }
     }
 
-    admin_ssh_key = {
-      public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
-      username   = "testeradmin"
-    }
+    admin_ssh_key = [
+      {
+        public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+        username   = "testeradmin"
+      }
+    ]
   },
   {
     name = "customlinux2"
@@ -269,7 +271,7 @@ vm_linux_objects_custom_config = [
       name = "customdisk"
       caching = "Read"
       disk_size_gb = 1024
-      write_accelerator_enableb = true
+      write_accelerator_enabled = true
     }
 
     source_image_reference = {
@@ -305,9 +307,11 @@ vm_linux_objects_custom_config = [
       }
     }
 
-    admin_ssh_key = {
-      public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
-      username   = "testeradmin"
-    }
+    admin_ssh_key = [
+      {
+        public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
+        username   = "testeradmin"
+      }
+    ]
   }
 ]
