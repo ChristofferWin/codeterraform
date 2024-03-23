@@ -50,7 +50,7 @@ run "unit_test_2_check_vnet_and_sub_id" {
   }
 }
 
-run "unit_test_3_check_vm_count" {
+run "unit_test_3_check_vm_count" { 
   command = plan
 
   assert {
