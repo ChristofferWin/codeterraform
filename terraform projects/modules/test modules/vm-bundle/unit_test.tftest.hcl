@@ -13,7 +13,7 @@ run "pre_deployment_for_apply" {
       rg_name = "vm-bundle-integration-test-rg"
       location = var.location
       vnet_object = var.vnet_object
-      subnet_objects = var.subnet_objects
+      subnet_objects = var.subnet_objects 
     }
 }
 
