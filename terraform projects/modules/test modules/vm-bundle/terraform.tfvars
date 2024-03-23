@@ -243,7 +243,7 @@ vm_linux_objects_custom_config = [
       username   = "testeradmin"
     }
   },
-   {
+  {
     name = "customlinux2"
     os_name = "DeBiAn11"
     size_pattern = "B1"
