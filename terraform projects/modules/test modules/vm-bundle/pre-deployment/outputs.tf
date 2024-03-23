@@ -1,9 +1,9 @@
 output "rg_id" {
-  value = module.pre_deployment.rg_object.id
+  value = module.pre_deployment_vnet_subnet.rg_object.id
 }
 
 output "vnet_resource_id" {
-  value = values(module.pre_deployment.vnet_object)[0].id
+  value = values(module.pre_deployment_vnet_subnet.vnet_object)[0].id
 }
 
 output "subnet_resource_id" {

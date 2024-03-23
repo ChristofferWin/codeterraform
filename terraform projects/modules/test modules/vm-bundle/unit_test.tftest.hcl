@@ -22,7 +22,7 @@ run "pre_deployment_for_apply2" {
   }
 
   variables {
-    rg_name = "vm-bundle-mgmt-test-rg" 
+    rg_name = "vm-bundle-mgmt-test-rg"  
   }
 }
 
