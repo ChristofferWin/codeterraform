@@ -48,6 +48,7 @@ jobs:
       shell: pwsh
       run: |
         $FinalPaths = @()
+        $Paths = ($env:TF_PATH -split '(?<=\S)(?=\s*\./)').Trim()
         foreach ($Path in $env:ALL_CHANGED_FILES) {
             if ($Path -like "*.tftest.hcl" -or $Path -like "*/modules/test*.tf") {
                 $FinalPaths += (Get-ChildItem -Path $Path).DirectoryName -Replace ".*/codeterraform", "."
