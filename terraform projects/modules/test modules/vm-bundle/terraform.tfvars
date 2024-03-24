@@ -63,7 +63,7 @@ vm_windows_objects_custom_config = [
     boot_diagnostics = {
       
       storage_account = {
-        name = "tester1331"
+        name = "dsaseqewh"
         access_tier = "Hot"
         public_network_access_enabled = true
         account_tier = "Standard"
@@ -127,7 +127,7 @@ vm_windows_objects_custom_config = [
     boot_diagnostics = {
       
       storage_account = {
-        name = "tester1332"
+        name = "dsaseqewj"
         access_tier = "Hot"
         public_network_access_enabled = true
         account_tier = "Standard"
@@ -192,7 +192,7 @@ vm_linux_objects_custom_config = [
     boot_diagnostics = {
       
       storage_account = {
-        name = "tester1334"
+        name = "dsaseqewp"
         access_tier = "Hot"
         public_network_access_enabled = true
         account_tier = "Standard"
@@ -261,7 +261,7 @@ vm_linux_objects_custom_config = [
     boot_diagnostics = {
       
       storage_account = {
-        name = "tester1335"
+        name = "dsaseqewt"
         access_tier = "Hot"
         public_network_access_enabled = true
         account_tier = "Standard"
