@@ -11,5 +11,5 @@ output "subnet_resource_id" {
 }
 
 output "subnet_bastion_resource_id" {
-  value = [for each in values(module.pre_deployment_mgmt_resources.subnet_object).*.id : each if length(regexall("bastion", lower(each))) > 0][0]
+  value = [for each in values(module.pre_deployment_mgmt_resources.subnet_object).*.id : each if length(regexall("bastion", lower(each))) > 0][0] 
 }
