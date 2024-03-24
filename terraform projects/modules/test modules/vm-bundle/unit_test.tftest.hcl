@@ -43,7 +43,7 @@ run "integration_test_1_check_vm_count_apply" {
   variables {
     rg_id = run.pre_deployment_for_apply.rg_id 
     vnet_resource_id = run.pre_deployment_for_apply.vnet_resource_id
-    subnet_resource_id = run.pre_deployment_for_apply.subnet_resource_id
+    subnet_resource_id = run.pre_deployment_for_apply.subnet_resource_id 
   }
 }
 
