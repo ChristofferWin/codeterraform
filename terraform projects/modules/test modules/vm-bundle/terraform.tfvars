@@ -76,7 +76,7 @@ vm_windows_objects_custom_config = [
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
-      storage_account_type = "ZRS"
+      storage_account_type = "Premium_ZRS"
     }
 
     source_image_reference = {
@@ -141,7 +141,7 @@ vm_windows_objects_custom_config = [
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
-      storage_account_type = "ZRS"
+      storage_account_type = "Premium_ZRS"
     }
 
     source_image_reference = {
@@ -197,8 +197,8 @@ vm_linux_objects_custom_config = [
         name = "dsaseqewp"
         access_tier = "Hot"
         public_network_access_enabled = true
-        account_tier = "Standard"
-        account_replication_type = "RAGRS"
+        account_tier = "Premium"
+        account_replication_type = "ZRS"
       }
     }
 
@@ -207,6 +207,7 @@ vm_linux_objects_custom_config = [
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = true
+      storage_account_type = "Premium_ZRS"
     }
 
     source_image_reference = {
@@ -259,8 +260,8 @@ vm_linux_objects_custom_config = [
         name = "dsaseqewt"
         access_tier = "Hot"
         public_network_access_enabled = true
-        account_tier = "Standard"
-        account_replication_type = "RAGRS"
+        account_tier = "Premium"
+        account_replication_type = "ZRS"
       }
     }
 
