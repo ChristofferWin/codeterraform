@@ -24,6 +24,10 @@ run "pre_deployment_for_apply2" {
     target = [module.pre_deployment_mgmt_resources]
   }
 
+  module {
+    source = "./pre-deployment"
+  }
+
   variables {
     rg_name = "vm-bundle-mgmt-test-rg" 
     location = var.location
