@@ -24,5 +24,5 @@ module "pre_deployment_mgmt_resources" {
   rg_name = var.rg_name
   location = var.location
   vnet_object = var.vnet_object
-  subnet_objects = var.subnet_objects_with_bastion
+  subnet_objects = var.subnet_bastion_resource_id
 }
