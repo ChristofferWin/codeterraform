@@ -75,7 +75,7 @@ vm_windows_objects_custom_config = [
       name = "customdisk"
       caching = "ReadOnly"
       disk_size_gb = 1024
-      write_accelerator_enabled = true
+      write_accelerator_enabled = false
       storage_account_type = "Premium_ZRS"
     }
 
@@ -140,7 +140,7 @@ vm_windows_objects_custom_config = [
       name = "customdisk"
       caching = "ReadOnly"
       disk_size_gb = 1024
-      write_accelerator_enabled = true
+      write_accelerator_enabled = false
       storage_account_type = "Premium_ZRS"
     }
 
@@ -206,7 +206,7 @@ vm_linux_objects_custom_config = [
       name = "customdisk"
       caching = "ReadOnly"
       disk_size_gb = 1024
-      write_accelerator_enabled = true
+      write_accelerator_enabled = false
       storage_account_type = "Premium_ZRS"
     }
 
@@ -269,7 +269,7 @@ vm_linux_objects_custom_config = [
       name = "customdisk"
       caching = "ReadOnly"
       disk_size_gb = 1024
-      write_accelerator_enabled = true
+      write_accelerator_enabled = false
     }
 
     source_image_reference = {
