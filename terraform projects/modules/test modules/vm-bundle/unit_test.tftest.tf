@@ -41,4 +41,4 @@ module "unit_and_integration_test_2" {
   subnet_bastion_resource_id = var.subnet_bastion_resource_id
   vm_windows_objects = var.vm_windows_objects_custom_config
   vm_linux_objects = var.vm_linux_objects_custom_config    
-}
+} 
