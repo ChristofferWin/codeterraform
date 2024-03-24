@@ -47,8 +47,8 @@ run "integration_test_1_check_vm_count_apply" {
   }
 
   assert {
-    condition = length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects])) == length(flatten([var.vm_linux_objects, var.vm_windows_objects]))
-    error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects, var.vm_windows_objects]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
+    condition = length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects])) == length(flatten([var.vm_linux_objects_simple, var.vm_windows_objects_simple]))
+    error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects_simple, var.vm_windows_objects_simple]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
   }
 }
 
