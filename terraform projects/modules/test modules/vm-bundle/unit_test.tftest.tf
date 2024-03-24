@@ -24,7 +24,7 @@ provider "azurerm" { //Will use command-line context, typically az cli login
 }
 
 module "unit_test_1_using_existing_resources" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main" 
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"  
   rg_id = var.rg_id
   location = var.location
   vnet_resource_id = var.vnet_resource_id
