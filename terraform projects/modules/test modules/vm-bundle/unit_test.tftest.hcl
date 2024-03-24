@@ -21,7 +21,7 @@ run "pre_deployment_for_apply2" {
   command = apply
 
   plan_options {
-    target = [module.pre_deployment_mgmt_resources]  
+    target = [module.pre_deployment_mgmt_resources]   
   }
 
   module {
