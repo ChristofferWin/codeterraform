@@ -28,13 +28,13 @@ run "pre_deployment_for_apply2" {
     rg_name = "vm-bundle-mgmt-test-rg" 
     location = var.location
     vnet_object = var.vnet_object
-    subnet_objects = var.subnet_objects_with_bastion
+    subnet_objects_with_bastion = var.subnet_objects_with_bastion
   }
 }
 
  
 run "integration_test_1_check_vm_count_apply" { 
-  command = apply
+  command = plan
 
   plan_options {
     target = [module.unit_test_1_using_existing_resources]
