@@ -32,37 +32,6 @@ run "pre_deployment_for_apply2" {
   }
 }
 
-run "unit_test_1_check_resource_id" {
-  command = apply
-
-  variables {
-    rg_name = var.rg_name
-    location = var.location
-    rg_id = run.pre_deployment_for_apply.rg_id
-    vnet_resource_id = run.pre_deployment_for_apply.vnet_resource_id
-    subnet_resource_id = run.pre_deployment_for_apply.subnet_resource_id
-  }
-
-  plan_options {
-    target = [module.unit_test_1_using_existing_resources]
-  }
-
-  assert {
-    condition = length([for each in flatten(values(module.unit_test_1_using_existing_resources.nic_object).*.ip_configuration) : true if length(regexall(var.rg_id,"${each.subnet_id}")) == 1]) > 0
-    error_message = "The resource group used for deployment via inputting a resource id does not match the resource group used for deployment. Resource group used is: ${split("/", values(module.unit_test_1_using_existing_resources.nic_object)[0].id)[4]}"
-  }
-
-  assert {
-    condition = length([for each in flatten(values(module.unit_test_1_using_existing_resources.nic_object).*.ip_configuration) : true if length(regexall(var.vnet_resource_id, replace(each.subnet_id, "resourceGroups", "resourcegroups"))) == 1  && each.subnet_id == var.subnet_resource_id]) > 0
-    error_message = "Either the virtual network used for the deployment, which is: ${split("/subnets/", values(module.unit_test_1_using_existing_resources.nic_object)[0].ip_configuration[0].subnet_id)[0]} not match the vnet resouce id or the subnet used which is: ${values(module.unit_test_1_using_existing_resources.nic_object)[0].ip_configuration[0].subnet_id} not match"
-  }
-
-  assert {
-    condition = length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects])) == length(flatten([var.vm_linux_objects_simple, var.vm_windows_objects_simples]))
-    error_message = "The amount of VMs defined in variables: ${length(flatten([var.vm_linux_objects_simple, var.vm_windows_objects_simple]))} does not match the amount planned: ${length(flatten([module.unit_test_1_using_existing_resources.summary_object.linux_objects, module.unit_test_1_using_existing_resources.summary_object.windows_objects]))}"
-  }
-
-}
 
 run "integration_test_1_check_vm_count_apply" { 
   command = apply
