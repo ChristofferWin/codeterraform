@@ -28,7 +28,7 @@ run "pre_deployment_for_apply2" {
     rg_name = "vm-bundle-mgmt-test-rg" 
     location = var.location
     vnet_object = var.vnet_object
-    subnet_objects_with_bastion = var.subnet_objects_with_bastion
+    subnet_objects_with_bastion = var.subnet_objects_with_bastion 
   }
 }
 
