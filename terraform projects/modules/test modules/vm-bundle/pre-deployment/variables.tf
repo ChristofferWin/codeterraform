@@ -22,7 +22,7 @@ variable "subnet_id" {
   default = null
 }
 
-variable "subnet_bastion_id" {
+variable "subnet_bastion_resource_id" {
   type = string
   default = null
 }
