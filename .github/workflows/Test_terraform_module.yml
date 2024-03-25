@@ -108,6 +108,6 @@ jobs:
             foreach($Path in $Paths){
               cd $Path
               Write-Output "At location: $Path"
-              terraform test
+              terraform test -verbose
               cd $BaseDirectory
             }
