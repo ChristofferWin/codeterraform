@@ -114,7 +114,7 @@ terraform {
 
 locals {
   //Variable transformation
-  rg_object = var.rg_name == null ? { name = split("/", var.rg_id)[4], create_rg = false } : { name = var.rg_name, create_rg = true }
+  rg_object = var.rg_name == null && can({ name = split("/", var.rg_id)[4], create_rg = false }) ? { name = split("/", var.rg_id)[4], create_rg = false } : var.rg_name != null ? {name = var.rg_name, create_rg = true} : null
 
   vnet_object_pre = var.vnet_resource_id == null && var.vnet_object == null ? { for each in [for each in range(1) : {
     name          = var.env_name != null ? "${var.env_name}-vm-vnet" : "vm-vnet"
