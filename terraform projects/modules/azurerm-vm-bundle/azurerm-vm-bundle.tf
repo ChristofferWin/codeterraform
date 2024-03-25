@@ -587,7 +587,7 @@ resource "azurerm_windows_virtual_machine" "vm_windows_object" {
   tags                                                   = can(each.value.tags) ? each.value.tags : null
   timezone                                               = can(each.value.timezone) ? each.value.timezone : null
   user_data                                              = can(each.value.user_data) ? each.value.user_data : null
-  virtual_machine_scale_set_id                           = can(each.value.virtual_machine_scale_set_id) ? each.value.virtual_machine_scale_set_id : null
+  virtual_machine_scale_set_id                           = can(each.value.virtual_machine_scale_set_id) ? each.value.virtual_machine_scale_set_id : null 
   vtpm_enabled                                           = can(each.value.vtpm_enabled) ? each.value.vtpm_enabled : null
 
   dynamic "additional_capabilities" {
