@@ -72,7 +72,7 @@ vm_windows_objects_custom_config = [
     }
 
     os_disk = {
-      name = "customdisk"
+      name = "customdisk1"
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = false
@@ -136,7 +136,7 @@ vm_windows_objects_custom_config = [
     }
 
     os_disk = {
-      name = "customdisk"
+      name = "customdisk2"
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = false
@@ -201,7 +201,7 @@ vm_linux_objects_custom_config = [
     }
 
     os_disk = {
-      name = "customdisk"
+      name = "customdisk3"
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = false
@@ -263,7 +263,7 @@ vm_linux_objects_custom_config = [
     }
 
     os_disk = {
-      name = "customdisk"
+      name = "customdisk4"
       caching = "ReadOnly"
       disk_size_gb = 1024
       write_accelerator_enabled = false
