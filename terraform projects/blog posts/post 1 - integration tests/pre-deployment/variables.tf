@@ -1,31 +1,11 @@
-variable "rg_name" {
-  type = string
-  default = "integration-test-rg"
-}
-
-variable "rg_id" {
-  type = string
-  default = null
-}
-
 variable "location" {
   type = string
   default = "northeurope"
 }
 
-variable "vnet_resource_id" {
+variable "rg_name" {
   type = string
-  default = null
-}
-
-variable "subnet_resource_id" {
-  type = string
-  default = null
-}
-
-variable "kv_resource_id" {
-  type = string
-  default = null
+  default = "integration-test-rg"
 }
 
 variable "vm_windows_objects" {

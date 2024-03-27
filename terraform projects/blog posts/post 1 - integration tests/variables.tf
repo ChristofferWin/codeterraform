@@ -1,11 +1,11 @@
-variable "rg_id" {
-  type = string
-  default = null
-}
-
 variable "location" {
   type = string
   default = "northeurope"
+}
+
+variable "rg_id" {
+  type = string
+  default = null
 }
 
 variable "vnet_resource_id" {

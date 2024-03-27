@@ -38,7 +38,7 @@ run "pre_deployment_for_apply2" {
 
  
 run "integration_test_1_check_vm_count_apply" {  
-  command = plan
+  command = apply
 
   plan_options {
     target = [module.unit_test_1_using_existing_resources]  
