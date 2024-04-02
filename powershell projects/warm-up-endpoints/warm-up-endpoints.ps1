@@ -1,8 +1,7 @@
 function Run-URLWarmUp {
     [System.Collections.ArrayList]$URLObjects = @()
     [array]$Jobs = @()
-    [int]$ThreadCount = 0
-
+    [int]$ThreadCount = $URLObjects.Count * $ThreadMultiplier
     foreach($URL in $URLS){
         if($URL -notmatch "^(https?://|www\.)[^\s/$.?#]+\.[^\s]*$"){
             $URLObjects += [PSCustomObject]@{
@@ -41,68 +40,87 @@ function Run-URLWarmUp {
         Write-Warning "Creating log files on default location: $(if($PSVersionTable.Edition -eq "Desktop"){"$HOME\Documents"}else{"$HOME"})"
     }
     
-    $ThreadCount = $URLObjects.Count
-    Write-Verbose "Script will create 1 thread per OK URL = $ThreadCount"
+    Write-Verbose "Script will create $($URLObjects.Count) * $($ThreadMultiplier) thread(s) per OK URL = $ThreadCount"
+    $ReturnObject = @()
     
-    for($i = 0; $i -le $ThreadCount -1; $i++){
-        try{
-            $Jobs += Start-Job -ScriptBlock {
-                $timer = [Diagnostics.Stopwatch]::StartNew()
-                $URL = $args[0]
-                $Date = (Get-Date).ToString("dd-MM-yyyy")
-                $Name = if($args[0] -like "www.*"){$URL.Split(".")[1]}else{($URL.Substring(7).Replace("/", "").Split(".")[0])}
-                $Path  "Log-$Name-at-$Date.$($args[4])"
-                
-                if($args[3]){
-                    cd $args[3]
-                }
-                $ReturnObjects = @()
-                while($true){
-                    try{
-                        $WebCall = Invoke-WebRequest -UseBasicParsing -Uri $URL -ErrorAction Stop
-                        $ResponseTime = $((Measure-Command -Expression {Invoke-WebRequest -UseBasicParsing -URI $URL}).Milliseconds)
-                    }
-                    catch{
-                        $_
-                    }
-                   <# $ReturnObject += [PSCustomObject]@{
-                        Time = '{0:hh\:mm\:ss}' -f $timer.Elapsed
-                        URL = $args[0]
-                        ThreadNumber = $args[1]
-                        HTTPStatus = $WebCall.StatusCode
-                        ResponseTimeInMS = $ResponseTime
-                    } #>
-                    if($args[2]){
-                        Start-Sleep -Seconds 1
-                    }
-                    else{
-                        Start-Sleep -Seconds 30
-                    }
-                    try{
-                        <#
-                        if($args[5]){
-                            switch($args[4]){
-                                "json" {$ReturnObject, "," | ConvertTo-Json -Depth 100 | ForEach-Object { $_ | Add-Content -Path $Path}}
-                                "yaml" {$ReturnObject | ConvertTo-Csv -Delimiter "," -NoTypeInformation | Out-File -Force -Append -FilePath $Path -ErrorAction Stop}
-                                "csv" {$ReturnObject | ConvertTo-Csv -Delimiter "," -NoTypeInformation | Out-File -Force -Append -FilePath $Path -ErrorAction Stop}
-                            }
-                        }
-                        #>
-
-                    }
-                    catch{
-                        $_
-                    }
-                    $Error.Clear()
-                }
-            } `
-             -ErrorAction Stop -ArgumentList $URLObjects[$i].URL, $i, $Aggressive, $Path, $ReportExtension, $CreateReport
-        }
-        catch{
-            Write-Warning "The following error occured inside of job $($Jobs[$i].Name)...`n$_"
+    if($CreateReport){
+        foreach($URLObject in $URLObjects){
+            $URL = $URLObject.URL
+            $Name = if($URL -like "www.*"){$URL.Split(".")[1]}elseif(($URL.Substring(7).Split("/") | ? {"" -notin $_}).Count -gt 1){"$($URL.Substring(7).Replace('/', '').Split('.'))".Replace(" com", "-")}else{$URL.Substring(7).Replace("/", "").Split(".")[0]}
+            switch($ReportExtension){
+                "json" {"[`n`n]" | Out-File "Log-$Name-at-$((Get-Date).ToString("dd-MM-yyyy")).json"}
+                "yaml" {}
+                "csv" {}
+            }
         }
     }
-    return 
+    $Jobs = @()
+    foreach($URLObject in $URLObjects){
+        for($i = 0; $i -le $ThreadMultiplier -1; $i++){
+            try{
+                $Jobs += Start-Process pwsh -WindowStyle Hidden -ArgumentList  -{
+                    $timer = [Diagnostics.Stopwatch]::StartNew()
+                    $URL = $args[0]
+                    $Date = (Get-Date).ToString("dd-MM-yyyy")
+                    $Name = if($URL -like "www.*"){$URL.Split(".")[1]}elseif(($URL.Substring(7).Split("/") | ? {"" -notin $_}).Count -gt 1){"$($URL.Substring(7).Replace('/', '').Split('.'))".Replace(" com", "-")}else{$URL.Substring(7).Replace("/", "").Split(".")[0]}
+                    $Path = "Log-$Name-at-$Date.$($args[4])"
+                    $ReturnObject = @()
+                    
+                    if($args[3]){
+                        cd $args[3]
+                    }
+                    while($true){
+                        try{
+                            $WebCall = Invoke-WebRequest -UseBasicParsing -Uri $URL -ErrorAction Stop
+                            $ResponseTime = $((Measure-Command -Expression {Invoke-WebRequest -UseBasicParsing -URI $URL}).Milliseconds)
+                        }
+                        catch{
+                            $_
+                        }
+                    $ReturnObject = [PSCustomObject]@{
+                            Time = '{0:hh\:mm\:ss}' -f $timer.Elapsed
+                            URL = $args[0]
+                            ThreadNumber = $args[1]
+                            HTTPStatus = $WebCall.StatusCode
+                            ResponseTimeInMS = $ResponseTime
+                        }
+                        if($args[2]){
+                            Start-Sleep -Seconds 1
+                        }
+                        else{
+                            Start-Sleep -Seconds 30
+                        }
+                        try{
+                            
+                            if($args[5]){
+                                switch($args[4]){
+                                    "json" {
+                                        $OutputArray = @()
+                                        
+                                        
+                                    }
+                                   # "yaml" {$ReturnObject | ConvertTo- -Delimiter "," -NoTypeInformation | Out-File -Force -Append -FilePath $Path -ErrorAction Stop}
+                                    "csv" {$ReturnObject | ConvertTo-Csv -Delimiter "," -NoTypeInformation | Out-File -Force -Append -FilePath $Path -ErrorAction Stop}
+                                }
+                            }
+                        }
+                        catch{
+                            $_
+                        }
+                        $Error.Clear()
+                    }
+                }
+                foreach($Job in $Jobs){
+                    $IDs += (Start-Process pwsh -ArgumentList "", "-Command", $Job -Verbose).id
+                }
+                Write-Host "HELLO WORLD"
+            }
+            catch{
+                Write-Warning "The following error occured inside of job $($Jobs[$i].Name)...`n$_"
+            }
+        }
+    }
+    Write-Host "STOP"
 }
 
 function Show-Threads {
@@ -110,13 +128,16 @@ function Show-Threads {
     [System.Collections.ArrayList]$JobObjects = @()
 
     try{
-        $Jobs += Get-Job -ErrorAction Stop | ? {$_.Command.ToString() -like '*$ResponseTime = $((Measure-Command*'}
+        $Jobs += Get-Job -ErrorAction Stop | ? {$_.Command.ToString() -like '*$ResponseTime = $((Measure-Command*' -and $_.State -eq "Running"}
     }
     catch{
         Write-Error "Something happened while trying to retrieve the running background jobs...`n$_"
     }
 
-
+    foreach($Job in $Jobs){
+        $JobObjects += [PSCustomObject]@{
+        }
+    }
 
     return $JobObjects
 }
@@ -129,6 +150,7 @@ function Main {
         [parameter(Mandatory = $false, ParameterSetName = "Run")][string]$Path,
         [parameter(Mandatory = $false, ParameterSetName = "Run")][switch]$CreateReport,
         [parameter(Mandatory = $false, ParameterSetName = "Run")][ValidateSet("json", "csv", "yaml")][string]$ReportExtension = "json",
+        [parameter(Mandatory = $false, ParameterSetName = "Run")][int]$ThreadMultiplier = 1,
         [parameter(Mandatory = $true, ParameterSetName = "Show")][switch]$ShowThreads,
         [parameter(Mandatory = $true, ParameterSetName = "Kill")][switch]$KillThreads
     )
@@ -155,8 +177,8 @@ function Main {
      }    
 }
 
-Main -Verbose -URLS @("test.dk", "https://test.dk", "https://google.dk", "https://codeterraform.com", "https://codeterraform.com/blog", "www.dr.dk") -Path "C:\Users\Christoffer Windahl\Desktop\for blog posts\codeterraform\powershell projects\warm-up-endpoints" -Aggressive -CreateReport
-Show-Threads
+Main -Verbose -URLS @("https://bt.dk", "https://ekstrabladet.dk") -Path "C:\Users\Christoffer Windahl\Desktop\for blog posts\codeterraform\powershell projects\warm-up-endpoints" -Aggressive -ThreadMultiplier 2 -CreateReport -ReportExtension "json"
+$Test = Show-Threads
 <#
 
 LOOK INTO THIS AS MEMORY CONSUMPTION ONLY INCREASES FOR JOBS OVER TIME:
