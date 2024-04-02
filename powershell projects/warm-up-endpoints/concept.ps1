@@ -6,8 +6,8 @@ $env:Path = "C:\Users\Christoffer Windahl\Desktop\for blog posts\codeterraform\p
 $env:ReportExtension = "json"
 $env:CreateReport = $true
 
-(Start-Process pwsh -PassThru -ErrorAction Stop -ArgumentList "-Command {
-                    $timer = [Diagnostics.Stopwatch]::StartNew()
+(Start-Process pwsh -PassThru -ErrorAction Stop -NoNewWindow -ArgumentList "-Command {
+                    $timer = $([Diagnostics.Stopwatch]::StartNew())
                     $URL = $env:URLObjects
                     $Date = (Get-Date).ToString('dd-MM-yyyy'))
                     $Name = if($URL -like 'www.*'){$URL.Split('.')[1]}elseif(($URL.Substring(7).Split('/') | ? {'' -notin $_}).Count -gt 1){'$URL.Substring(7).Replace('/', '').Split('.')'.Replace(' com', '-')}else{$URL.Substring(7).Replace('/', '').Split('.')[0]}
