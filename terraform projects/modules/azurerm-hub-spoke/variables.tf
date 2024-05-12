@@ -94,7 +94,6 @@ variable "typology_object" {
       })))
     })))
       }))
-    }))
   })
   default = {
     multiplicator = 5
