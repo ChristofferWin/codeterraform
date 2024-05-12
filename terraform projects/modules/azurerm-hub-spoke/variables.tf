@@ -9,8 +9,9 @@ variable "typology_object" {
     create_tag = optional(bool)
     multiplicator = optional(number)
     dns_servers = optional(list(string))
-    cidr_notation = optional(string)
     tags = optional(map(string))
+    address_spaces = optional(list(string))
+    subnets_cidr_notation = optional(string)
 
     hub_object = optional(object({
       rg_name = optional(string)
@@ -23,6 +24,15 @@ variable "typology_object" {
         address_spaces = optional(list(string))
         dns_servers = optional(list(string))
         tags = optional(map(string))
+        vnet_peering_name = optional(string)
+        vnet_peering_allow_virtual_network_access = optional(bool)
+        vnet_peering_allow_forwarded_traffic = optional(bool)
+
+        vpn = optional(object({
+          gw_name = optional(string)
+          gw_sku = optional(string)
+          
+        }))
 
         subnet_objects = optional(list(object({
           name = optional(string)
@@ -30,11 +40,12 @@ variable "typology_object" {
           use_last_subnet = optional(bool)
           cidr_notation = optional(string)
           address_prefixes = optional(list(string))
+          service_endpoints = optional(set(string))
+          service_endpoint_policy_ids = optional(set(string))
 
       delegation = optional(list(object({
         name = optional(string)
-        service_name = optional(string)
-        actions = optional(list(string))
+        service_name_pattern = optional(string)
       })))
     })))
 
@@ -53,11 +64,15 @@ variable "typology_object" {
     solution_name = optional(string)
 
     network = optional(object({
-      vnet_name = string
+      vnet_name = optional(string)
       vnet_cidr_notation = optional(string)
       address_spaces = optional(list(string))
       dns_servers = optional(list(string))
       tags = optional(map(string))
+      vnet_peering_name = optional(string)
+      vnet_peering_allow_virtual_network_access = optional(bool)
+      vnet_peering_allow_forwarded_traffic = optional(bool)
+    }))
 
     ddos_protection_plan = optional(object({
         id = string
@@ -70,11 +85,12 @@ variable "typology_object" {
       use_last_subnet = optional(bool)
       cidr_notation = optional(string)
       address_prefixes = optional(list(string))
+      service_endpoints = optional(set(string))
+      service_endpoint_policy_ids = optional(set(string))
 
       delegation = optional(list(object({
         name = optional(string)
-        service_name = optional(string)
-        actions = optional(list(string))
+        service_name_pattern = optional(string)
       })))
     })))
       }))
@@ -93,7 +109,8 @@ variable "typology_object" {
       network = {
         subnet_objects = [
           {
-            name = "tester1337"
+            name = "GatewaySubnet"
+            use_last_subnet = true
           }
         ]
       }
@@ -104,45 +121,24 @@ variable "typology_object" {
     },
     {
       location = "eastus"
-      solution_name = "solution"
 
       network = {
-        vnet_name = "test123"
-        address_spaces = ["192.168.0.0/24"]
-
+      address_spaces = [ "172.16.0.0/22" ]
         subnet_objects = [
           {
-            use_first_subnet = true
+
+           
+          },
+          {
+          },
+          {
+            delegation = [{
+              service_name_pattern = "ApiManagement"
+            }]
           }
         ]
-
-        ddos_protection_plan = {
-          id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/group1/providers/Microsoft.Network/ddosProtectionPlans/testddospplan"
-          enable = true
-        }
       }
-    },
-    {
-      location = "northeurope"
-      }
+    }
     ]
   }
-}
-
-variable "subnet_objects" {
-  description = "a list of objects describing subnets to create - this list can contain both subnets for the hub and any spoke vnet"
-  type = list(object({
-    name = optional(string)
-    address_prefixes = optional(list(string))
-    solution_name = optional(string)
-    use_first_subnet = optional(bool)
-    use_last_subnet = optional(bool)
-
-    delegation = optional(list(object({
-      name = optional(string)
-      service_name = optional(string)
-      actions = optional(list(string))
-    })))
-  }))
-  default = null
 }
