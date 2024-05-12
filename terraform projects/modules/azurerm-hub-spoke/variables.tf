@@ -31,6 +31,8 @@ variable "typology_object" {
         vpn = optional(object({
           gw_name = optional(string)
           gw_sku = optional(string)
+          pip_name = optional(string)
+          pip_ddos_protection_mode = optional(string)
           
         }))
 
@@ -106,6 +108,8 @@ variable "typology_object" {
       location = "westus"
 
       network = {
+
+        vpn = {}
         subnet_objects = [
           {
             name = "GatewaySubnet"

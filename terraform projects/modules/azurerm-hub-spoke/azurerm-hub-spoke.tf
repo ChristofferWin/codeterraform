@@ -99,21 +99,26 @@ locals {
     solution_name = null
   }]
 
-  gateway_object = local.tp_object.hub_object.network == null ? {} : local.tp_object.hub_object.network.vpn != null || local.tp_object.hub_object.network.vpn == {} ? {
+  gw_object = local.tp_object.hub_object.network == null ? {} : local.tp_object.hub_object.network.vpn != null || local.tp_object.hub_object.network.vpn == {} ? {for each in [{
     name = local.tp_object.hub_object.network.vpn.gw_name == null ? local.gateway_base_name : local.tp_object.hub_object.network.vpn.gw_name
+    vnet_name = [for a,b in local.vnet_objects_pre : b.name if a == local.rg_count -1][0]
     sku = local.tp_object.hub_object.network.vpn.gw_sku == null ? local.vpn_gateway_sku : local.tp_object.hub_object.network.vpn.gw_sku
     type = "Vpn"
     remote_vnet_traffic_enabled = true
 
     ip_configuration = {
-      subnet_id = [for a, b in local.subnet_return_helper_objects : a.id if a.name == "GatewaySubnet"][0]
+      subnet_id = [for a, b in local.subnet_return_helper_objects : b.id if b.name == "GatewaySubnet"][0]
     }
-    
-  } : {}
+  }] : each.name => each} : {}
 
-  pip_gw_object = local.gateway_object != {} ? {
-    name = local.tp_object.hub_object.network.vpn.
-  }
+  pip_gw_object = local.gw_object != {} ? {for each in [{
+    name = local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : replace(local.gateway_base_name, "gw", "pip")
+    vnet_name = [for a,b in local.vnet_objects_pre : b.name if a == local.rg_count -1][0]
+    ddos_protection_mode = local.tp_object.hub_object.network.vpn.pip_ddos_protection_mode != null ? local.tp_object.hub_object.network.vpn.pip_ddos_protection_mode : "Disabled"
+    sku = "Standard"
+    sku_tier = "Regional"
+    allocation_method = "Static"
+  }] : each.name => each} : {}
 
   vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
   subnet_objects = {for each in flatten([for a in local.subnet_objects_pre : a.subnets if a.subnets != null]) : each.name => each}
@@ -123,13 +128,15 @@ locals {
   ########## VARIABLE RETURN OBJECTS #########
   ############################################
 
-  rg_return_helper_objects = local.rg_return_object != {} ? values(local.rg_return_object) : []
-  rg_return_object = azurerm_resource_group.rg_object
+  rg_return_helper_objects = local.rg_return_objects != {} ? values(local.rg_return_objects) : []
+  rg_return_objects = azurerm_resource_group.rg_object
   vnet_return_objects = azurerm_virtual_network.vnet_object
   vnet_return_helper_objects = local.vnet_return_objects != {} ? values(local.vnet_return_objects) : []
   subnet_return_objects = azurerm_subnet.subnet_object
   subnet_return_helper_objects = azurerm_subnet.subnet_object != {} ? values(local.subnet_return_objects) : []
   peering_return_objects = azurerm_virtual_network_peering.peering_object
+  pip_return_object = azurerm_public_ip.gw_pip_object
+  pip_return_helper_object = azurerm_public_ip.gw_pip_object != {} ? values(azurerm_public_ip.gw_pip_object) : []
 }
 
   ############################################
@@ -199,7 +206,23 @@ resource "azurerm_virtual_network_peering" "peering_object" {
 }
 
 resource "azurerm_public_ip" "gw_pip_object" {
-  name = 
+  for_each = local.pip_gw_object
+  name = each.key
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
+  location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
+  sku = each.value.sku
+  sku_tier = each.value.sku_tier
+  allocation_method = each.value.allocation_method
+}
+
+resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
+  for_each = local.gw_object
+  name = each.key
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
+  location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
+  sku = each.value.sku
+  type = each.value.type
+  
 }
 
 output "vnet" {
