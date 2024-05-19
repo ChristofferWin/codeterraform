@@ -118,6 +118,8 @@ variable "typology_object" {
       network = { 
         vpn = {}
 
+        firewall = {}
+
         subnet_objects = [
           {
             name = "GatewaySubnet"
@@ -125,6 +127,9 @@ variable "typology_object" {
           },
           {
             name = "AzureBastionSubnet"
+          },
+          {
+            name = "AzureFirewallSubnet"
           }
         ]
       }

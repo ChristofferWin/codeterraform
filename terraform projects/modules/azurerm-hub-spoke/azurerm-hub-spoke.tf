@@ -107,7 +107,7 @@ locals {
     solution_name = null
   }]
   
-  route_table_objects_pre = (local.wan_object == {} && can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
+  route_table_objects_pre = (local.wan_object == {} && !can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
     name = replace(replace(local.gateway_base_name, "gw", "rt-to-hub-from-${b.name}-to"), "-p2s", "")
     vnet_name = b.vnet_name
 
@@ -147,28 +147,27 @@ locals {
 
   #PROBLEM AT LINE 151 - NAME AFTER FIRST LOGIC CHECK IT FAILS BECAUSE D.NETWORK.<null>
   pip_objects_pre = local.gw_object != [] ? [for a, b in range(local.pip_count) : {
-    pip_objects = [for c, d in local.tp_object.hub_object : {
-      name = a == 2 && !can(d.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 2 && d.network.vpn.pip_name != null ? d.network.vpn.pip_name : a == 0 && local.create_vpn && !can(d.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.create_vpn && d.network.vpn.pip_name != null ? d.network.vpn.pip_name : a == 0 && local.create_vpn && d.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.create_firewall && !can(d.network.firewall.pip_name) ? replace(local.gateway_base_name, "gw", "fw-pip") : a == 0 && local.create_firewall && d.network.firewall.pip_name != null ? d.network.firewall.pip_name : replace(local.gateway_base_name, "gw", "fw-pip") 
+      name = ""
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
-      ddos_protection_mode = a == 2 && !can(d.network.vpn.pip_ddos_protection_mode) ? false : a == 2 && d.network.vpn.pip_ddos_protection_mode != null ? d.network.vpn.pip_ddos_protection_mode : a == 0 && local.create_vpn && !can(d.network.vpn.pip_ddos_protection_mode) ? false : a == 0 && local.create_vpn && d.network.vpn.pip_ddos_protection_mode != null ? d.network.vpn.pip_ddos_protection_mode : a == 0 && local.create_vpn && d.network.vpn.pip_ddos_protection_mode == null ? false : a == 0 && local.create_firewall && !can(d.network.firewall.pip_ddos_protection_mode) ? false : a == 0 && local.create_firewall && d.network.firewall.pip_ddos_protection_mode != null ? d.network.firewall.pip_ddos_protection_mode : false
+      ddos_protection_mode = null
       sku = "Standard"
       sku_tier = "Regional"
       allocation_method = "Static"
-    }]
-  }] : []
+    }
+  ] : []
 
-  fw_object = !can(local.tp_object.hub_object.network.firewall) ? {} : local.tp_object.hub_object.network.firewall != null ? {for each in [for a, b in local.tp_object.hub_object.network.firewall : {
-    name = b.name != null ? b.name : replace(local.gateway_base_name, "gw", "fw")
-    sku_name = local.wan_object == {} ? "AZFW_Vnet" : "AZFW_Hub"
-    sku_tier = b.sku_tier != null ? b.sku_tier : "Standard"
+  fw_object = !can(local.tp_object.hub_object.network.firewall) ? {} : local.tp_object.hub_object.network.firewall != null ? {for each in [for a, b in range(1) : {
+    name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw-pip")
+    sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
+    sku_tier = can(b.sku_tier) ? b.sku_tier : "Standard"
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
 
     ip_configuration = {
       name = "fw-config"
-      subnet_id = [for c, d in local.subnet_return_helper_objects : d.id if d.name == "AzureFirewallSubnet"]
+      subnet_id = [for c, d in local.subnet_return_helper_objects : d.id if d.name == "AzureFirewallSubnet"][0]
     }
 
-    virtual_hub = local.wan_object == {} ? [{}] : {for each in [
+    virtual_hub = local.wan_object == {} ? {} : {for each in [
       {
         virtual_hub_id = null
       }
@@ -179,7 +178,7 @@ locals {
   subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name => each}
   peering_objects = {for each in flatten([local.peering_objects_from_hub_to_spokes, local.peering_objects_from_spokes_to_hub]) : each.name => each }
   route_table_objects = {for each in local.route_table_objects_pre : each.name => each}
-  pip_objects = {for each in flatten(local.pip_objects_pre.*.pip_objects) : each.name => each}
+  pip_objects = {for each in local.pip_objects_pre : each.name => each}
 
   ############################################
   ########## VARIABLE RETURN OBJECTS #########
@@ -353,4 +352,8 @@ resource "azurerm_firewall" "fw_object" {
       virtual_hub_id = virtual_hub.key
     }
   }
+}
+
+output "test" {
+  value = local.fw_object
 }
