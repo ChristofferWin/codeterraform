@@ -10,7 +10,6 @@ terraform {
 provider "azurerm" {
   features {
   }
-  skip_provider_registration = true
 }
 
 locals {
@@ -29,6 +28,8 @@ locals {
   #subnet_objects_pre = can(flatten([for a in local.vnet_objects_pre.*.subnets : a if a != null])) ? flatten([for a in local.vnet_objects_pre.*.subnets : a if a != null]) : null
   vpn_gateway_sku = "VpnGw2"
   #multiplicator = local.tp_object.multiplicator != null ? local.tp_object.multiplicator : 1
+  create_firewall = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.firewall != null ? true : false
+  create_vpn = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vpn != null ? true : false
   rg_count = 1 + length(local.tp_object.spoke_objects) #* local.multiplicator
   env_name = local.tp_object.env_name != null ? local.tp_object.env_name : ""
   customer_name = local.tp_object.customer_name != null ? local.tp_object.customer_name : ""
@@ -38,8 +39,7 @@ locals {
   rg_name = local.name_fix ? "rg-${replace(local.base_name, "-open", "hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "hub")}-rg" : "rg-hub"
   vnet_base_name = local.name_fix ? "vnet-${replace(local.base_name, "-open", "hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "hub")}-vnet" : "vnet-hub"
   gateway_base_name = local.name_fix ? "gw-${replace(local.base_name, "-open", "hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "hub")}-gw" : "gw-hub-p2s"
-  route_table_base_name = "from-spoke-to-hub-all-traffic"
-  
+  pip_count = local.create_firewall && local.create_vpn ? 2 : local.create_firewall || local.create_vpn ? 1 : 0
   subnet_list_of_delegations = (jsondecode("{\"value\":[{\"name\":\"Microsoft.Web.serverFarms\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Web.serverFarms\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Web/serverFarms\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/action\"]},{\"name\":\"Microsoft.ContainerInstance.containerGroups\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.ContainerInstance.containerGroups\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.ContainerInstance/containerGroups\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/action\"]},{\"name\":\"Microsoft.Netapp.volumes\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Netapp.volumes\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Netapp/volumes\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.HardwareSecurityModules.dedicatedHSMs\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.HardwareSecurityModules.dedicatedHSMs\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.HardwareSecurityModules/dedicatedHSMs\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.ServiceFabricMesh.networks\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.ServiceFabricMesh.networks\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.ServiceFabricMesh/networks\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/action\"]},{\"name\":\"Microsoft.Logic.integrationServiceEnvironments\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Logic.integrationServiceEnvironments\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Logic/integrationServiceEnvironments\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/action\"]},{\"name\":\"Microsoft.Batch.batchAccounts\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Batch.batchAccounts\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Batch/batchAccounts\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/action\"]},{\"name\":\"Microsoft.Sql.managedInstances\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Sql.managedInstances\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Sql/managedInstances\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\",\"Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action\",\"Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action\"]},{\"name\":\"Microsoft.Web.hostingEnvironments\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Web.hostingEnvironments\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Web/hostingEnvironments\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/action\"]},{\"name\":\"Microsoft.BareMetal.CrayServers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.BareMetal.CrayServers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.BareMetal/CrayServers\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Databricks.workspaces\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Databricks.workspaces\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Databricks/workspaces\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\",\"Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action\",\"Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action\"]},{\"name\":\"Microsoft.BareMetal.AzureHostedService\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.BareMetal.AzureHostedService\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.BareMetal/AzureHostedService\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.BareMetal.AzureVMware\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.BareMetal.AzureVMware\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.BareMetal/AzureVMware\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.StreamAnalytics.streamingJobs\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.StreamAnalytics.streamingJobs\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.StreamAnalytics/streamingJobs\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DBforPostgreSQL.serversv2\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DBforPostgreSQL.serversv2\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DBforPostgreSQL/serversv2\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.AzureCosmosDB.clusters\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.AzureCosmosDB.clusters\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.AzureCosmosDB/clusters\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.MachineLearningServices.workspaces\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.MachineLearningServices.workspaces\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.MachineLearningServices/workspaces\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DBforPostgreSQL.singleServers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DBforPostgreSQL.singleServers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DBforPostgreSQL/singleServers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DBforPostgreSQL.flexibleServers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DBforPostgreSQL.flexibleServers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DBforPostgreSQL/flexibleServers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DBforMySQL.serversv2\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DBforMySQL.serversv2\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DBforMySQL/serversv2\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DBforMySQL.flexibleServers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DBforMySQL.flexibleServers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DBforMySQL/flexibleServers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DBforMySQL.servers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DBforMySQL.servers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DBforMySQL/servers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.ApiManagement.service\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.ApiManagement.service\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.ApiManagement/service\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\",\"Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action\"]},{\"name\":\"Microsoft.Synapse.workspaces\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Synapse.workspaces\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Synapse/workspaces\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.PowerPlatform.vnetaccesslinks\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.PowerPlatform.vnetaccesslinks\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.PowerPlatform/vnetaccesslinks\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Network.dnsResolvers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Network.dnsResolvers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Network/dnsResolvers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Kusto.clusters\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Kusto.clusters\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Kusto/clusters\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\",\"Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action\",\"Microsoft.Network/virtualNetworks/subnets/unprepareNetworkPolicies/action\"]},{\"name\":\"Microsoft.DelegatedNetwork.controller\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DelegatedNetwork.controller\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DelegatedNetwork/controller\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.ContainerService.managedClusters\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.ContainerService.managedClusters\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.ContainerService/managedClusters\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.PowerPlatform.enterprisePolicies\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.PowerPlatform.enterprisePolicies\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.PowerPlatform/enterprisePolicies\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.StoragePool.diskPools\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.StoragePool.diskPools\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.StoragePool/diskPools\",\"actions\":[\"Microsoft.Network/virtualNetworks/read\"]},{\"name\":\"Microsoft.DocumentDB.cassandraClusters\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DocumentDB.cassandraClusters\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DocumentDB/cassandraClusters\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Apollo.npu\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Apollo.npu\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Apollo/npu\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.AVS.PrivateClouds\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.AVS.PrivateClouds\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.AVS/PrivateClouds\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\"]},{\"name\":\"Microsoft.Orbital.orbitalGateways\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Orbital.orbitalGateways\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Orbital/orbitalGateways\",\"actions\":[\"Microsoft.Network/publicIPAddresses/join/action\",\"Microsoft.Network/virtualNetworks/subnets/join/action\",\"Microsoft.Network/virtualNetworks/read\",\"Microsoft.Network/publicIPAddresses/read\"]},{\"name\":\"Microsoft.Singularity.accounts.networks\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Singularity.accounts.networks\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Singularity/accounts/networks\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Singularity.accounts.npu\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Singularity.accounts.npu\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Singularity/accounts/npu\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.LabServices.labplans\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.LabServices.labplans\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.LabServices/labplans\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Fidalgo.networkSettings\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Fidalgo.networkSettings\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Fidalgo/networkSettings\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DevCenter.networkConnection\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DevCenter.networkConnection\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DevCenter/networkConnection\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"NGINX.NGINXPLUS.nginxDeployments\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/NGINX.NGINXPLUS.nginxDeployments\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"NGINX.NGINXPLUS/nginxDeployments\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.DevOpsInfrastructure.pools\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.DevOpsInfrastructure.pools\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.DevOpsInfrastructure/pools\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.CloudTest.pools\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.CloudTest.pools\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.CloudTest/pools\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.CloudTest.hostedpools\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.CloudTest.hostedpools\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.CloudTest/hostedpools\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.CloudTest.images\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.CloudTest.images\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.CloudTest/images\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"PaloAltoNetworks.Cloudngfw.firewalls\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/PaloAltoNetworks.Cloudngfw.firewalls\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"PaloAltoNetworks.Cloudngfw/firewalls\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Qumulo.Storage.fileSystems\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Qumulo.Storage.fileSystems\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Qumulo.Storage/fileSystems\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.App.testClients\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.App.testClients\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.App/testClients\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.App.environments\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.App.environments\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.App/environments\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.ServiceNetworking.trafficControllers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.ServiceNetworking.trafficControllers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.ServiceNetworking/trafficControllers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"GitHub.Network.networkSettings\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/GitHub.Network.networkSettings\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"GitHub.Network/networkSettings\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Network.networkWatchers\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Network.networkWatchers\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Network/networkWatchers\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Dell.Storage.fileSystems\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Dell.Storage.fileSystems\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Dell.Storage/fileSystems\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.Netapp.scaleVolumes\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.Netapp.scaleVolumes\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.Netapp/scaleVolumes\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Oracle.Database.networkAttachments\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Oracle.Database.networkAttachments\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Oracle.Database/networkAttachments\",\"actions\":[\"Microsoft.Network/networkinterfaces/*\",\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"PureStorage.Block.storagePools\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/PureStorage.Block.storagePools\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"PureStorage.Block/storagePools\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Informatica.DataManagement.organizations\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Informatica.DataManagement.organizations\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Informatica.DataManagement/organizations\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.AzureCommunicationsGateway.networkSettings\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.AzureCommunicationsGateway.networkSettings\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.AzureCommunicationsGateway/networkSettings\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.PowerAutomate.hostedRpa\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.PowerAutomate.hostedRpa\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.PowerAutomate/hostedRpa\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]},{\"name\":\"Microsoft.MachineLearningServices.workspaceComputes\",\"id\":\"/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/providers/Microsoft.Network/availableDelegations/Microsoft.MachineLearningServices.workspaceComputes\",\"type\":\"Microsoft.Network/availableDelegations\",\"serviceName\":\"Microsoft.MachineLearningServices/workspaceComputes\",\"actions\":[\"Microsoft.Network/virtualNetworks/subnets/join/action\"]}]}")).value
 
   ############################################
@@ -66,20 +66,9 @@ locals {
     ddos_protection_plan = can(local.tp_object.spoke_objects[a].network.ddos_protection_plan) ? local.tp_object.spoke_objects[a].network.ddos_protection_plan : null
   }]
 
-  /*
-
-  subnet_objects_pre2 = local.subnet_objects_pre != null ? [for a, b in local.vnet_objects_pre : {
-    name = can(b.name) ? b.name : replace(b.name, "vnet", "subnet${a + 1}")
-    vnet_name = b.name
-    solution_name = null
-    address_prefixes = can(b.) ? local.subnet_objects_pre[c].address_prefixes : can(local.subnet_objects_pre[c].use_first_subnet) && !can(local.subnet_objects_pre[c].use_last_subnet) ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), c)] : [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")))), 2) -1 -c)] 
-    delegation = !can(local.subnet_objects_pre[0].delegation[0]) ? [] : [for f, g in range(length([for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(local.subnet_objects_pre[c].delegation[0].service_name_pattern), lower(i.serviceName))[0])])) : {
-      name = split(".", [for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(local.subnet_objects_pre[c].delegation[0].service_name_pattern), lower(i.serviceName))[0])][f])[1]
-      service_name = [for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(local.subnet_objects_pre[c].delegation[0].service_name_pattern), lower(i.serviceName))[0])][f]
-      actions = [for h, i in local.subnet_list_of_delegations : i.actions if can(regexall(lower(local.subnet_objects_pre[c].delegation[0].service_name_pattern), lower(i.serviceName))[0])][f]
-    }]
-  }] : []
-*/
+  wan_object = !can(local.tp_object.hub_object.network.wan) ? {} : local.tp_object.hub_object.network.wan != null ? {for each in [for a , b in [local.tp_object.hub_object.network.wan] : {
+    name = b.name != null ? b.name : replace(local.vnet_base_name, "vnet", "wan")
+  }] : each.name => each} : {}
 
   subnet_objects_pre = [for a, b in local.vnet_objects_pre : {
     subnets = can(flatten(b.*.subnets)) ? [for c, d in ([for e, f in flatten(b.*.subnets) : f if f != null]) : {
@@ -100,8 +89,8 @@ locals {
     name = local.tp_object.hub_object.network == null ? "peering-from-hub-to-spoke${a + 1}" : local.tp_object.hub_object.network.vnet_peering_name != null ? "${local.tp_object.hub_object.network.vnet_peering_name}${a}" : "peering-from-hub-to-spoke${a + 1}"
     vnet_name = [for c, d in local.vnet_objects_pre : d.name if d.is_hub][0]
     remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == local.vnet_objects_pre[a].address_spaces[0]][0]
-    allow_virtual_network_access = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access : false
-    allow_forwarded_traffic = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic : true
+    allow_virtual_network_access = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access : true
+    allow_forwarded_traffic = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = true
     use_remote_gateways = false
     solution_name = null
@@ -111,22 +100,24 @@ locals {
     name = local.tp_object.spoke_objects[a].network == null ? "peering-from-spoke${a + 1}-to-hub" : local.tp_object.spoke_objects[a].network.vnet_peering_name != null ? "${local.tp_object.spoke_objects[a].network.vnet_peering_name}${a}" : "peering-from-spoke${a + 1}-to-hub"
     vnet_name = local.vnet_objects_pre[a].name
     remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == ([for e, f in local.vnet_objects_pre : f.address_spaces[0] if f.is_hub])[0]][0]
-    allow_virtual_network_access = local.tp_object.spoke_objects[a].network == null ? false : local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access : false
+    allow_virtual_network_access = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = false
-    use_remote_gateways = false
+    use_remote_gateways = true
     solution_name = null
   }]
   
-  route_table_objects_pre = [for a, b in range(length([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])) : {
-    name = [for x, y in values(local.subnet_objects) : y.vnet_name if y.vnet_name == values(local.subnet_objects)[b].vnet_name][0]
+  route_table_objects_pre = (local.wan_object == {} && can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
+    name = replace(replace(local.gateway_base_name, "gw", "rt-to-hub-from-${b.name}-to"), "-p2s", "")
+    vnet_name = b.vnet_name
 
     route = [for a in range(1) : {
-      name = "all-traffic-to-hub-first"
-      address_prefix = ["0.0.0.0/0"]
+      name = "all-traffic-from-${b.name}-to-hub-first"
+      address_prefix = "0.0.0.0/0"
       next_hop_type = "VirtualNetworkGateway"
+      next_hop_in_ip_address = null
     }]
-  }]
+  }] : []
 
   ####################################################
   ###### VARIABLE OBJECTS TRANSFORMATION TO MAPS #####
@@ -154,19 +145,41 @@ locals {
     }
   }] : each.name => each} : {}
 
-  pip_gw_object = local.gw_object != {} ? {for each in [{
-    name = local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : replace(local.gateway_base_name, "gw", "pip")
-    vnet_name = [for a, b in local.vnet_objects_pre : b.name if a == local.rg_count -1][0]
-    ddos_protection_mode = local.tp_object.hub_object.network.vpn.pip_ddos_protection_mode != null ? local.tp_object.hub_object.network.vpn.pip_ddos_protection_mode : "Disabled"
-    sku = "Standard"
-    sku_tier = "Regional"
-    allocation_method = "Static"
-  }] : each.name => each} : {}
+  #PROBLEM AT LINE 151 - NAME AFTER FIRST LOGIC CHECK IT FAILS BECAUSE D.NETWORK.<null>
+  pip_objects_pre = local.gw_object != [] ? [for a, b in range(local.pip_count) : {
+    pip_objects = [for c, d in local.tp_object.hub_object : {
+      name = a == 2 && !can(d.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 2 && d.network.vpn.pip_name != null ? d.network.vpn.pip_name : a == 0 && local.create_vpn && !can(d.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.create_vpn && d.network.vpn.pip_name != null ? d.network.vpn.pip_name : a == 0 && local.create_vpn && d.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.create_firewall && !can(d.network.firewall.pip_name) ? replace(local.gateway_base_name, "gw", "fw-pip") : a == 0 && local.create_firewall && d.network.firewall.pip_name != null ? d.network.firewall.pip_name : replace(local.gateway_base_name, "gw", "fw-pip") 
+      vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
+      ddos_protection_mode = a == 2 && !can(d.network.vpn.pip_ddos_protection_mode) ? false : a == 2 && d.network.vpn.pip_ddos_protection_mode != null ? d.network.vpn.pip_ddos_protection_mode : a == 0 && local.create_vpn && !can(d.network.vpn.pip_ddos_protection_mode) ? false : a == 0 && local.create_vpn && d.network.vpn.pip_ddos_protection_mode != null ? d.network.vpn.pip_ddos_protection_mode : a == 0 && local.create_vpn && d.network.vpn.pip_ddos_protection_mode == null ? false : a == 0 && local.create_firewall && !can(d.network.firewall.pip_ddos_protection_mode) ? false : a == 0 && local.create_firewall && d.network.firewall.pip_ddos_protection_mode != null ? d.network.firewall.pip_ddos_protection_mode : false
+      sku = "Standard"
+      sku_tier = "Regional"
+      allocation_method = "Static"
+    }]
+  }] : []
 
+  fw_object = !can(local.tp_object.hub_object.network.firewall) ? {} : local.tp_object.hub_object.network.firewall != null ? {for each in [for a, b in local.tp_object.hub_object.network.firewall : {
+    name = b.name != null ? b.name : replace(local.gateway_base_name, "gw", "fw")
+    sku_name = local.wan_object == {} ? "AZFW_Vnet" : "AZFW_Hub"
+    sku_tier = b.sku_tier != null ? b.sku_tier : "Standard"
+    vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
+
+    ip_configuration = {
+      name = "fw-config"
+      subnet_id = [for c, d in local.subnet_return_helper_objects : d.id if d.name == "AzureFirewallSubnet"]
+    }
+
+    virtual_hub = local.wan_object == {} ? [{}] : {for each in [
+      {
+        virtual_hub_id = null
+      }
+    ] : each.virtual_hub_id => each}
+  }] : each.name => each} : {}
+  
   vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
   subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name => each}
   peering_objects = {for each in flatten([local.peering_objects_from_hub_to_spokes, local.peering_objects_from_spokes_to_hub]) : each.name => each }
-  route_table_objects = {for each in local.route_table_objects_pre :  => each}
+  route_table_objects = {for each in local.route_table_objects_pre : each.name => each}
+  pip_objects = {for each in flatten(local.pip_objects_pre.*.pip_objects) : each.name => each}
 
   ############################################
   ########## VARIABLE RETURN OBJECTS #########
@@ -180,7 +193,9 @@ locals {
   subnet_return_helper_objects = azurerm_subnet.subnet_object != {} ? values(local.subnet_return_objects) : []
   peering_return_objects = azurerm_virtual_network_peering.peering_object
   pip_return_object = azurerm_public_ip.gw_pip_object
-  pip_return_helper_object = azurerm_public_ip.gw_pip_object != {} ? values(azurerm_public_ip.gw_pip_object) : []
+  pip_return_helper_objects = azurerm_public_ip.gw_pip_object != {} ? values(azurerm_public_ip.gw_pip_object) : []
+  gw_return_object = azurerm_virtual_network_gateway.gw_vpn_object
+  rt_return_objects = azurerm_route_table.route_table_from_spokes_to_hub_object
 } 
 
   ############################################
@@ -220,6 +235,13 @@ resource "azurerm_virtual_network" "vnet_object" {
   depends_on = [ azurerm_resource_group.rg_object ]
 }
 
+resource "azurerm_virtual_wan" "wan_object" {
+  for_each = local.wan_object
+  name = each.key
+  location = each.value.location
+  resource_group_name = each.value.resource_group_name
+}
+
 resource "azurerm_subnet" "subnet_object" {
   for_each = local.subnet_objects
   name = each.key
@@ -254,18 +276,28 @@ resource "azurerm_virtual_network_peering" "peering_object" {
   allow_forwarded_traffic = each.value.allow_forwarded_traffic
   allow_gateway_transit = each.value.allow_gateway_transit
   use_remote_gateways = each.value.use_remote_gateways
+
+  depends_on = [ azurerm_virtual_network_gateway.gw_vpn_object ]
 }
 
-resource "azurerm_route_table" "route_table_from_spokes_to_hub" {
+resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
   for_each = local.route_table_objects
   name = each.value.name
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
   route = each.value.route
+
+  depends_on = [ azurerm_resource_group.rg_object ]
+}
+#rt-to-hub-from-subnet1-spoke1-to-hub  #subnet1-spoke1
+resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+  for_each = local.rt_return_objects
+  route_table_id = each.value.id
+  subnet_id = [for a, b in local.subnet_return_helper_objects : b.id if b.name == "${split("-", each.value.name)[4]}-${split("-", each.value.name)[5]}"][0]
 }
 
 resource "azurerm_public_ip" "gw_pip_object" {
-  for_each = local.pip_gw_object
+  for_each = local.pip_objects
   name = each.key
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
@@ -288,19 +320,37 @@ resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
 
   ip_configuration {
     subnet_id = each.value.ip_configuration.subnet_id
-    public_ip_address_id = local.pip_return_helper_object[0].id
+    public_ip_address_id = local.pip_return_helper_objects[0].id
   }
 
   vpn_client_configuration {
     address_space = each.value.vpn_client_configuration.address_space
     aad_tenant = each.value.vpn_client_configuration.aad_tenant
-    aad_audience = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
+    aad_audience = "41b23e61-6c1e-4545-b367-cd054e0ed4b4" #WIll always be this ID for the application Azure VPN
     aad_issuer = each.value.vpn_client_configuration.aad_issuer
     vpn_client_protocols = each.value.vpn_client_configuration.vpn_client_protocols
     vpn_auth_types = each.value.vpn_client_configuration.vpn_auth_types
   }
 }
 
-output "test" {
-  value = local.subnet_objects_pre
+resource "azurerm_firewall" "fw_object" {
+  for_each = local.fw_object
+  name = each.key
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
+  location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
+  sku_name = each.value.sku_name
+  sku_tier = each.value.sku_tier
+  
+  ip_configuration {
+    name = each.value.ip_configuration.name
+    subnet_id = each.value.ip_configuration.subnet_id
+    public_ip_address_id = [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][0]
+  }
+
+  dynamic "virtual_hub" {
+    for_each = each.value.virtual_hub
+    content {
+      virtual_hub_id = virtual_hub.key
+    }
+  }
 }
