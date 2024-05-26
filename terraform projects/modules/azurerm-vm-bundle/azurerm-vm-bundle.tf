@@ -385,7 +385,7 @@ resource "null_resource" "download_script" {
   count = local.script_commands != null ? 1 : 0
   provisioner "local-exec" {
     command     = <<-EOT
-      for($i = 0; $i -ge 100; $i++){
+      for($i = 0; $i -le 100; $i++){
         $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
         $outputPath = "${var.script_name}"
         $content = Invoke-WebRequest -Uri $url
