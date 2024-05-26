@@ -385,9 +385,16 @@ resource "null_resource" "download_script" {
   count = local.script_commands != null ? 1 : 0
   provisioner "local-exec" {
     command     = <<-EOT
-      $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
-      $outputPath = "${var.script_name}"
-      Invoke-WebRequest -Uri $url -OutFile $outputPath
+      for($i = 0; $i -ge 100; $i++){
+        $url = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/terraform%20projects/modules/azurerm-vm-bundle/Get-AzVMSKu.ps1"
+        $outputPath = "${var.script_name}"
+        $content = Invoke-WebRequest -Uri $url
+        if($content.count -gt 0){
+           $content | Out-File -path $outputPath
+           exit
+        }
+        Start-Sleep -Seconds 3
+      }
     EOT
     interpreter = ["pwsh", "-Command"]
   }
