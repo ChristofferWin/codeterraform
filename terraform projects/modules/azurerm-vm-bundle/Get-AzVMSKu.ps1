@@ -6,6 +6,8 @@ param (
     [string]$OutputFileName = ".\SKUs.json"
 )
 
+Start-Sleep -Seconds 10
+
 $Module = Get-Module -ListAvailable | ? {$_.Name -eq "Get-AzVMSku"}
 if($Module.Length -eq 0){
     Install-Module -Name Get-AzVMSku -Force
