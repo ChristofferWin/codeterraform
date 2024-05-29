@@ -289,7 +289,7 @@ resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
 
   depends_on = [ azurerm_resource_group.rg_object ]
 }
-#rt-to-hub-from-subnet1-spoke1-to-hub  #subnet1-spoke1
+
 resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
   for_each = local.rt_return_objects
   route_table_id = each.value.id
@@ -317,10 +317,9 @@ resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
   private_ip_address_enabled = each.value.private_ip_address_enabled
   remote_vnet_traffic_enabled = each.value.remote_vnet_traffic_enabled
   
-
   ip_configuration {
     subnet_id = each.value.ip_configuration.subnet_id
-    public_ip_address_id = local.pip_return_helper_objects[0].id
+    public_ip_address_id = local.pip_count == 2 ? local.pip_return_helper_objects[1].id : local.pip_return_helper_objects[0].id
   }
 
   vpn_client_configuration {
@@ -344,7 +343,7 @@ resource "azurerm_firewall" "fw_object" {
   ip_configuration {
     name = each.value.ip_configuration.name
     subnet_id = each.value.ip_configuration.subnet_id
-    public_ip_address_id = can([for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][1]) ? [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][1] : [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][0]
+    public_ip_address_id = [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][0]
   }
 
   dynamic "virtual_hub" {
