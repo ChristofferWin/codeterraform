@@ -111,11 +111,11 @@ locals {
     name = replace(replace(local.gateway_base_name, "gw", "rt-to-hub-from-${b.name}-to"), "-p2s", "")
     vnet_name = b.vnet_name
 
-    route = [for a in range(1) : {
-      name = "all-traffic-from-${b.name}-to-hub-first"
-      address_prefix = "0.0.0.0/0"
-      next_hop_type = "VirtualNetworkGateway"
-      next_hop_in_ip_address = null
+    route = [for a in range(2) : { 
+      name = a == 0 ? "all-internet-traffic-from-${b.name}-to-hub-first" : "all-traffic-from-${b.name}-to-hub-first"
+      address_prefix = a == 0 ? "0.0.0.0/0" : b.address_prefixes[0]
+      next_hop_type = "VirtualAppliance"
+      next_hop_in_ip_address = local.fw_return_helper_object[0].ip_configuration[0].private_ip_address
     }]
   }] : []
 
@@ -145,19 +145,18 @@ locals {
     }
   }] : each.name => each} : {}
 
-  #PROBLEM AT LINE 151 - NAME AFTER FIRST LOGIC CHECK IT FAILS BECAUSE D.NETWORK.<null>
-  pip_objects_pre = local.gw_object != [] ? [for a, b in range(local.pip_count) : {
-      name = ""
+  pip_objects_pre = [for a, b in range(local.pip_count) : {
+      name = a == 1 && !can(local.tp_object.hub_object.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "pip-gw") : a == 1 && local.tp_object.hub_object.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "pip-gw") : a == 1 ? local.tp_object.hub_object.network.vpn.pip_name : !can(local.tp_object.hub_object.network.firewall.pip_name) ? replace(local.gateway_base_name, "gw", "pip-fw") : local.tp_object.hub_object.network.firewall.pip_name != null ? local.tp_object.hub_object.network.firewall.pip_name : replace(local.gateway_base_name, "gw", "pip-fw")
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
       ddos_protection_mode = null
       sku = "Standard"
       sku_tier = "Regional"
       allocation_method = "Static"
     }
-  ] : []
+  ]
 
   fw_object = !can(local.tp_object.hub_object.network.firewall) ? {} : local.tp_object.hub_object.network.firewall != null ? {for each in [for a, b in range(1) : {
-    name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw-pip")
+    name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw")
     sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
     sku_tier = can(b.sku_tier) ? b.sku_tier : "Standard"
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
@@ -195,6 +194,8 @@ locals {
   pip_return_helper_objects = azurerm_public_ip.gw_pip_object != {} ? values(azurerm_public_ip.gw_pip_object) : []
   gw_return_object = azurerm_virtual_network_gateway.gw_vpn_object
   rt_return_objects = azurerm_route_table.route_table_from_spokes_to_hub_object
+  fw_return_helper_object = azurerm_firewall.fw_object != {} ? values(azurerm_firewall.fw_object) : []
+  fw_return_object = azurerm_firewall.fw_object
 } 
 
   ############################################
@@ -343,7 +344,7 @@ resource "azurerm_firewall" "fw_object" {
   ip_configuration {
     name = each.value.ip_configuration.name
     subnet_id = each.value.ip_configuration.subnet_id
-    public_ip_address_id = [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][0]
+    public_ip_address_id = can([for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][1]) ? [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][1] : [for a, b in local.pip_return_helper_objects : b.id if b.name == [for c, d in values(local.pip_objects) : d.name if d.vnet_name == each.value.vnet_name][0]][0]
   }
 
   dynamic "virtual_hub" {
