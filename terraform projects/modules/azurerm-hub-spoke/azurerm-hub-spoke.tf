@@ -171,6 +171,18 @@ locals {
         virtual_hub_id = null
       }
     ] : each.virtual_hub_id => each}
+
+    log_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
+      name = local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw")
+      daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
+    }] : each.name => each} : {}
+
+    diag_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
+      name = "fw-logs-to-log-analytics" #Static
+      log_analytics_destination_type = "Dedicated" #Static
+      category_group = "AllLogs" #Static
+    }] : each.name => each} : {}
+
   }] : each.name => each} : {}
   
   vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
@@ -190,12 +202,14 @@ locals {
   subnet_return_objects = azurerm_subnet.subnet_object
   subnet_return_helper_objects = azurerm_subnet.subnet_object != {} ? values(local.subnet_return_objects) : []
   peering_return_objects = azurerm_virtual_network_peering.peering_object
-  pip_return_object = azurerm_public_ip.gw_pip_object
-  pip_return_helper_objects = azurerm_public_ip.gw_pip_object != {} ? values(azurerm_public_ip.gw_pip_object) : []
+  pip_return_object = azurerm_public_ip.pip_object
+  pip_return_helper_objects = azurerm_public_ip.pip_object != {} ? values(azurerm_public_ip.pip_object) : []
   gw_return_object = azurerm_virtual_network_gateway.gw_vpn_object
   rt_return_objects = azurerm_route_table.route_table_from_spokes_to_hub_object
   fw_return_helper_object = azurerm_firewall.fw_object != {} ? values(azurerm_firewall.fw_object) : []
   fw_return_object = azurerm_firewall.fw_object
+  log_return_object = azurerm_log_analytics_workspace.fw_log_object
+  log_return_helper_object = azurerm_log_analytics_workspace.fw_log_object != {} ? values(azurerm_log_analytics_workspace.fw_log_object) : []
 } 
 
   ############################################
@@ -296,7 +310,7 @@ resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_ob
   subnet_id = [for a, b in local.subnet_return_helper_objects : b.id if b.name == "${split("-", each.value.name)[4]}-${split("-", each.value.name)[5]}"][0]
 }
 
-resource "azurerm_public_ip" "gw_pip_object" {
+resource "azurerm_public_ip" "pip_object" {
   for_each = local.pip_objects
   name = each.key
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
@@ -304,6 +318,8 @@ resource "azurerm_public_ip" "gw_pip_object" {
   sku = each.value.sku
   sku_tier = each.value.sku_tier
   allocation_method = each.value.allocation_method
+
+  depends_on = [ azurerm_resource_group.rg_object ]
 }
 
 resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
@@ -354,6 +370,26 @@ resource "azurerm_firewall" "fw_object" {
   }
 }
 
+resource "azurerm_log_analytics_workspace" "fw_log_object" {
+  for_each = values(local.fw_object)[0].log_object
+  name = each.key
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
+  location = [for a in local.rg_objects : a.location if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
+  daily_quota_gb = each.value.daily_quota_gb
+}
+
+resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
+  for_each = values(local.fw_object)[0].diag_object
+  name = each.key
+  log_analytics_destination_type = each.value.log_analytics_destination_type
+  log_analytics_workspace_id = local.log_return_helper_object[0].id
+  target_resource_id = local.fw_return_helper_object[0].id
+
+  enabled_log {
+    category_group = each.value.category_group
+  }
+}
+
 output "test" {
-  value = local.fw_object
+  value = values(local.fw_object)[0].log_object
 }

@@ -42,6 +42,9 @@ variable "typology_object" {
           threat_intel_mode = optional(bool)
           pip_name = optional(string)
           pip_ddos_protection_mode = optional(string)
+          log_name = optional(string)
+          log_daily_quota_gb = optional(number)
+          no_logs = optional(bool)
         }))
 
         subnet_objects = optional(list(object({
