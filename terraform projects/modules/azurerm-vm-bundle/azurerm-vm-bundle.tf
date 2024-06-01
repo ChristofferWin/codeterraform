@@ -390,7 +390,7 @@ resource "null_resource" "download_script" {
         $outputPath = "${var.script_name}"
         $content = Invoke-WebRequest -Uri $url
         if($content.count -gt 0){
-        while($true)
+        while($true){
            try{
             $content.Content | Out-File -path $outputPath -ErrorAction Stop
             exit
@@ -398,6 +398,7 @@ resource "null_resource" "download_script" {
            catch{
              Start-Sleep -Seconds 3
            }
+         }  
         }
       }
     EOT
