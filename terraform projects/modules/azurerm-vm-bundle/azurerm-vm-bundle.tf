@@ -390,10 +390,15 @@ resource "null_resource" "download_script" {
         $outputPath = "${var.script_name}"
         $content = Invoke-WebRequest -Uri $url
         if($content.count -gt 0){
-           $content | Out-File -path $outputPath
-           exit
+        while($true)
+           try{
+            $content.Content | Out-File -path $outputPath -ErrorAction Stop
+            exit
+           }
+           catch{
+             Start-Sleep -Seconds 3
+           }
         }
-        Start-Sleep -Seconds 3
       }
     EOT
     interpreter = ["pwsh", "-Command"]
