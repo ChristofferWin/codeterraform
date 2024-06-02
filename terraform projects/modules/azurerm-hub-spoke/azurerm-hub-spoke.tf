@@ -60,7 +60,7 @@ locals {
     spoke_number = a != local.rg_count -1 ? a : null
     address_spaces = local.tp_object.address_spaces != null ? local.tp_object.address_spaces : a == local.rg_count -1 && local.tp_object.hub_object.network == null ? local.vnet_cidr_block : a == local.rg_count -1 && local.tp_object.hub_object.network.address_spaces != null ? local.tp_object.hub_object.network.address_spaces : a == local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_block[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a != local.rg_count -1 && !can(local.tp_object.spoke_objects[a].network.address_spaces) ? [cidrsubnet(local.vnet_cidr_block[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), a + 1)] : a == local.rg_count -1 ? null : local.tp_object.spoke_objects[a].network.address_spaces != null ? local.tp_object.spoke_objects[a].network.address_spaces : [cidrsubnet(local.vnet_cidr_block[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), a + 1)]
     solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
-    dns_servers = local.tp_object.dns_servers != null ? local.tp_object.dns_servers : a == local.rg_count - 1 && can(local.tp_object.hub_object.network.dns_servers) ? local.tp_object.hub_object.dns_servers : a != local.rg_count - 1 && can(local.tp_object.spoke_objects[a].network.dns_servers) ? local.tp_object.spoke_objects[a].network.dns_servers : null
+    dns_servers = local.tp_object.dns_servers != null ? local.tp_object.dns_servers : a == local.rg_count - 1 && can(local.tp_object.hub_object.network.dns_servers[0]) ? local.tp_object.hub_object.dns_servers : a != local.rg_count - 1 && can(local.tp_object.spoke_objects[a].network.dns_servers) ? local.tp_object.spoke_objects[a].network.dns_servers : null
     tags = local.tp_object.tags != null && can(local.tp_object.hub_object.network.tags) && a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : local.tp_object.tags != null && a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.tags) ? merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags) : local.tp_object.tags
     subnets = a == local.rg_count -1 && local.tp_object.hub_object.network == null ? null : a == local.rg_count -1 && can(local.tp_object.hub_object.network.subnet_objects) ? local.tp_object.hub_object.network.subnet_objects : a != local.rg_count -1 && local.tp_object.spoke_objects[a].network == null ? null : a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.subnet_objects) ? local.tp_object.spoke_objects[a].network.subnet_objects : []
     ddos_protection_plan = can(local.tp_object.spoke_objects[a].network.ddos_protection_plan) ? local.tp_object.spoke_objects[a].network.ddos_protection_plan : null
@@ -171,7 +171,7 @@ locals {
         virtual_hub_id = null
       }
     ] : each.virtual_hub_id => each}
-
+  
     log_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
       name = local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw")
       daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
@@ -179,10 +179,22 @@ locals {
 
     diag_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
       name = "fw-logs-to-log-analytics" #Static
+      unique_name = "fw-logs-to-log-analytics-${split("-",uuid())[0]}"
       log_analytics_destination_type = "Dedicated" #Static
       category_group = "AllLogs" #Static
     }] : each.name => each} : {}
 
+  }] : each.name => each} : {}
+
+  fw_rule_objects = local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(2) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
+      name = a == 0 ? "Allow-RDP-SSH-FROM-VPN-TO-SPOKES" : "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
+      priority = a == 0 ? 100 : 200
+      action = "Allow"
+      source_addresses = a == 0 ? local.gw_return_helper_object[0].vpn_client_configuration[0].address_space : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
+      destination_ports = a == 0 ? ["22", "3389"] : ["53", "80", "443"]
+      destination_addresses = a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : ["0.0.0.0/0"]
+      protocols = a == 0 ? ["TCP"] : ["TCP", "UDP"]
+      vnet_name = [for c, d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
   }] : each.name => each} : {}
   
   vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
@@ -205,6 +217,7 @@ locals {
   pip_return_object = azurerm_public_ip.pip_object
   pip_return_helper_objects = azurerm_public_ip.pip_object != {} ? values(azurerm_public_ip.pip_object) : []
   gw_return_object = azurerm_virtual_network_gateway.gw_vpn_object
+  gw_return_helper_object = azurerm_virtual_network_gateway.gw_vpn_object != {} ? values(azurerm_virtual_network_gateway.gw_vpn_object) : []
   rt_return_objects = azurerm_route_table.route_table_from_spokes_to_hub_object
   fw_return_helper_object = azurerm_firewall.fw_object != {} ? values(azurerm_firewall.fw_object) : []
   fw_return_object = azurerm_firewall.fw_object
@@ -370,6 +383,23 @@ resource "azurerm_firewall" "fw_object" {
   }
 }
 
+resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
+  for_each = local.fw_rule_objects
+  name = each.key
+  azure_firewall_name = local.fw_return_helper_object[0].name
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
+  priority = each.value.priority
+  action = each.value.action
+
+  rule {
+    name = each.key
+    source_addresses = each.value.source_addresses
+    destination_addresses = each.value.destination_addresses
+    destination_ports = each.value.destination_ports
+    protocols = each.value.protocols
+  }
+}
+
 resource "azurerm_log_analytics_workspace" "fw_log_object" {
   for_each = values(local.fw_object)[0].log_object
   name = each.key
@@ -380,7 +410,7 @@ resource "azurerm_log_analytics_workspace" "fw_log_object" {
 
 resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   for_each = values(local.fw_object)[0].diag_object
-  name = each.key
+  name = each.value.unique_name
   log_analytics_destination_type = each.value.log_analytics_destination_type
   log_analytics_workspace_id = local.log_return_helper_object[0].id
   target_resource_id = local.fw_return_helper_object[0].id
@@ -388,8 +418,4 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   enabled_log {
     category_group = each.value.category_group
   }
-}
-
-output "test" {
-  value = values(local.fw_object)[0].log_object
 }
