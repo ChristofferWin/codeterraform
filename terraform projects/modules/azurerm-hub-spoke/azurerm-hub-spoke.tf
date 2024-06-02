@@ -186,7 +186,7 @@ locals {
 
   }] : each.name => each} : {}
 
-  fw_rule_objects = local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(2) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
+  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules != null ? {for each in [for a, b in range(2) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
       name = a == 0 ? "Allow-RDP-SSH-FROM-VPN-TO-SPOKES" : "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
       priority = a == 0 ? 100 : 200
       action = "Allow"
