@@ -401,7 +401,7 @@ resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
 }
 
 resource "azurerm_log_analytics_workspace" "fw_log_object" {
-  for_each = values(local.fw_object)[0].log_object
+  for_each = can(values(local.fw_object)[0].log_object) ? values(local.fw_object)[0].log_object : {}
   name = each.key
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
@@ -409,7 +409,7 @@ resource "azurerm_log_analytics_workspace" "fw_log_object" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
-  for_each = values(local.fw_object)[0].diag_object
+  for_each = can(values(local.fw_object)[0].diag_object) ? values(local.fw_object)[0].diag_object : {}
   name = each.value.unique_name
   log_analytics_destination_type = each.value.log_analytics_destination_type
   log_analytics_workspace_id = local.log_return_helper_object[0].id
