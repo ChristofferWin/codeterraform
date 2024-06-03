@@ -19,7 +19,6 @@ locals {
   ############################################
 
   tp_object = var.typology_object
-  location = local.tp_object.location != null ? local.tp_object.location : "westeurope"
   tenant_id = data.azurerm_client_config.context_object.tenant_id
   vnet_cidr_notation_total = "/16"
   vnet_cidr_notation = "/24"
@@ -48,7 +47,7 @@ locals {
 
   rg_objects = {for each in [for a, b in range(local.rg_count) : {
     name = replace((a == local.rg_count - 1 && local.tp_object.hub_object.rg_name != null ? local.tp_object.hub_object.rg_name : local.rg_name != null && a == (local.rg_count - 1) ? local.rg_name : local.tp_object.spoke_objects[a].rg_name != null ? local.tp_object.spoke_objects[a].rg_name : replace(local.rg_name, "hub", "spoke${a + 1}")), "^-.+|.+-$", "/")
-    location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : a != local.rg_count - 1 && local.tp_object.spoke_objects[a - 1].location != null ? local.tp_object.spoke_objects[a - 1].location : local.location
+    location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].location != null ? local.tp_object.spoke_objects[a].location : "westeurope"
     solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
     tags = a == local.rg_count - 1 && local.tp_object.hub_object.tags != null ? local.tp_object.hub_object.tags : a != local.rg_count - 1 ? local.tp_object.spoke_objects[a].tags : null
     vnet_name = local.vnet_objects_pre[a].name
@@ -75,7 +74,7 @@ locals {
       name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}")
       solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
       vnet_name = b.name
-      address_prefixes = can(d.use_first_subnet) && !can(d.use_last_subnet) ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), c)] : !can(d.address_prefixes[0]) ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")))), 2) -1 -c)] : d.address_prefixes != null || d.address_prefixes != [] ? d.address_prefixes : null
+      address_prefixes = d.use_first_subnet != null && d.use_last_subnet == null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), c)] : !can(d.address_prefixes[0]) ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")))), 2) -1 -c)] : d.address_prefixes != null || d.address_prefixes != [] ? d.address_prefixes : null
 
       delegation = c == 0 && can(d.delegation[0]) ? [for f, g in range(length([for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(d.delegation[0].service_name_pattern), lower(i.serviceName))[0])])) : {
       name = split(".", [for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(d.delegation[0].service_name_pattern), lower(i.serviceName))[0])][f])[1]
@@ -103,7 +102,7 @@ locals {
     allow_virtual_network_access = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = false
-    use_remote_gateways = true
+    use_remote_gateways = !can(local.tp_object.hub_object.network.firewall) ? false : local.tp_object.hub_object.network.firewall != null ? true : false
     solution_name = null
   }]
   
@@ -173,12 +172,12 @@ locals {
     ] : each.virtual_hub_id => each}
   }] : each.name => each} : {}
 
-  fw_log_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
+  fw_log_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ?  {for each in [for c, d in range(1) : {
     name = local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw")
     daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
   }] : each.name => each} : {}
 
-  fw_diag_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
+  fw_diag_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
     name = "fw-logs-to-log-analytics" #Static
     unique_name = "fw-logs-to-log-analytics-${split("-",uuid())[0]}"
     log_analytics_destination_type = "Dedicated" #Static
@@ -421,4 +420,8 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   }
 
   depends_on = [ azurerm_firewall.fw_object ]
+}
+
+locals {
+  value = local.rg_count
 }
