@@ -48,7 +48,7 @@ locals {
 
   rg_objects = {for each in [for a, b in range(local.rg_count) : {
     name = replace((a == local.rg_count - 1 && local.tp_object.hub_object.rg_name != null ? local.tp_object.hub_object.rg_name : local.rg_name != null && a == (local.rg_count - 1) ? local.rg_name : local.tp_object.spoke_objects[a].rg_name != null ? local.tp_object.spoke_objects[a].rg_name : replace(local.rg_name, "hub", "spoke${a + 1}")), "^-.+|.+-$", "/")
-    location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].location != null ? local.tp_object.spoke_objects[a].location : local.location
+    location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : a != local.rg_count - 1 && local.tp_object.spoke_objects[a - 1].location != null ? local.tp_object.spoke_objects[a - 1].location : local.location
     solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
     tags = a == local.rg_count - 1 && local.tp_object.hub_object.tags != null ? local.tp_object.hub_object.tags : a != local.rg_count - 1 ? local.tp_object.spoke_objects[a].tags : null
     vnet_name = local.vnet_objects_pre[a].name
@@ -171,19 +171,18 @@ locals {
         virtual_hub_id = null
       }
     ] : each.virtual_hub_id => each}
-  
-    log_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
-      name = local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw")
-      daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
-    }] : each.name => each} : {}
+  }] : each.name => each} : {}
 
-    diag_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
-      name = "fw-logs-to-log-analytics" #Static
-      unique_name = "fw-logs-to-log-analytics-${split("-",uuid())[0]}"
-      log_analytics_destination_type = "Dedicated" #Static
-      category_group = "AllLogs" #Static
-    }] : each.name => each} : {}
+  fw_log_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
+    name = local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw")
+    daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
+  }] : each.name => each} : {}
 
+  fw_diag_object = local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
+    name = "fw-logs-to-log-analytics" #Static
+    unique_name = "fw-logs-to-log-analytics-${split("-",uuid())[0]}"
+    log_analytics_destination_type = "Dedicated" #Static
+    category_group = "AllLogs" #Static
   }] : each.name => each} : {}
 
   fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules != null ? {for each in [for a, b in range(2) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
@@ -401,15 +400,17 @@ resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
 }
 
 resource "azurerm_log_analytics_workspace" "fw_log_object" {
-  for_each = can(values(local.fw_object)[0].log_object) ? values(local.fw_object)[0].log_object : {}
+  for_each = local.fw_log_object
   name = each.key
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
   daily_quota_gb = each.value.daily_quota_gb
+
+  depends_on = [ azurerm_firewall.fw_object ]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
-  for_each = can(values(local.fw_object)[0].diag_object) ? values(local.fw_object)[0].diag_object : {}
+  for_each = local.fw_diag_object
   name = each.value.unique_name
   log_analytics_destination_type = each.value.log_analytics_destination_type
   log_analytics_workspace_id = local.log_return_helper_object[0].id
@@ -418,4 +419,6 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   enabled_log {
     category_group = each.value.category_group
   }
+
+  depends_on = [ azurerm_firewall.fw_object ]
 }
