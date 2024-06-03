@@ -7,6 +7,19 @@ terraform {
   }
 }
 
+################################################################################################
+######################################### NOTES ################################################
+##                                                                                            ##
+##  Date: 04-06-2024                                                                          ## 
+##  State: Version 1.0                                                                        ##
+##  Missing: As part of version 1.1, more support for the use of custom names will be added   ##
+##  Improvements (1): N/A                                                                     ##                                                                                
+##  =||= (2): N/A                                                                             ## 
+##  =||= (3): N/A                                                                             ##
+##  Future improvements: See missing or the readme for details                                ##
+##                                                                                            ##
+## -------------------------------------------------------------------------------------------##
+
 provider "azurerm" {
   features {
   }
