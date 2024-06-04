@@ -434,7 +434,3 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
 
   depends_on = [ azurerm_firewall.fw_object ]
 }
-
-locals {
-  value = local.rg_count
-}

@@ -6,8 +6,8 @@ variable "typology_object" {
     name_prefix = optional(string)
     name_suffix = optional(string)
     env_name = optional(string)
-    create_tag = optional(bool)
-    multiplicator = optional(number)
+    #create_tag = optional(bool)
+    #multiplicator = optional(number)
     dns_servers = optional(list(string))
     tags = optional(map(string))
     address_spaces = optional(list(string))
@@ -45,6 +45,7 @@ variable "typology_object" {
           log_name = optional(string)
           log_daily_quota_gb = optional(number)
           no_logs = optional(bool)
+          no_rules = optional(bool)
         }))
 
         subnet_objects = optional(list(object({
@@ -52,7 +53,7 @@ variable "typology_object" {
           use_first_subnet = optional(bool)
           use_last_subnet = optional(bool)
           cidr_notation = optional(string)
-          address_prefixes = optional(list(string))
+          address_prefix = optional(list(string))
           service_endpoints = optional(set(string))
           service_endpoint_policy_ids = optional(set(string))
 
@@ -91,12 +92,12 @@ variable "typology_object" {
         enable = bool
       }))
       
-      subnet_objects = optional(list(object({
+      subnet_objects = list(object({
         name = optional(string)
         use_first_subnet = optional(bool)
         use_last_subnet = optional(bool)
         cidr_notation = optional(string)
-        address_prefixes = optional(list(string))
+        address_prefix = optional(list(string))
         service_endpoints = optional(set(string))
         service_endpoint_policy_ids = optional(set(string))
 
@@ -104,69 +105,7 @@ variable "typology_object" {
           name = optional(string)
           service_name_pattern = optional(string)
         })))
-      })))
+      }))
     }))
   }))})
-  default = {
-    multiplicator = 5
-    location = "westeurope"
-    dns_servers = [ "8.8.8.8" ]
-    tags = {
-      "hello" = "world"
-    }
-
-    hub_object = {
-      location = "westus"
-
-      network = { 
-        vpn = {}
-
-        firewall = {}
-
-        subnet_objects = [
-          {
-            name = "GatewaySubnet"
-            use_last_subnet = true
-          },
-          {
-            name = "AzureBastionSubnet"
-          },
-          {
-            name = "AzureFirewallSubnet"
-          }
-        ]
-      }
-    }
-
-    spoke_objects = [ {
-      location = "westus"
-
-      network = {
-        subnet_objects = [
-          {
-            
-          }
-        ]
-      }
-    },
-    {
-      location = "eastus"
-
-      network = {
-      address_spaces = [ "172.16.0.0/22" ]
-        subnet_objects = [
-          {
-          },
-          {
-          },
-          {
-            delegation = [{
-              service_name_pattern = "ApiManagement"
-            }]
-          }
-        ]
-      }
-    }
-    ]
-  }
 }
