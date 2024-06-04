@@ -60,7 +60,7 @@ locals {
 
   rg_objects = {for each in [for a, b in range(local.rg_count) : {
     name = replace((a == local.rg_count - 1 && local.tp_object.hub_object.rg_name != null ? local.tp_object.hub_object.rg_name : local.rg_name != null && a == (local.rg_count - 1) ? local.rg_name : local.tp_object.spoke_objects[a].rg_name != null ? local.tp_object.spoke_objects[a].rg_name : replace(local.rg_name, "hub", "spoke${a + 1}")), "^-.+|.+-$", "/")
-    location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].location != null ? local.tp_object.spoke_objects[a].location : "westeurope"
+    location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : !can(local.tp_object.spoke_objects[a].location) ? "westeurope" : local.tp_object.spoke_objects[a].location != null ? local.tp_object.spoke_objects[a].location : "westeurope"
     solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
     tags = a == local.rg_count - 1 && local.tp_object.hub_object.tags != null ? local.tp_object.hub_object.tags : a != local.rg_count - 1 ? local.tp_object.spoke_objects[a].tags : null
     vnet_name = local.vnet_objects_pre[a].name
