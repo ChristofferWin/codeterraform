@@ -87,7 +87,7 @@ locals {
       name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}")
       solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
       vnet_name = b.name
-      address_prefixes = d.use_first_subnet != null && d.use_last_subnet == null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), c)] : !can(d.address_prefixes[0]) ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")))), 2) -1 -c)] : d.address_prefixes != null || d.address_prefixes != [] ? d.address_prefixes : null
+      address_prefix = d.use_first_subnet != null && d.use_last_subnet == null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), c)] : !can(d.address_prefix[0]) ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(replace(local.vnet_cidr_notation, "/", "")), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")))), 2) -1 -c)] : d.address_prefix != null || d.address_prefix != [] ? d.address_prefix : null
 
       delegation = c == 0 && can(d.delegation[0]) ? [for f, g in range(length([for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(d.delegation[0].service_name_pattern), lower(i.serviceName))[0])])) : {
       name = split(".", [for h, i in local.subnet_list_of_delegations : i.serviceName if can(regexall(lower(d.delegation[0].service_name_pattern), lower(i.serviceName))[0])][f])[1]
@@ -125,7 +125,7 @@ locals {
 
     route = [for a in range(2) : { 
       name = a == 0 ? "all-internet-traffic-from-${b.name}-to-hub-first" : "all-traffic-from-${b.name}-to-hub-first"
-      address_prefix = a == 0 ? "0.0.0.0/0" : b.address_prefixes[0]
+      address_prefix = a == 0 ? "0.0.0.0/0" : b.address_prefix[0]
       next_hop_type = "VirtualAppliance"
       next_hop_in_ip_address = local.fw_return_helper_object[0].ip_configuration[0].private_ip_address
     }]
@@ -285,7 +285,7 @@ resource "azurerm_subnet" "subnet_object" {
   name = each.key
   resource_group_name = each.value.solution_name == null ? [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0] : replace(replace(each.value.vnet_name, "spoke", "${each.value.solution_name}-spoke"), "vnet", "rg")
   virtual_network_name = each.value.vnet_name
-  address_prefixes = each.value.address_prefixes
+  address_prefixes = each.value.address_prefix
   service_endpoints = can(each.value.service_endpoints) ? each.value.service_endpoints : null
   service_endpoint_policy_ids = can(each.value.service_endpoint_policy_ids) ? each.value.service_endpoint_policy_ids : null
 
