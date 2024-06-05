@@ -34,7 +34,7 @@ locals {
   tp_object = var.typology_object
   tenant_id = data.azurerm_client_config.context_object.tenant_id
   vnet_cidr_notation = can(local.tp_object.address_spaces[0]) ? "/${split("/", local.tp_object.address_spaces[0])[1]}" : can(local.tp_object.hub_object.address_spaces[0]) ? "/${split("/", local.tp_object.hub_object.address_spaces[0])[1]}" : "/24"
-  vnet_cidr_block = ["10.0.0.0${local.vnet_cidr_notation}"]
+  vnet_cidr_block = ["10.0.0.0/22"]
   subnets_cidr_notation = local.tp_object.subnets_cidr_notation != null ? local.tp_object.subnets_cidr_notation : "/26"
   vpn_gateway_sku = "VpnGw2"
   #multiplicator = local.tp_object.multiplicator != null ? local.tp_object.multiplicator : 1
