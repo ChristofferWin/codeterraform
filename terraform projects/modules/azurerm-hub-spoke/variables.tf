@@ -13,12 +13,12 @@ variable "typology_object" {
     address_spaces = optional(list(string))
     subnets_cidr_notation = optional(string)
 
-    hub_object = optional(object({
+    hub_object = object({
       rg_name = optional(string)
       location = optional(string)
       tags = optional(map(string))
 
-      network = optional(object({
+      network = object({
         vnet_name = optional(string)
         vnet_cidr_notation = optional(string)
         address_spaces = optional(list(string))
@@ -68,8 +68,8 @@ variable "typology_object" {
           id = optional(string)
           enable = optional(bool)
         }))
-      }))
-    }))
+      })
+    })
 
     spoke_objects = list(object({
       rg_name = optional(string)
@@ -77,35 +77,34 @@ variable "typology_object" {
       tags = optional(map(string))
       solution_name = optional(string)
 
-    network = optional(object({
-      vnet_name = optional(string)
-      vnet_cidr_notation = optional(string)
-      address_spaces = optional(list(string))
-      dns_servers = optional(list(string))
-      tags = optional(map(string))
-      vnet_peering_name = optional(string)
-      vnet_peering_allow_virtual_network_access = optional(bool)
-      vnet_peering_allow_forwarded_traffic = optional(bool)
+      network = object({
+        vnet_name = optional(string)
+        address_spaces = optional(list(string))
+        dns_servers = optional(list(string))
+        tags = optional(map(string))
+        vnet_peering_name = optional(string)
+        vnet_peering_allow_virtual_network_access = optional(bool)
+        vnet_peering_allow_forwarded_traffic = optional(bool)
 
-      ddos_protection_plan = optional(object({
-        id = string
-        enable = bool
-      }))
+        ddos_protection_plan = optional(object({
+          id = string
+          enable = bool
+        }))
       
-      subnet_objects = list(object({
-        name = optional(string)
-        use_first_subnet = optional(bool)
-        use_last_subnet = optional(bool)
-        cidr_notation = optional(string)
-        address_prefix = optional(list(string))
-        service_endpoints = optional(set(string))
-        service_endpoint_policy_ids = optional(set(string))
-
-        delegation = optional(list(object({
+        subnet_objects = list(object({
           name = optional(string)
-          service_name_pattern = optional(string)
-        })))
-      }))
-    }))
+          use_first_subnet = optional(bool)
+          use_last_subnet = optional(bool)
+          cidr_notation = optional(string)
+          address_prefix = optional(list(string))
+          service_endpoints = optional(set(string))
+          service_endpoint_policy_ids = optional(set(string))
+
+          delegation = optional(list(object({
+            name = optional(string)
+            service_name_pattern = optional(string)
+          })))
+        }))
+      })
   }))})
 }
