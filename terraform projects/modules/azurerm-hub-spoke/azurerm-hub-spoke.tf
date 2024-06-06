@@ -157,7 +157,7 @@ locals {
   }] : each.name => each} : {}
 
   pip_objects_pre = [for a, b in range(local.pip_count) : {
-      name = a == 1 && !can(local.tp_object.hub_object.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "pip-gw") : a == 1 && local.tp_object.hub_object.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "pip-gw") : a == 1 ? local.tp_object.hub_object.network.vpn.pip_name : !can(local.tp_object.hub_object.network.firewall.pip_name) ? replace(local.gateway_base_name, "gw", "pip-fw") : local.tp_object.hub_object.network.firewall.pip_name != null ? local.tp_object.hub_object.network.firewall.pip_name : replace(local.gateway_base_name, "gw", "pip-fw")
+      name = a == 1 && !can(local.tp_object.hub_object.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && !can(local.tp_object.hub_object.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 1 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 0 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : !can(local.tp_object.hub_object.network.firewall.pip_name) ? replace(local.gateway_base_name, "gw", "fw-pip") : local.tp_object.hub_object.network.firewall.pip_name != null ? local.tp_object.hub_object.network.firewall.pip_name : replace(local.gateway_base_name, "gw", "fw-pip")
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
       ddos_protection_mode = null
       sku = "Standard"
