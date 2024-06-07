@@ -220,11 +220,12 @@ The table below outlines the compatibility of the module:
 
 Please take note of the 'Azure Provider Version' among the various providers utilized by the module. Keep in mind that there WILL be a required minimum version, and this requirement can vary with each module version.
 
-<b>Module version 1.0.0 requires the following provider versions:<b>
+<b>Module version 1.0.0 requires the following provider versions:</b>
 
 | Provider name | Provider url | Minimum version |
-| -------------- | ---------------------- | ---------------- |
-| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a> | 3.99.0 |
+| -------------- | ------------ | ---------------- |
+| azurerm        | [hashicorp/azurerm](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) | 3.99.0 |
+|                |                          |        |
 
 For the latest updates of the terraform module, check the <a href="https://github.com/ChristofferWin/codeterraform/releases">release page</a>
 
