@@ -218,9 +218,9 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 ## Versions
 The table below outlines the compatibility of the module:
 
-Please take note of the 'Azure Provider Version' among the various providers utilized by the module. Keep in mind that there WILL be a required minimum version, and this requirement can vary with each module version.
+Please take note of the 'Module version' among the provider utilized by the module. Keep in mind that there WILL be a required minimum version, and this requirement can vary with each module version.
 
-<b>Module version 1.0.0 requires the following provider versions:</b>
+<b>"Module version" 1.0.0 requires the following provider versions:</b>
 
 | Provider name | Provider url | Minimum version |
 | -------------- | ------------ | ---------------- |
@@ -407,7 +407,7 @@ module "show_case_object" {
 ### Attributes on the "spoke_objects" level of the "typology_object"
 1. Minimum of 1 spoke must be defined
 2. All attributes on the top level of this object can be defined exactly as for the "hub_object"
-3. The "network" Block is decribed exactly the same as for the "hub_object" With the ONLY differences being you can ONLY define "subnet_objects", no Firewall or VPN settings. See the [Examples](#examples) for more details
+3. The "network" Block is described exactly the same as for the "hub_object" With the ONLY differences being you can ONLY define "subnet_objects", no Firewall or VPN settings. See the [Examples](#examples) for more details
 
 [Back to the top](#table-of-contents)
 
@@ -416,51 +416,22 @@ Its important to state that almost all values returned from the module is of typ
 or we can simply use a function like 'values' to make the return value a list of object instead, where we can then simply use int index-based references like [0]
 
 See below list of possible return values:
- - summary_object = simpel object, can call attributes directly
-    - <general information> even how many CPU cores are left in terms of quota on the subscription
-    - network_summary
-    - windows_objects
-      - passwords are NOT 
-    - linux_objects
- - rg_object = simpel object, can call attributes directly
-    - id
-    - name
-    - location
- - vnet_object = map of object, call specific key, or use values()
-    - id
-    - name
-    - address_space
-    - See vnet <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network#attributes-reference">Hashicorp docs / attributes references</a>
- - subnet_object = map of object, call specific key, or use values()
-    - id
-    - name
-    - virtual_network_name
-    - address_prefixes
- - nsg_object = map of object, call specific key, or use values()
-    - id
-    - name
-    - See nsg
- - nic_object = map of object, call specific key, or use values()
-    - id
-    - name
-    - See nic <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface#attributes-reference">Hashicorp docs / attribute references</a>
- - pip_object = map of object, call specific key, or use values()
-    - id
-    - name
-    - ip_address
-    - fqdn
- - windows_object = map of object, call specific key, or use values()
-    - id
-    - name
-    - See windows vm <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/windows_virtual_machine#attributes-reference">Hashicorp docs / attribute references</a>
- - linux_object = map of object, call specific key or use values()
-    - id
-    - name
-    - See linux vm <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_virtual_machine#attributes-reference">Hashicorp docs / attribute references</a>
- - storage_object = map of object, call specific key or use values()
-    - id
-    - name
-    - See storage <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account#attributes-reference">Hashicorp docs / attribute references</a>
+
+1. rg_return_objects = map of objects containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group#attributes-reference">Azurerm Resource group</a>
+
+2. vnet_return_objects = map of objects containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network#attributes-reference">Azurerm Virtual network</a>
+
+3. subnet_return_objects = map of objects containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet#attributes-reference">Azurerm Subnet</a>
+
+4. rt_return_objects = map of objects containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/route_table#attributes-reference">Azurerm Route table</a>
+
+5. fw_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/firewall#attributes-reference">Azurerm Firewall</a>
+
+6. gw_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/Azurerm/latest/docs/resources/virtual_network_gateway#attributes-reference">Azurerm Virtual network gateway</a>
+
+7. pip_return_object = map of object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip#attributes-reference">Azurerm Public IP</a>
+
+8. log_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/log_analytics_workspace.html#attributes-reference">Azurerm Log Analytics workspace</a>
 
 [Back to the top](#table-of-contents)
 ## Examples
