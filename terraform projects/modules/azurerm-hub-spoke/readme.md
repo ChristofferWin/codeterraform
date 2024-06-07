@@ -13,13 +13,11 @@
 
 ## Description
 
-Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network typology as easy as 1-2-3. The module builts on a concept of a single input variable
-called "Typology_object" Which then can contain a huge sub-set of custom configuration. The module supports name injection, automatic subnetting, Point-2-Site VPN, Firewall, routing and so much more! 
-Because its built for Azure it uses the architectual design from the Microsoft CAF concepts which can be read more about at => <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke typlogy</a>
+Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network topology as easy as 1-2-3. The module is built on a concept of a single input variable called 'Typology_object', which can then contain a huge subset of custom configurations. The module supports name injection, automatic subnetting, Point-to-Site VPN, firewall, routing, and much more! Because it's built for Azure, it uses the architectural design from the Microsoft CAF concepts, which can be read more about at <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke typology</a>
 
-OBS. The module does NOT support builting hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
+OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
 
-Below 2 different examples of topologies can be seen:
+Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the [Examples](#examples) for the actual code.
 
 <b>Example 1: Deployment of a simple hub-spoke</b>
 </br>
@@ -214,10 +212,7 @@ yes
 Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 ```
 
-6. How it looks in Azure
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/first-vm-black.png"/>
-
-7. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#examples">Examples</a> for details
+6. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#examples">Examples</a> for details
 
 [Back to the top](#table-of-contents)
 ## Versions
@@ -228,8 +223,8 @@ Please take note of the 'Azure Provider Version' among the various providers uti
 <b>Module version 1.0.0 requires the following provider versions:<b>
 
 | Provider name | Provider url | Minimum version |
-| ------------------ | ---------------------- | -------------- |
-| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a>  | 3.99.0 |
+| -------------- | ---------------------- | ---------------- |
+| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a> | 3.99.0 |
 
 For the latest updates of the terraform module, check the <a href="https://github.com/ChristofferWin/codeterraform/releases">release page</a>
 
