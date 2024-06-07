@@ -16,7 +16,7 @@ Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make
 
 OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
 
-Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the [Examples](#examples) for the actual code.
+Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the for the actual code.
 
 <b>Example 1: Deployment of a simple hub-spoke</b>
 </br>
@@ -225,7 +225,6 @@ Please take note of the 'Azure Provider Version' among the various providers uti
 | Provider name | Provider url | Minimum version |
 | -------------- | ------------ | ---------------- |
 | azurerm        | [hashicorp/azurerm](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs) | 3.99.0 |
-|                |                          |        |
 
 For the latest updates of the terraform module, check the <a href="https://github.com/ChristofferWin/codeterraform/releases">release page</a>
 
@@ -331,98 +330,84 @@ module "show_case_object" {
 
 5. env_name = (optional) A string defining an environment name to inject into all resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "customer_name" To be provided as well
 
-6. dns_servers = (optional) A list of strings defining DNS server IP adresses to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
+6. dns_servers = (optional) A list of strings defining DNS server IP  to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
 
 7. tags = (optional) A map of strings defining any tags to set on ALL vnets and resource groups (Any tags set lower will be appended to these tags set here)
 
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
 
-### Attributes on the "hub" Level of the "typology_object"
+### Attributes on the "hub_object" level of the "typology_object"
 1. rg_name = (optional) A string defining the specific name of the hub resource group resource (Overwrites any name injection defined in the top level attributes)
 
 2. location = (optional) A string defining the location of which to deploy the hub to (If the top level location is set, this will be overwritten)
 
 3. tags = (optional) A map og strings defining any tags to set on the hub resources
 
-4. network = (required) an object 
+4. network = (required) An object structured as:
+    1. vnet_name = (optional) A string defining the name of the hub Azure Virtual Network resource (Overwrites any name injection defined in the top level attributes)
 
-#### Example of values to use for mgmt parameters
-```hcl
-rg_name = "some-rg"
-location = "northeurope" Must be a valid Microsoft location, use the powershell module 'Get-AzVMSKu' With the switch '-ShowLocations' To see all valid regions
-env_name_1 = "p" = prod
-env_name_2 = "prod" = prod
-env_name_3 = "prd" = prod
-env_name_4 = "pd" = prod
-env_name_5 = "t" = test
-env_name_6 = "test" = test
-env_name_7 = "tst" = test
+    2. vnet_cidr_notation = (optional) A string to be used in case you do NOT parse the attribute "address_spaces" The module will then instead use a base CIDR block of ["10.0.0.0/16] and use the attribute "vnet_cidr_notation" to subnet the "address_spaces" for the hub Azure Virtual Network resource. Must be parsed in the form of "/\<CIDR>" e.g "/24"
 
-//Many more names can be used for the environments, these are simply a slice of them
-```
+    3. address_spaces = (optional) A list of strings to be used in case you do NOT provide the attribute "vnet_cidr_notation" By providing a value for this attribute, you completely define the exact CIDR block for the hub Azure Virtual Network resource
 
-### object defined parameters
-1. vm_windows_objects & vm_linux_objects = a list of objects defining:
-    - name
-    - admin_username
-    - admin_password
-    - size (vm)
-    - size_pattern (use a pattern to find a vm size, like e.g. 'A1')
-      - size will then be decided by the module using specific logic - See the advanced examples section for more information
-    - boot_diagnostics which is an object defining:
-      - storage_account, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'storage_account'
-    - os_disk which is an object defining:
-      - name
-      - disk_size_gb
-      - see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a> for all other attributes to set, search for variable 'os_disk'
-    - source_image_reference which is an object defining:
-      - offer
-      - publisher
-      - sku
-      - version
-      - *Warning* Only utilize this option when a custom SKU or version is necessary. To obtain this information, employ the PowerShell module 'Get-AzVmSku' with parameters '-Location <location> -OperatingSystem <os_name>' to retrieve all the necessary details.
-    - nic which is an object defining:
-      - name
-      - dns_servers
-      - enable_ip_forwarding
-      - ip_configuration, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a> for all other attributes to set, search for variable 'nic'
-    - public_ip which is an object defining:
-      - name
-      - allocation_method
-      - sku
-      - tags
-    - admin_ssh_key which is a list of objects defining (Only Linux vms):
-      - public_key
-      - username
-    - Many other attributes, they can all be found at <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>
-2. vnet_object = an object defining:
-    - name
-    - address_space
-    - tags
-2. subnet_objects = a list of objects defining:
-    - name
-    - address_prefixes (bastion must be at least /26)
-    - The order of defining the objects are defining the bastion subnet first, then the vm subnet - See the examples for a more detailed explanation
-3. bastion_object = an object defining:
-    - name
-    - copy_paste_enabled
-    - file_copy_enabled
-    - sku 
-    - scale_units
-    - tags
-    - *Warning* Its only recommended to use this parameter in case the number of 'scale_units' is to be customized  See the advanced examples for guidance
-4. nsg_objects = a list of objects defining:
-    - name
-    - subnet_id
-    - tags
-    - security_rule, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'nsg_objects'
-    - *Warning* Its only recommended to use this parameter in case the security rule is to be customized - See the advanced examples for guidance
-5. kv_object = an object defining:
-    - name (must be globally unique)
-    - network_acls = an object defining:
-      - Define a custom network security ruleset for the kv
-    - For all other attributes, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/variables.tf">expanded defintion</a>, search for variable 'kv_object'
-    - *Warning* Its only recommended to use this parameter in case a network security rule is to be customized - See the advanced examples for guidance
+    4. dns_servers = (optional) A list of strings defining DNS server IP addresses to set for the spoke Azure Virtual Network resource (Will be overwritten in case the attribute is set on the top level object)
+
+    5. tags = (optional) A map og strings defining any tags to set on the spoke resources
+
+    6. vnet_peering_allow_virtual_network_access = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the spoke vnet´s Azure Virtual machine resources can reach the hub
+
+    7. vnet_peering_allow_forwarded_traffic = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the hub vnet can recieve forwarded traffic from the spoke vnet
+
+    8. vpn = (optional) An object structured as:
+       
+       1. gw_name = (optional) A string to define the custom name of the Azure Virtual Network Gateway resource (Overwrites any naming injection defined in the top level object)
+
+        2. address_space = (optional) A list of strings defining the CIDR block to be used by the Point-2-Site VPN connections, for the DHCP scope
+
+        3. gw_sku = (optional) (NOT RECOMMENDED TO CHANGE) A string used to define the SKU for the Azure Virtual Gateway resource. Defaults to "VpnGw2"
+
+        4. pip_name = (optional) A string defining the custom name of the Azure Public IP to be used on the VPN (Overwrites any naming injection defined in the top level object)
+    
+    9. firewall = (optional) An object structured as:
+        
+        1. name = (optional) A string to define the custom name of the Azure Firewall resource (Overwrites any naming injection defined in the top level object)
+
+        2. sku_tier = (optional) A string defining the SKU tier of the Azure Firewall resource. Defaults to "Standard"
+
+        3. threat_intel_mode = (optional) A bool defining whether the mode of the automatic detection shall be set to "Deny" Mode. Defaults to "Alert"
+
+        4. pip_name = (optional) A string defining the custom name of the Azure Public IP to be used on the Firewall (Overwrites any naming injection defined in the top level object)
+
+        5. log_name = (optional) A string defining the custom name of the Azure Log Analytics workspace resource (Overwrites any naming injection defined in the top level object)
+
+        6. log_daily_quota_gb = (optional) A number defining the daily quota in GB that can be injested into the Azure Log Analytics workspace. Defaults to -1 which means NO limit
+
+        7. no_logs = (optional) A bool to determine whether the module shall NOT create an Azure Log Analytics workspace and Azure Diagnostic settings for the Azure Firewall. Pr. default both resources will be created IF the Firewall is also created
+
+        8. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
+    
+    10. subnet_objects = (optional) A list og objects structured as:
+        
+        1. name = (optional) A string defining the custom name of the Azure Subnet (Overwrites any naming injection defined in the top level object)
+        
+        2. use_first_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the START of the CIDR block used in the deployment. See the [Examples](#examples) for more details
+
+        3. use_last_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the END of the CIDR block used in the deployment. See the [Examples](#examples) for more details
+
+        4. address_prefix = (optional) An address space specifically defined for the subnet. Its NOT recommended to define this manually in case the overall vnets "address_spaces" Attribute is NOT populated.
+
+        5. service_endpoints = (optional) A string defining Microft Azure Service Endpoints to add to the subnet
+
+        6. service_endpoint_policy_ids = (optional) A set of strings defining any Azure Service Endpoint policy id's to add to the subnet
+
+        7. delegation = (optional) A list of objects structured as:
+            1. name = optional(string) A custom name to add as the display name for the deletation added to the subnet
+            2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [Examples](#examples) for more details
+
+### Attributes on the "spoke_objects" level of the "typology_object"
+1. Minimum of 1 spoke must be defined
+2. All attributes on the top level of this object can be defined exactly as for the "hub_object"
+3. The "network" Block is decribed exactly the same as for the "hub_object" With the ONLY differences being you can ONLY define "subnet_objects", no Firewall or VPN settings. See the [Examples](#examples) for more details
 
 #### Example of defining custom sub resource objects
 ```hcl
@@ -486,7 +471,7 @@ The below list also contain resource types default value in case the user adds a
 4. Subnet(s)
   - The address prefixes of each subnet, bastion subnet wont be created unless the resource is to be deployed
     - bastion subnet = /26 (as per required by Azure)
-    - vm subnet = /25 (123 host addresses)
+    - vm subnet = /25 (123 host )
 5. Bastion
   - Configured to work for most use-cases
     - copy_paste_enabled = true
