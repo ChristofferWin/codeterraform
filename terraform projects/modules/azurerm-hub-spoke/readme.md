@@ -283,7 +283,7 @@ If you're using VSCode, leverage the Terraform extension from HashiCorp to benef
 
 The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-hub-spoke#detailed-description">Detailed Description</a>
 
-### attributes on the "top" Level of the "topology_object"
+### Attributes on the "top" Level of the "typology_object"
 1. customer_name = (optional) A string defining the name of the customer. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
 
 2. location = (optional) A string defining the location of ALL resources deployed (overwrites ANY lower set location)
@@ -300,25 +300,14 @@ The below lists showcases all possible parameters. For default values go to <a h
 
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
 
-9. 
+### Attributes on the "hub" Level of the "typology_object"
+1. rg_name = (optional) A string defining the specific name of the hub resource group resource (Overwrites any name injection defined in the top level attributes)
 
-#### Example of create statements
-```hcl
-create_bastion = true //Not defining it means not deploying it
-create_nsg = true //Not defining it means not deploying it
-create_public_ip = true //Not defining it means not deploying it
-create_diagnostic_settings = true //Not defining it means not deploying it
-create_kv_for_vms = true //Not defining it means not deploying it
-create_kv_role_assignment = false //If create_kv_for_vms is set to true, this will automatically be true. The parameter can be used to overwrite the module and not allowing it to create the role assignment "Key Vault Administrator" On the kv. 
-```
+2. location = (optional) A string defining the location of which to deploy the hub to (If the top level location is set, this will be overwritten)
 
-### mgmt parameters used to define the most backbone pieces of information for the module
-1. rg_name = Define a name for the resource group to be deployed
-2. location = Define the Azure location of which to deploy to
-3. env_name = Define an env to use as prefix on resources being deployed
-  - The module can track a multitude of env names as it uses complex regex expressions
-  - Also, using the env_name will effect the ip ranges, see <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Detailed Description</a> for more information, under "Virtual network"
-4. script_name = *Warning* This parameter is experimental and currently not utilized for any purpose
+3. tags = (optional) A map og strings defining any tags to set on the hub resources
+
+4. network = (required) an object 
 
 #### Example of values to use for mgmt parameters
 ```hcl
