@@ -214,42 +214,7 @@ Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
 6. How it looks in Azure
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/first-vm-black.png"/>
 
-7. To easily establish a connection, include the following code in your module.
-```hcl
-module "my_first_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0" //Always use a specific version of the module
-
-  rg_name = "vm-rg" //Creating a new rg
-
-  vm_linux_objects = [
-    {
-      name = "ubuntu-vm"
-      os_name = "ubuntu"
-    }
-  ]
-
-  create_public_ip = true
-  create_nsg = true
-
-  // VNet and VM subnet will also be created.
-  // Required dependencies for the vm will also be created.
-  // Due to no public subtypes enabled, the VM will only be accessible via its private IP.
-  // Refer to the examples section for many more combinations of configurations.
-}
-```
-8. Run terraform apply again
-```hcl
-//Skipping confirm
-terraform apply --auto-approve=true
-
-//apply output
-
-Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
-```
-9. What has been added to Azure
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/second-vm-black.png" />
-
-10. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#examples">Examples</a> for details
+7. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#examples">Examples</a> for details
 
 [Back to the top](#table-of-contents)
 ## Versions
@@ -261,10 +226,7 @@ Please take note of the 'Azure Provider Version' among the various providers uti
 
 | Provider name | Provider url | Minimum version |
 | ------------------ | ---------------------- | -------------- |
-| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a>  | 3.76.0 |
-| null | <a href="https://registry.terraform.io/providers/hashicorp/null/latest/docs">hashicorp/null</a> | 3.2.1 |
-| random | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/random</a> | 3.5.1 |
-local | <a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs">hashicorp/local</a> | 2.4.0
+| azurerm | <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs">hashicorp/azurerm</a>  | 3.99.0 |
 
 For the latest updates of the terraform module, check the <a href="https://github.com/ChristofferWin/codeterraform/releases">release page</a>
 
@@ -287,9 +249,9 @@ terraform init
 
 │ Error: Failed to query available provider packages
 │
-│ Could not retrieve the list of available versions for provider hashicorp/azurerm: no available releases match the given constraints 3.64.0, >= 3.76.0
+│ Could not retrieve the list of available versions for provider hashicorp/azurerm: no available releases match the given constraints 3.64.0, >= 3.99.0
 ```
-To solve it, simply remove the version parameter OR use a version that is the minimum requirement from <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#versions">Versions</a>:
+To solve it, simply remove the version parameter OR use a version that is the minimum requirement from <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-hub-spoke#versions">Versions</a>:
 ```hcl
 //Remove the version parameter entirely which causes terraform to use the latest version of azurerm
 terraform {
@@ -303,11 +265,11 @@ terraform {
 terraform init
 
 //Init results:
-- Installed hashicorp/azurerm v3.81.0 (signed by HashiCorp)
+- Installed hashicorp/azurerm v3.99.0 (signed by HashiCorp)
 
 Terraform has been successfully initialized!
 ```
-Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#parameters">Parameters</a> section for a better understanding of what the module can take as inputs
+Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-hub-spoke#parameters">Parameters</a> section for a better understanding of what the module can take as inputs
 
 [Back to the top](#table-of-contents)
 ## Parameters
@@ -317,7 +279,7 @@ If you're using VSCode, leverage the Terraform extension from HashiCorp to benef
 
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
 
-The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-vm-bundle#detailed-description">Detailed Description</a>
+The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-hub-spoke#detailed-description">Detailed Description</a>
 
 
 ### resource_id (to avoid that the module must create the resoruce type)
