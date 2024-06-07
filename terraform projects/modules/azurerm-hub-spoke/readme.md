@@ -272,13 +272,37 @@ Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/mai
 
 [Back to the top](#table-of-contents)
 ## Parameters
-If you're using VSCode, leverage the Terraform extension from HashiCorp to benefit from 'Intellisense.' Note that, in some cases, you may need to clone the repository as the HashiCorp Terraform extension might encounter difficulties resolving parameters through a remote module.
+For assisting in understanding the actual structure of the only input variable "typology_object" Please see below code:
+```hcl
+module "show_case_object" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0"
+  typology_object = { //The "root" is an OBJECT
+    //Many different overall settings for the entire deployment can be set here. See below the code snippet for details.
 
-(Intellisense might need a local copy of the repository, clone <a href="https://github.com/ChristofferWin/codeterraform.git">codeterraform</a>)
+    hub_object = { //The "hub_object" is an OBJECT - Object path is then <typology_object.hub_object>
+      //Less but specific attributes can be set for the hub here. See below the code snippet for details.
 
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/Intellisense1.gif"/>
+      network = { //The object "network" is an OBJECT - Object path is then <typology_object.hub_object.network>
+        //Multiple different attributes with relevance to network can be set for the hub here. See below the code snippet for details.
 
-The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-hub-spoke#detailed-description">Detailed Description</a>
+        vpn = { //The object "vpn" is an OBJECT - Object path is then <typology_object.hub_object.network.vpn>
+          //Specific attributes related to configuring a Point-2-Site VPN. See below the code snippet for details
+        }
+
+        firewall = { //The object "vpn" is an OBJECT - Object path is then <typology_object.hub_object.network.firewall>
+          //Specific attributes related to configuring an Azure Firewall. See below the code snippet for details
+        }
+
+        subnet_objects = [ //The list of object "subnet_objects" is a LIST OF OBJECT - Object path is then <typology_object.hub_object.network.subnet_objects[index]>
+          {
+            //For each {} block, define specific attributes related to Azure subnets. See below the code snippet for details
+          }
+        ]
+      }
+    }
+  }
+}
+```
 
 ### Attributes on the "top" Level of the "typology_object"
 1. customer_name = (optional) A string defining the name of the customer. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
