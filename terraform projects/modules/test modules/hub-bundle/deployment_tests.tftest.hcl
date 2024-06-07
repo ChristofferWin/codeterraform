@@ -32,7 +32,7 @@ run "test_3_simple_deployment_with_firewall_apply" {
   }
 }
 */
-run "test_4_simple_deployment_with_firewall_apply" {
+run "test_4_advanced_deployment_with_all_custom_values" {
   command = apply
 
   plan_options {
