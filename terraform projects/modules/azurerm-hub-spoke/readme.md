@@ -285,13 +285,21 @@ The below lists showcases all possible parameters. For default values go to <a h
 
 ### attributes on the "top" Level of the "topology_object"
 1. customer_name = (optional) A string defining the name of the customer. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
+
 2. location = (optional) A string defining the location of ALL resources deployed (overwrites ANY lower set location)
+
 3. name_prefix = (optional) A string to inject a prefix into all resource names - This variable makes it so names follow a naming standard: \<resource abbreviation>\-<name_prefix>\-\<Identier, either "hub" or "spoke">
+
 4. name_suffix = (optional) A string to inject a suffix into all resource names - This variable also makes names follow a naming standard: <Identifier, either "hub" or "spoke">\-\<name_suffix>\-\<resource abbreviation>
+
 5. env_name = (optional) A string defining an environment name to inject into all resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "customer_name" To be provided as well
+
 6. dns_servers = (optional) A list of strings defining DNS server IP adresses to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
+
 7. tags = (optional) A map of strings defining any tags to set on ALL vnets and resource groups (Any tags set lower will be appended to these tags set here)
+
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
+
 9. 
 
 #### Example of create statements
