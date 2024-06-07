@@ -437,134 +437,396 @@ See below list of possible return values:
 ## Examples
 <b>This section is split into 2 different sub sections:</b>
 
-- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase the easiest ways to deploy vms with its dependencies
-- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/readme.md#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase different combinations of resources to deploy with vms
+- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase how to deploy simple hub-spoke typologies
+- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase how to deploy advanced hub-spoke typologies
 
 [Back to the top](#table-of-contents)
 
 ### Simple examples - Separated on topics
-1. [How to retrieve required information like os_name](#1-how-to-retrieve-required-information-like-os_name)
+1. [Deploy a simple hub and 2 spokes with minimum config](#1-Deploy-a-simple-hub-and-2-spokes-with-minimum-config)
 2. [A few vms and bastion](#2-a-few-vms-and-bastion)
 3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
 4. [Use attributes like size_pattern and defining a custom os_disk configuration](#4-use-attributes-like-size_pattern-and-defining-a-custom-os_disk-configuration)
 5. [Avoid using PowerShell 7 entirely when deploying with the module](#5-avoid-using-powershell-7-entirely-when-deploying-with-the-module)
 
 
-### (1) how to retrieve required information like 'os_name'
-```powershell
-#Make sure to have the PowerShell module 'Get-AzVMSku' Installed
-#Must be in administrator mode to install
-Install-module Get-AzVMSku -Force
+### (1) Deploy a simple hub and 2 spokes with minimum config
+```hcl
+module "hub_and_2_spokes" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  //We want to deploy a hub with 0 subnets and default settings
+  //We want to deploy 2 spokes, with 2 subnets in each
+  typology_object = {
+    
+    hub_object = {
+      network = {
+        //We wont add any custom config
+      }
+    }
 
-#Run the show command for different information that you may require to run the terraform module
+    spoke_objects = [
+      {
+        network = {
+          subnet_objects = [
+            {
+               #We wont any other thing than the simple empty block {} (Spoke 1, subnet 1)
+            },
+            {
+               #We wont any other thing than the simple empty block {} (Spoke 1, subnet 2)
+            }
+          ]
+        }      
+      },
+      {
+        network = {
+          subnet_objects = [
+            {
+                #We wont any other thing than the simple empty block {} (Spoke 2, subnet 1)
+            },
+            {
+                #We wont any other thing than the simple empty block {} (Spoke 2, subnet 2)
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
 
-#Retrive name needed for parameter 'os_name' of the terraform module
-Get-AzVmSku -ShowVMOperatingSystems
+//TF Plan output:
+Plan: 14 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
 
-#Sample output
-server2008
-server2012
-server2012r2
-....
+  # module.hub_and_2_spokes.azurerm_resource_group.rg_object["rg-hub"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-hub"
+    }
 
-#Retrieve valid Azure locations required by parameter 'location'
-#Requires an Azure context
-Login-AzAccount #Interactive browser prompt
-Get-AzVmSku -ShowLocations #Use the 'ShortName' output
+  # module.hub_and_2_spokes.azurerm_resource_group.rg_object["rg-spoke1"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-spoke1"
+    }
 
-#Sample output
-ShortName          LongName
----------          --------
-eastus             East US
-eastus2            East US 2
-westus             West US
-centralus          Central US
-northcentralus     North Central US
-....
+  # module.hub_and_2_spokes.azurerm_resource_group.rg_object["rg-spoke2"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-spoke2"
+    }
 
-#We can also retrieve a specific os and use this information for other parameters
-$VMObject = Get-AzVMSKU -Location "westeurope" -OperatingSystem "windows11"
+  # module.hub_and_2_spokes.azurerm_subnet.subnet_object["subnet1-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.0/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet1-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke1"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
 
-#Sample output required in case you want to deploy vms with specific version and sku
-$VMObject | Select-Object Publisher, Offer
+  # module.hub_and_2_spokes.azurerm_subnet.subnet_object["subnet1-spoke2"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.2.0/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet1-spoke2"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke2"
+      + virtual_network_name                           = "vnet-spoke2"
+    }
 
-Publisher               Offer
----------               -----
-MicrosoftWindowsDesktop Windows-11
+  # module.hub_and_2_spokes.azurerm_subnet.subnet_object["subnet2-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.64/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet2-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke1"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
 
-$VMObject.SKUs #Sample of windows11 skus
+  # module.hub_and_2_spokes.azurerm_subnet.subnet_object["subnet2-spoke2"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.2.64/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet2-spoke2"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke2"
+      + virtual_network_name                           = "vnet-spoke2"
+    }
 
-win11-21h2-avd
-win11-21h2-ent
-win11-21h2-entn
-win11-21h2-pro
+  # module.hub_and_2_spokes.azurerm_virtual_network.vnet_object["vnet-hub"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.0.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-hub"
+      + resource_group_name = "rg-hub"
+      + subnet              = (known after apply)
+    }
 
-#In summary, the PowerShell module can be used interactively before executing the Terraform module to gather necessary information for deployment. 
-#For most applications, obtaining specific OS information is unnecessary, as the module can handle this automatically. 
-#However, in cases where #a particular SKU or SKU version is required for any operating system, the information obtained from the last output needs to be provided as input to the module.
+  # module.hub_and_2_spokes.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.1.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-spoke1"
+      + resource_group_name = "rg-spoke1"
+      + subnet              = (known after apply)
+    }
+
+  # module.hub_and_2_spokes.azurerm_virtual_network.vnet_object["vnet-spoke2"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.2.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-spoke2"
+      + resource_group_name = "rg-spoke2"
+      + subnet              = (known after apply)
+    }
+
+  # module.hub_and_2_spokes.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-hub-to-spoke1"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-hub"
+    }
+
+  # module.hub_and_2_spokes.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke2"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-hub-to-spoke2"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-hub"
+    }
+
+  # module.hub_and_2_spokes.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke1-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-spoke1"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-spoke1"
+    }
+
+  # module.hub_and_2_spokes.azurerm_virtual_network_peering.peering_object["peering-from-spoke2-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke2-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-spoke2"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-spoke2"
+    }
 ```
-For more information about how to use the PowerShell module, please visit the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/powershell%20projects/modules/Get-AzVMSku/Examples.md">readme</a> where a lot of examples are shown
 
 [Back to the Examples](#examples)
-### (2) A few vms and bastion
+### (2) Simple hub-spoke and ready for Bastion
+Please pay close attention to the comments within the code-snippet below
+
 ```hcl
-//Boilerplate
-
-provider "azurerm" {
-  features{}
-}
-
-module "simple_vms" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
-
-  rg_name = "simple-vms-rg"
-  create_public_ip = true
-  create_nsg = true //With publicIP true, nsg should also be created otherwise we cant connect via the public ip
-  create_diagnostic_settings = true //Will create us a storage account and link both vms to it
-
-  vm_windows_objects = [
-    {
-      name = "simple-win-vm"
-      os_name = "windows10"
-    }
-  ]
-
-  vm_linux_objects = [
-    {
-      name = "simple-linux-vm"
-      os_name = "centos"
-    }
-  ]
-}
-
-//Create a simple output to see our deployment results
-output "deployment_results" {
-  value = module.simple_vms.summary_object
-}
-
-//Sample output
-/*
-"linux_objects" = [
-    {
-      "admin_username" = "localadmin"
-      "name" = "simple-linux-vm"
-      "network_summary" = {
-        "private_ip_address" = "192.168.0.5"
-        "public_ip_address" = "20.126.18.32"
+module "hub_and_2_spokes_custom_subnets" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  //We want to deploy a hub with 0 subnets and default settings
+  //We want to deploy 2 spokes, with 2 subnets in each
+  typology_object = {
+    
+    hub_object = {
+      network = {
+        
+        subnet_objects = [
+          {
+            name = "AzureBastionSubnet"
+            use_last_subnet = true //We want to take the last possible CIDR of /26 from the /24 block provided to the vnet
+            //We do NOT need to define more, module always defaults to subnets CIDR /26
+          }
+        ]
       }
-      "os" = "centos"
-      "os_sku" = "8_5-gen2"
-      "size" = {
-        "cpu_cores" = 2
-        "memory_gb" = 8
-        "name" = "Standard_B2ms"
+    }
+
+    spoke_objects = [
+      {
+        network = {
+          subnet_objects = [
+            {
+               name = "vm-subnet"
+               address_prefix = ["10.0.1.0/24"] //Because we use default values, the CIDR block available will be ["10.0.0.0/16"] and all vnets defaults to /24 and subnets to /26
+               //Also, the module automatically divides all available CIDR blocks between vnets, where the hub will ALWAYS recieve the first address space available, then spokes are +1
+            }
+          ]
+        }      
       }
-    },
-  ]
-  */
+    ]
+  }
+}
+
+//TF Plan output:
+Plan: 8 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_resource_group.rg_object["rg-hub"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-hub"
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_resource_group.rg_object["rg-spoke1"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-spoke1"
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_subnet.subnet_object["AzureBastionSubnet"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.0.192/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "AzureBastionSubnet"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-hub"
+      + virtual_network_name                           = "vnet-hub"
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_subnet.subnet_object["vm-subnet"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.0/24",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "vm-subnet"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke1"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_virtual_network.vnet_object["vnet-hub"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.0.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-hub"
+      + resource_group_name = "rg-hub"
+      + subnet              = (known after apply)
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.1.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-spoke1"
+      + resource_group_name = "rg-spoke1"
+      + subnet              = (known after apply)
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-hub-to-spoke1"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-hub"
+    }
+
+  # module.hub_and_2_spokes_custom_subnets.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke1-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-spoke1"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-spoke1"
+    }
 ```
-How it looks in Azure:
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/3rd-vm-black.png" />
 
 [Back to the Examples](#examples)
 ### (3) Using existing virtual vnet and subnet
