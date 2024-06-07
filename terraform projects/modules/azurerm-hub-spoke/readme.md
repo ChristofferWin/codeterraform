@@ -17,6 +17,8 @@ Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make
 called "Typology_object" Which then can contain a huge sub-set of custom configuration. The module supports name injection, automatic subnetting, Point-2-Site VPN, Firewall, routing and so much more! 
 Because its built for Azure it uses the architectual design from the Microsoft CAF concepts which can be read more about at => <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke typlogy</a>
 
+OBS. The module does NOT support builting hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
+
 Below 2 different examples of topologies can be seen:
 
 <b>Example 1: Deployment of a simple hub-spoke</b>
@@ -281,39 +283,16 @@ If you're using VSCode, leverage the Terraform extension from HashiCorp to benef
 
 The below lists showcases all possible parameters. For default values go to <a href="https://github.com/ChristofferWin/codeterraform/tree/main/terraform%20projects/modules/azurerm-hub-spoke#detailed-description">Detailed Description</a>
 
-
-### resource_id (to avoid that the module must create the resoruce type)
-1. rg_id = resource id of a resource group to deploy resources to
-2. vnet_resource_id = resource id of virtual network to deploy subnet to
-3. subnet_resource_id = resource id of the vm subnet where the module shall deploy vms to
-4. subnet_bastion_resource_id = resource id of the subnet of which to place bastion in
-5. kv_resource_id = resource id of the key vault to add vm admin password secret to
-
-#### Example of each resource id type
-```hcl
-rg_id = /subscriptions/<sub id>/resourceGroups/<rg name>
-vnet_resource_id = /subscriptions/<sub id>/resourceGroups/<rg name>/providers/Microsoft.Network/virtualNetworks/<vnet name>
-subnet_resource_id = /subscriptions/<sub id>/resourceGroups/<rg name>/providers/Microsoft.Network/virtualNetworks/<vnet name>/subnets/<subnet name>
-kv_resource_id = /subscriptions/<sub id>/resourceGroups/<rg name>/providers/Microsoft.KeyVault/vaults/<key vault name>
-
-//Remember in most cases these ids can be retrieved directly from resource definitions like:
-
-resource "azurerm_resource_group" "rg_object" {
-  name = "rg-test"
-  location = "westeurope"
-}
-
-//Which gives us the rg_id as such:
-azurerm_resource_group.rg_object.id //Which can be used directly in the module resource call. OBS. all resources parsed as resource_ids MUST be deployed ahead of time of the module. See the examples for a detailed explanation.
-```
-
-### create_ statement, switches used to tell the module to create specific sub resources
-1. create_bastion = Creates a bastion host to be used by any VM on the same vnet
-2. create_nsg = Creates 1 nsg for the vm subnet
-3. create_public_ip = Creates a public ip for each vm specified
-4. create_diagnostic_settings = Creates a storage account to hold boot diagnostics information from all vms defined
-5. create_kv_for_vms = Creates a kv to be used to store all vm admin passwords as secrets
-6. create_kv_role_assignment = Creates RBAC role assignment for the principal in the current Azure context
+### attributes on the "top" Level of the "topology_object"
+1. customer_name = (optional) A string defining the name of the customer. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
+2. location = (optional) A string defining the location of ALL resources deployed (overwrites ANY lower set location)
+3. name_prefix = (optional) A string to inject a prefix into all resource names - This variable makes it so names follow a naming standard: \<resource abbreviation>\-<name_prefix>\-\<Identier, either "hub" or "spoke">
+4. name_suffix = (optional) A string to inject a suffix into all resource names - This variable also makes names follow a naming standard: <Identifier, either "hub" or "spoke">\-\<name_suffix>\-\<resource abbreviation>
+5. env_name = (optional) A string defining an environment name to inject into all resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "customer_name" To be provided as well
+6. dns_servers = (optional) A list of strings defining DNS server IP adresses to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
+7. tags = (optional) A map of strings defining any tags to set on ALL vnets and resource groups (Any tags set lower will be appended to these tags set here)
+8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
+9. 
 
 #### Example of create statements
 ```hcl
