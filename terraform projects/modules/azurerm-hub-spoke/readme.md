@@ -286,20 +286,36 @@ module "show_case_object" {
         //Multiple different attributes with relevance to network can be set for the hub here. See below the code snippet for details.
 
         vpn = { //The object "vpn" is an OBJECT - Object path is then <typology_object.hub_object.network.vpn>
-          //Specific attributes related to configuring a Point-2-Site VPN. See below the code snippet for details
+          //Specific attributes related to configuring a Point-2-Site VPN. See below the code snippet for details.
         }
 
         firewall = { //The object "vpn" is an OBJECT - Object path is then <typology_object.hub_object.network.firewall>
-          //Specific attributes related to configuring an Azure Firewall. See below the code snippet for details
+          //Specific attributes related to configuring an Azure Firewall. See below the code snippet for details.
         }
 
-        subnet_objects = [ //The list of object "subnet_objects" is a LIST OF OBJECT - Object path is then <typology_object.hub_object.network.subnet_objects[index]>
+        subnet_objects = [ //The list of objects "subnet_objects" is a LIST OF OBJECT - Object path is then <typology_object.hub_object.network.subnet_objects[index]>
           {
-            //For each {} block, define specific attributes related to Azure subnets. See below the code snippet for details
+            //For each {} block, define specific attributes related to Azure subnets. See below the code snippet for details.
           }
         ]
       }
     }
+
+    spoke_objects = [ //The list of objects "spoke_objects" is a LIST OF OBJECT - Object path is then <typology_object.spoke_objects[index]>
+      {
+        //For each {} block, many spokes can be deployed. Minimum 1. See below the code snippet for details.
+      
+        network = { //The object "network" is an OBJECT - Object path is then <typology_object.spoke_objects[index].network>
+          //Multiple different attributes with relevance to network can be set for each spoke here. See below the code snippet for details.
+
+          subnet_objects = [ //The list of objects "subnet_objects" is a LIST OF OBJECT - Object path is then <typology_object.spoke_objects[index].network.subnet_objects[index]>
+            {
+              //For each {} block, define specific attributes related to Azure subnets. See below the code snippet for details.
+            }
+          ]
+        }
+      }
+    ]
   }
 }
 ```
