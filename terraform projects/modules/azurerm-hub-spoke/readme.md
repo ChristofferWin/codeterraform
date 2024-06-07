@@ -24,12 +24,13 @@ Below 2 different examples of topologies can be seen:
 <b>Example 1: Deployment of a simple hub-spoke</b>
 </br>
 </br>
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
-
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/DrawIO/Simple-hub-spoke-Simple-Hub-Spoke.png"/>
+</br>
+</br>
 <b>Example 2: Deployment of an advanced hub-spoke</b>
 </br>
 </br>
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/gifs/SSH-Demo.gif"/>
+<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/DrawIO/Simple-hub-spoke-Complex%20Hub-Spoke.drawio.png"/>
 
 [Back to the top](#table-of-contents)
 ## Prerequisites
