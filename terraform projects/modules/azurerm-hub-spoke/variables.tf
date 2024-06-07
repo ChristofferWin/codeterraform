@@ -10,7 +10,6 @@ variable "typology_object" {
     #multiplicator = optional(number)
     dns_servers = optional(list(string))
     tags = optional(map(string))
-    address_spaces = optional(list(string))
     subnets_cidr_notation = optional(string)
 
     hub_object = object({

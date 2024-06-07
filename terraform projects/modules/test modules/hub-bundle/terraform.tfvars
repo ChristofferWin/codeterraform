@@ -1,4 +1,6 @@
 deployment_1_simple_hub_spoke = {
+
+  name_prefix = "test1"
   
   hub_object = {
     network = {
@@ -34,6 +36,8 @@ deployment_1_simple_hub_spoke = {
 }
 
 deployment_2_simple_with_vpn = {
+
+  name_suffix = "test2"
   
   hub_object = {
     network = {
@@ -66,6 +70,8 @@ deployment_2_simple_with_vpn = {
 }
 
 deployment_3_simple_with_firewall = {
+
+  name_prefix = "test3"
   
   hub_object = {
     network = {
@@ -99,7 +105,7 @@ deployment_3_simple_with_firewall = {
 
 deployment_4_advanced_with_all_top_level_custom_values = {
   customer_name = "contoso"
-  name_prefix = "fuck-sake"
+  name_prefix = "test4"
   env_name = "prod"
   dns_servers = ["8.8.8.8", "8.8.4.4"]
   
