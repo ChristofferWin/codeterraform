@@ -72,7 +72,7 @@ module "simple_hub_spoke" {
     spoke_objects = [
       {
         network = {
-           address_spaces = [172.16.0.0/20]
+           address_spaces = ["172.16.0.0/20"] //All subnets in the spoke will use this to CIDR from, because "address_prefix" IS not defined for ANY subnet
 
            subnet_objects = [
             {
@@ -97,7 +97,111 @@ terraform apply
 
 //Plan output
 Plan: 8 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
 
+  # module.simple_hub_spoke.azurerm_resource_group.rg_object["rg-test-hub"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-test-hub"
+    }
+
+  # module.simple_hub_spoke.azurerm_resource_group.rg_object["rg-test-spoke1"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-test-spoke1"
+    }
+
+  # module.simple_hub_spoke.azurerm_subnet.subnet_object["subnet1-test-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "172.16.0.0/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet1-test-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-test-spoke1"
+      + virtual_network_name                           = "vnet-test-spoke1"
+    }
+
+  # module.simple_hub_spoke.azurerm_subnet.subnet_object["subnet2-test-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "172.16.8.128/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet2-test-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-test-spoke1"
+      + virtual_network_name                           = "vnet-test-spoke1"
+    }
+
+  # module.simple_hub_spoke.azurerm_virtual_network.vnet_object["vnet-test-hub"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.0.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-test-hub"
+      + resource_group_name = "rg-test-hub"
+      + subnet              = (known after apply)
+    }
+
+  # module.simple_hub_spoke.azurerm_virtual_network.vnet_object["vnet-test-spoke1"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "172.16.0.0/20",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-test-spoke1"
+      + resource_group_name = "rg-test-spoke1"
+      + subnet              = (known after apply)
+    }
+
+  # module.simple_hub_spoke.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-hub-to-spoke1"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-test-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-test-hub"
+    }
+
+  # module.simple_hub_spoke.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke1-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-test-spoke1"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-test-spoke1"
+    }
+
+Plan: 8 to add, 0 to change, 0 to destroy.
 ────────────────────────────────────────────────────────────────────────────────── 
 
 //press yes
