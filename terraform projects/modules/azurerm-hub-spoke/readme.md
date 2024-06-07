@@ -469,10 +469,10 @@ module "hub_and_2_spokes" {
         network = {
           subnet_objects = [
             {
-               #We wont any other thing than the simple empty block {} (Spoke 1, subnet 1)
+               #We will only provide an empty {}, all default values (Spoke 1, subnet 1)
             },
             {
-               #We wont any other thing than the simple empty block {} (Spoke 1, subnet 2)
+               #We will only provide an empty {}, all default values (Spoke 1, subnet 2)
             }
           ]
         }      
@@ -481,10 +481,10 @@ module "hub_and_2_spokes" {
         network = {
           subnet_objects = [
             {
-                #We wont any other thing than the simple empty block {} (Spoke 2, subnet 1)
+                #We will only provide an empty {}, all default values (Spoke 2, subnet 1)
             },
             {
-                #We wont any other thing than the simple empty block {} (Spoke 2, subnet 2)
+                #We will only provide an empty {}, all default values (Spoke 2, subnet 2)
             }
           ]
         }
