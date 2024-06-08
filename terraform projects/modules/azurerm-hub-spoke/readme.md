@@ -402,7 +402,7 @@ module "show_case_object" {
 
         7. delegation = (optional) A list of objects structured as:
             1. name = optional(string) A custom name to add as the display name for the deletation added to the subnet
-            2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [Examples](#examples) for more details
+            2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-"service_name_pattern") for more details
 
 ### Attributes on the "spoke_objects" level of the "typology_object"
 1. Minimum of 1 spoke must be defined
@@ -444,10 +444,9 @@ See below list of possible return values:
 
 ### Simple examples - Separated on topics
 1. [Deploy a simple hub and 2 spokes with minimum config](#1-Deploy-a-simple-hub-and-2-spokes-with-minimum-config)
-2. [A few vms and bastion](#2-a-few-vms-and-bastion)
-3. [Using existing virtual vnet and subnet](#3-using-existing-virtual-vnet-and-subnet)
-4. [Use attributes like size_pattern and defining a custom os_disk configuration](#4-use-attributes-like-size_pattern-and-defining-a-custom-os_disk-configuration)
-5. [Avoid using PowerShell 7 entirely when deploying with the module](#5-avoid-using-powershell-7-entirely-when-deploying-with-the-module)
+2. [Simple hub-spoke and ready for Bastion](#2-Simple-hub-spoke-and-ready-for-Bastion)
+3. [Using the subnet delegation filter attribute called "service_name_pattern"](#3-Using-the-subnet-delegation-filter-attribute-called-"service_name_pattern")
+
 
 
 ### (1) Deploy a simple hub and 2 spokes with minimum config
@@ -967,7 +966,8 @@ Terraform will perform the following actions:
       + virtual_network_name         = "vnet-spoke1"
     }
   
-  //Notice how the delegation completes simple by using pattern "Web/server" Which finds the delegation "Web/serverFarms"
+  //Notice how the delegation completes simply by using pattern "Web/server" Which finds the delegation "Web/serverFarms"
+  //The pattern could even be "Web/s" In the case above, but in terms of readabillity in a terraform script, the more descriptive pattern makes sense
   //It also adds the underlying actions for set delegation
 
   //More pattern values:
