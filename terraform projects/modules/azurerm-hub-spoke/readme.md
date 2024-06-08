@@ -974,100 +974,108 @@ Terraform will perform the following actions:
   // "Fabric", "Logic", "Batch", "PostgreSQL" And so many more - The entire list can be found in the local variable called "subnet_list_of_delegations" of the source code, link below
   ```
 
-[Source code of the module](https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf){:target="_blank"}
+<a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf" target="_blank">source code of the module</a>
 
 [Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
-1. [Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object](#1-define-custom-vnet-subnet-bastion-and-both-nic-and-public-ip-directly-on-a-windows-vm-object)
+1. [Hub-spoke with both firewall and vpn](#1-Hub-spoke-with-both-firewall-and-vpn)
 2. [Use of default settings combined with specialized vm configurations on multiple vms](#2-use-of-default-settings-combined-with-specialized-vm-configurations-on-multiple-vms)
 
-### (1) Define custom vnet, subnet, bastion and both nic and public ip directly on a windows vm object
+### (1) Hub-spoke with both firewall and vpn
 ```hcl
-module "custom_advanced_settings" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0"
+module "advanced_spoke_with_all_components" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0"
+  //We want to use name injection on all resources + add a few custom names
+  //We want to use top level attributes, to enforce location, a custom CIDR block for ALL vnets to use and more
+  //We want to deploy a hub with 3 subnets, 1 for Bastion, 1 for the Firewall and 1 for the VPN
+  //We want the Firewall to be the first subnet AND take first possible CIDR block available
+  //We want to deploy the Point-2-Site VPN wih a custom address space for the VPN DHCP
+  //We want to customize the firewall object
+  //We want to deploy 2 spokes, each with 2 subnets, where we will use a mix of first possible CIDR block and last possible
+  typology_object = {
+    name_suffix = "lab"
+    customer_name = "contoso"
+    env_name = "prod" //Because the customer name is defined, we must also define an env_name
+    location = "westus" //Forcing the location of ALL resources to be set location
+    address_spaces = ["172.16.0.0/20"] //Custom CIDR block to replace the default within the module of ["10.0.0.0/16"]
+    dns_servers = ["8.8.8.8", "8.8.4.4"] //Forcing DNS to be google for ALL vnets
 
-  rg_name = "custom-advanced-settings-rg"
+    hub_object = {
+      network = {
 
-  //Windows 10 with a custom public ip and NIC configurations
-  vm_windows_objects = [
-    {
-      name = "win10"
-      os_name = "windows10"
+        firewall = {
+          //Instead of defining custom names for both the fw and pip, we let the attributes from the root object inject into the names
+          threat_intel_mode = true //Overwrite the default behaviour of "Alert" When it comes to the Azure Firewall packet inspection to "Deny"
+          log_daily_quota_gb = 5 //By default the Log Analytics workspace created does NOT have a limit - Here we Overwrite it to being 5gb
+        }
 
-      public_ip = {
-        name = "vm-custom-pip"
-        allocation_method = "Dynamic"
-        sku = "Basic"
+        vpn = {
+          address_space = ["192.168.0.0/24"]
+        }
+
+        subnet_objects = [
+          {
+            name = "AzureFirewallSubnet" //Overwrites anything defined in the above levels
+            //use_first_subnet = true //If the subnet object definition is left as an empty object {}, the subnetting defaults to using the first available CIDR block
+          },
+          {
+            name = "AzureBastionSubnet"
+            use_last_subnet = true
+          },
+          {
+            name = "GatewaySubnet"
+            //use_first_subnet = true //If the subnet object definition is left as an empty object {}, the subnetting defaults to using the first available CIDR block
+          }
+        ]
+      }
+    }
+
+    spoke_objects = [
+      { #spoke 1
+        network = {
+          subnet_objects = [
+            {
+               name = "app-services-subnet"
+               use_last_subnet = true
         
+               delegation = [
+                 {
+                    name = "delegation-by-terraform"
+                    service_name_pattern = "Web/server" //Make sure the pattern is "close enough" To the right delegation such that the module does NOT try to add conflicting delegations
+                    //E.g. typing pattern "Web" Will both create a delegation for "Microsoft.Web/Hosting" AND "Microsoft.Web/server" which is not possible. By adding "Web/server" We secure only 1 of the delegations
+                    //For other patterns, please see the buttom of this code snippet
+                 }
+               ]
+            },
+            {
+
+            }
+          ]
+        }      
+      },
+      { #spoke 2
+        rg_name = "spoke-2-custom-name" #Will overwrite ALL naming injection from the top level attributes
         tags = {
-          "environment" = "prod"
-        }
-      }
-
-      nic = {
-        name = "vm-custom-nic"
-        dns_servers = ["8.8.8.8", "8.8.4.4"] //Google DNS
-        enable_ip_forwarding = true
-        
-        ip_configuration = {
-          name = "ip-config"
-          private_ip_address_version = "IPv4"
-          private_ip_address_allocation = "Static"
-          private_ip_address = "10.0.0.5" //First possible address in the subnet we are deploying, as Azure takes the first 4 and last 1
+          "environment" = "production"
         }
 
-        tags = {
-          "vm_name" = "win10"
-        }
+         network = {
+           subnet_objects = [
+             { #subnet_1_spoke_2
+               name = "vm-subnet"
+               address_prefix = ["172.16.2.0/26"] //Because we define a custom "address_spaces" In the top level object, we know the spoke 2 vnet will have CIDR block ["172.16.2.0/24"]
+             },
+             { #subnet_2_spoke_2
+               use_last_subnet = true //This will not overlap with subnet one, as we manually defined it as the first possible /26 CIDR block and now we instead take the last possible block
+               //The address_prefix will then automatically be calculated to value "10.0.2.128/26"
+             }
+           ]
+         }
       }
-    }
-  ]
-
-  vnet_object = {
-    name = "custom-with-bastion-vnet"
-    address_space = ["10.0.0.0/20"]
-  }
-
-  subnet_objects = [
-    {
-      //Name wont matter as it will always be forced to be "AzureBastionSubnet" because we have defined that we also want a bastion host
-      address_prefixes = ["10.0.10.0/26"]
-    },
-    {
-      name = "custom-vm-subnet"
-      address_prefixes = ["10.0.0.0/24"]
-
-      tags = {
-        "environment" = "prod"
-      }
-    }
-  ]
-
-  bastion_object = {
-    name = "custom-bastion" //must contain 'bastion'
-    copy_paste_enabled = true
-    file_copy_enabled = true
-    sku = "Standard"
-    scale_units = 5
-
-    tags = {
-      "environment" = "mgmt"
-    }
+    ]
   }
 }
-
-output "custom_advanced_settings" {
-  value = module.custom_advanced_settings.summary_object
-}
-
-//Sample output
-/*
-
-*/
 ```
-How it looks in Azure:
-
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/8th-vm-black.png" />
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 ### (2) Use of default settings combined with specialized vm configurations on multiple vms
