@@ -179,7 +179,7 @@ locals {
     name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw")
     sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
     sku_tier = can(b.sku_tier) ? b.sku_tier : "Standard"
-    threat_intel_mode = can(tostring(b.threat_intel_mode)) ? b.threat_intel_mode : "Alert"
+    threat_intel_mode = b.threat_intel_mode
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
 
     ip_configuration = {
