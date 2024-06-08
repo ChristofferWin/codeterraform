@@ -854,7 +854,9 @@ module "using_subnet_delegation" {
                delegation = [
                  {
                     name = "delegation-by-terraform"
-                    service_name_pattern = "Web" //For other patterns, please see the buttom of this code snippet
+                    service_name_pattern = "Web/server" //Make sure the pattern is "close enough" To the right delegation such that the module does NOT try to add conflicting delegations
+                    //E.g. typing pattern "Web" Will both create a delegation for "Microsoft.Web/Hosting" AND "Microsoft.Web/server" which is not possible. By adding "Web/server" We secure only 1 of the delegations
+                    //For other patterns, please see the buttom of this code snippet
                  }
                ]
             }
@@ -866,6 +868,7 @@ module "using_subnet_delegation" {
 }
 
 Plan: 7 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
 Terraform will perform the following actions:
 
   # module.using_subnet_delegation.azurerm_resource_group.rg_object["rg-hub"] will be created
@@ -906,16 +909,6 @@ Terraform will perform the following actions:
                   + "Microsoft.Network/virtualNetworks/subnets/action",
                 ]
               + name    = "Microsoft.Web/serverFarms"
-            }
-        }
-      + delegation {
-          + name = "Web/hostingEnvironments"
-
-          + service_delegation {
-              + actions = [
-                  + "Microsoft.Network/virtualNetworks/subnets/action",
-                ]
-              + name    = "Microsoft.Web/hostingEnvironments"
             }
         }
     }
@@ -974,7 +967,8 @@ Terraform will perform the following actions:
       + virtual_network_name         = "vnet-spoke1"
     }
   
-  //Notice how the following 2 delegations has been defined, simply by defining the pattern of "Web"
+  //Notice how the delegation completes simple by using pattern "Web/server" Which finds the delegation "Web/serverFarms"
+  //It also adds the underlying actions for set delegation
 
   //More pattern values:
   // "Fabric", "Logic", "Batch", "PostgreSQL" And so many more - The entire list can be found in the local variable called "subnet_list_of_delegations" of the source code, link below
