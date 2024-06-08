@@ -973,7 +973,8 @@ Terraform will perform the following actions:
   //More pattern values:
   // "Fabric", "Logic", "Batch", "PostgreSQL" And so many more - The entire list can be found in the local variable called "subnet_list_of_delegations" of the source code, link below
   ```
-<a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf" target="_blank">source code of the module</a>
+
+[Source code of the module](https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf){:target="_blank"}
 
 [Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
