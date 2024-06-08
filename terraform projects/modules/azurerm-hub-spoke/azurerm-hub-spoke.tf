@@ -38,10 +38,9 @@ locals {
   vnet_cidr_total = ["10.0.0.0/16"]
   subnets_cidr_notation = local.tp_object.subnets_cidr_notation != null ? local.tp_object.subnets_cidr_notation : "/26"
   vpn_gateway_sku = "VpnGw2"
-  #multiplicator = local.tp_object.multiplicator != null ? local.tp_object.multiplicator : 1
   create_firewall = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.firewall != null ? true : false
   create_vpn = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vpn != null ? true : false
-  rg_count = 1 + length(local.tp_object.spoke_objects) #* local.multiplicator
+  rg_count = 1 + length(local.tp_object.spoke_objects)
   env_name = local.tp_object.env_name != null ? local.tp_object.env_name : ""
   customer_name = local.tp_object.customer_name != null ? local.tp_object.customer_name : ""
   name_fix_pre = local.tp_object.name_prefix != null ? true : false
@@ -180,7 +179,7 @@ locals {
     name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw")
     sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
     sku_tier = can(b.sku_tier) ? b.sku_tier : "Standard"
-    threat_intel_mode = can(b.threat_intel_mode) ? b.threat_intel_mode : "Alert"
+    threat_intel_mode = can(tostring(b.threat_intel_mode)) ? b.threat_intel_mode : "Alert"
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
 
     ip_configuration = {
