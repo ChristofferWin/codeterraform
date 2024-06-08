@@ -47,7 +47,7 @@ locals {
   name_fix_pre = local.tp_object.name_prefix != null ? true : false
   name_fix = local.name_fix_pre ? local.name_fix_pre : local.tp_object.name_suffix != null ? false : false
   base_name = local.name_fix == null ? null : local.name_fix && local.tp_object.env_name != null ? "${local.tp_object.name_prefix}-${local.customer_name}-open-${local.env_name}" : local.name_fix == false && local.tp_object.env_name != null ? "${local.env_name}-${local.customer_name}-open-${local.tp_object.name_suffix}" : local.name_fix && local.tp_object.env_name == null ? "${local.tp_object.name_prefix}-${local.customer_name}-open" : local.name_fix == false && local.tp_object.env_name == null && local.tp_object.name_suffix != null ? "${local.customer_name}-open-${local.tp_object.name_suffix}" : null
-  rg_name = local.name_fix ? "rg-${replace(local.base_name, "-open", "-hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "hub")}-rg" : "rg-hub"
+  rg_name = local.name_fix ? "rg-${replace(local.base_name, "-open", "-hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "-hub")}-rg" : "rg-hub"
   vnet_base_name = local.name_fix ? "vnet-${replace(local.base_name, "-open", "hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "hub")}-vnet" : "vnet-hub"
   gateway_base_name = local.name_fix ? "gw-${replace(local.base_name, "-open", "hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "hub")}-gw" : "gw-hub-p2s"
   pip_count = local.create_firewall && local.create_vpn ? 2 : local.create_firewall || local.create_vpn ? 1 : 0
