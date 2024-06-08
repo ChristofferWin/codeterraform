@@ -686,10 +686,10 @@ Terraform will perform the following actions:
 Please pay close attention to the comments within the code-snippet below
 
 ```hcl
-module "hub_and_2_spokes_custom_subnets" {
+module "hub_and_1_spoke_custom_subnets" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
-  //We want to deploy a hub with 0 subnets and default settings
-  //We want to deploy 2 spokes, with 2 subnets in each
+  //We want to deploy a hub with 1 subnet with a custom "name" So that its a valid Bastion subnet
+  //We want to deploy 1 spoke, with 1 subnet and a custom "address_prefix" Which will consume the entire default address space provided to the spoke vnet
   typology_object = {
     
     hub_object = {
@@ -829,176 +829,157 @@ Terraform will perform the following actions:
 ```
 
 [Back to the Examples](#examples)
-### (3) Using existing virtual vnet and subnet
+### (3) Using the subnet delegation filter attribute called "service_name_pattern"
 ```hcl
-//The resource group, virtual network & subnet must be created in advance
-//Using reference from example 2, adding 1 new windows vm to the environment and a public ip for it
-module "existing_resources_vm" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
-  rg_id = module.simple_vms.rg_object.id
-  vnet_resource_id = module.simple_vms.vnet_object["vm-vnet"].id
-  subnet_resource_id = module.simple_vms.subnet_object["vm-subnet"].id
-  create_public_ip = true //So we can connect to it
-
-  vm_windows_objects = [
-    {
-      name = "windows-vm01"
-      os_name = "windows11"
+module "using_subnet_delegation" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  //We want to deploy a hub with 0 subnets and default settings
+  //We want to deploy 1 spoke, with 1 subnet which must be delegated to server farms
+  typology_object = {
+    
+    hub_object = {
+      network = {
+        
+      }
     }
-  ]
+
+    spoke_objects = [
+      {
+        network = {
+          subnet_objects = [
+            {
+               name = "app-services-subnet"
+               use_last_subnet = true
+        
+               delegation = [
+                 {
+                    name = "delegation-by-terraform"
+                    service_name_pattern = "Web" //For other patterns, please see the buttom of this code snippet
+                 }
+               ]
+            }
+          ]
+        }      
+      }
+    ]
+  }
 }
 
-//Create a simple output to see our deployment results
-output "existing_resources_vm_result" {
-  value = module.existing_resources_vm.summary_object
-}
+Plan: 7 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
 
-//Sample output
-/*
-windows_objects" = [
-    {
-      "admin_username" = "localadmin"
-      "name" = "windows-vm01"
-      "network_summary" = {
-        "private_ip_address" = "192.168.0.6"
-        "public_ip_address" = "40.118.59.198"
-      }
-      "os" = "windows11"
-      "os_sku" = "win11-23h2-pron"
-      "size" = {
-        "cpu_cores" = 2
-        "memory_gb" = 8
-        "name" = "Standard_B2ms"
-      }
-    },
-  ]
-*/
-```
-How it looks in Azure:
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/4th-vm-black.png" />
+  # module.using_subnet_delegation.azurerm_resource_group.rg_object["rg-hub"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-hub"
+    }
 
-[Back to the Examples](#examples)
-### (4) Use attributes like 'size_pattern' and defining a custom 'os_disk' configuration 
-```hcl
-module "vm_specific_config" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0"
+  # module.using_subnet_delegation.azurerm_resource_group.rg_object["rg-spoke1"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-spoke1"
+    }
 
-  rg_name = "vm-specific-config-rg"
+  # module.using_subnet_delegation.azurerm_subnet.subnet_object["app-services-subnet"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.192/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "app-services-subnet"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke1"
+      + virtual_network_name                           = "vnet-spoke1"
+
+      + delegation {
+          + name = "Web/serverFarms"
+
+          + service_delegation {
+              + actions = [
+                  + "Microsoft.Network/virtualNetworks/subnets/action",
+                ]
+              + name    = "Microsoft.Web/serverFarms"
+            }
+        }
+      + delegation {
+          + name = "Web/hostingEnvironments"
+
+          + service_delegation {
+              + actions = [
+                  + "Microsoft.Network/virtualNetworks/subnets/action",
+                ]
+              + name    = "Microsoft.Web/hostingEnvironments"
+            }
+        }
+    }
+
+  # module.using_subnet_delegation.azurerm_virtual_network.vnet_object["vnet-hub"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.0.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-hub"
+      + resource_group_name = "rg-hub"
+      + subnet              = (known after apply)
+    }
+
+  # module.using_subnet_delegation.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.1.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-spoke1"
+      + resource_group_name = "rg-spoke1"
+      + subnet              = (known after apply)
+    }
+
+  # module.using_subnet_delegation.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-hub-to-spoke1"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-hub"
+    }
+
+  # module.using_subnet_delegation.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke1-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-spoke1"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-spoke1"
+    }
   
-  create_public_ip = true
-  create_nsg = true //With publicIP true, nsg should also be created otherwise we cant connect via the public ip
-  create_diagnostic_settings = true //Will create us a storage account and link both vms to it
+  //Notice how the following 2 delegations has been defined, simply by defining the pattern of "Web"
 
-  vm_windows_objects = [
-    {
-      name = "simple-win-vm" //Required
-      os_name = "windows10" //Required
-      admin_username = "mycustomuser" //Optional
-      admin_password = "ShowCasedONLYFORDEMO!" //Optional
-      //See the parameters section or use Intellisense to see the rest of the possible attributes to set
-      
-      os_disk = {
-        name = "custom-os-disk" //Optional
-        disk_size_gb = 256 //Optional
-        caching = "ReadWrite" //Required
-        //See the parameters section or use Intellisense to see the rest of the possible attributes to set
-      }
-    },
-    {
-      name = "default-vm"
-      os_name = "windows11"
-      size_pattern = "DS4" //Module retrieves the closest vm sized matched
-      //See the parameters section or use Intellisense to see the rest of the possible attributes to set
-    }
-  ]
-}
-
-//Output
-output "vm_specific_config_result" {
-  value = module.vm_specific_config.summary_object
-}
-
-//Sample (Notice how the size of the vm became 'Standard_DS4_v2' and we only wrote 'DS4' in the 'size_patteren')
-/*
-"windows_objects" = [
-    {
-      "admin_username" = "localadmin"
-      "name" = "default-vm"
-      "network_summary" = {
-        "private_ip_address" = "192.168.0.4"
-        "public_ip_address" = "13.94.244.99"
-      }
-      "os" = "windows11"
-      "os_sku" = "win11-23h2-pron"
-      "size" = {
-        "cpu_cores" = 8
-        "memory_gb" = 28
-        "name" = "Standard_DS4_v2" 
-      }
-    },
-]
-/*
-```
-How it looks in Azure:
-
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/5th-vm-black.png" />
-
-[Back to the Examples](#examples)
-### (5) Avoid using PowerShell 7 entirely when deploying with the module
-```hcl
-module "avoid_using_powershell" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=main"
-
-  rg_name = "avoid-using-powershell-rg"
-
-  create_public_ip = true
-  create_nsg = true
-
-  //We can define any attribute, but because we have statically defined the 'source_image_reference' PowerShell will NOT be executed by the module
-  vm_linux_objects = [
-    {
-      name = "custom-sku-ubuntu"
-      os_name = "ubuntu"
-
-      //used the PS module 'Get-AzVMSku' to retrieve the below information, only parsing 'Get-AzVmsku -Location westeurope -OperatingSystem ubuntu -NewestSKUsVersions'
-      source_image_reference = {
-        offer = "UbuntuServer"
-        publisher = "Canonical"
-        sku = "14.04.5-DAILY-LTS"
-        version = "14.04.201911070"
-      }
-    }
-  ]
-}
-
-output "avoid_using_powershell" {
-  value = module.avoid_using_powershell.summary_object
-}
-
-//Sample output
-/*
-"linux_objects" = [
-    {
-      "admin_username" = "localadmin"
-      "name" = "custom-sku-ubuntu"
-      "network_summary" = {
-        "private_ip_address" = "192.168.0.4"
-        "public_ip_address" = "13.81.201.156"
-      }
-      "os" = "ubuntu"
-      "os_sku" = "14.04.5-DAILY-LTS"
-      "size" = {
-        "cpu_cores" = null
-        "memory_gb" = null
-        "name" = "Standard_B2ms"
-      }
-    },
-  ]
-/*
-```
-How it looks in Azure:
-
-<img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-vm-bundle/pictures/6th-vm-black.png" />
+  //More pattern values:
+  // "Fabric", "Logic", "Batch", "PostgreSQL" And so many more - The entire list can be found in the local variable called "subnet_list_of_delegations" of the source code, link below
+  ```
+<a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf" target="_blank">source code of the module</a>
 
 [Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
