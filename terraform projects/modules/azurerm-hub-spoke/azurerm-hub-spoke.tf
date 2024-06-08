@@ -259,7 +259,7 @@ data "azurerm_client_config" "context_object"{
 
 resource "azurerm_resource_group" "rg_object" {
   for_each = local.rg_objects
-  name = each.value.solution_name == null ? each.key : replace(each.key, "spoke", "${each.value.solution_name}-spoke")
+  name = length(regexall(each.key, "hub-")) > 0 ? replace(each.key, "hub-", "-hub-") : length(regexall(each.key, "spoke-")) > 0 ? replace(each.key, "spoke-", "-spoke-") : each.key
   location = each.value.location
 }
 
