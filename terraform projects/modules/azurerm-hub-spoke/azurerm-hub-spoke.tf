@@ -156,15 +156,25 @@ locals {
     }
   }] : each.name => each} : {}
 
-  pip_objects_pre = [for a, b in range(local.pip_count) : {
-      name = a == 1 && !can(local.tp_object.hub_object.network.vpn.pip_name) ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 1 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 1 ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && !can(local.tp_object.hub_object.network.vpn.pip_name) && local.pip_count < 2 ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 0 && local.tp_object.hub_object.network.vpn.pip_name == null && local.pip_count < 2 ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && !can(local.tp_object.hub_object.network.firewall.pip_name) ? replace(local.gateway_base_name, "gw", "fw-pip") : a == 0 && local.tp_object.hub_object.network.firewall.pip_name != null ? local.tp_object.hub_object.network.firewall.pip_name : replace(local.gateway_base_name, "gw", "fw-pip")
+  pip_objects_pre = local.pip_count == 2 ? [for a, b in range(local.pip_count) : {
+      name = a == 1 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 1 && local.tp_object.hub_object.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.tp_object.hub_object.network.firewall.pip_name == null ? replace(local.gateway_base_name, "gw", "fw-pip") : local.tp_object.hub_object.network.firewall.pip_name
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
       ddos_protection_mode = null
       sku = "Standard"
       sku_tier = "Regional"
       allocation_method = "Static"
     }
-  ]
+  ] : []
+
+  pip_objects_pre_2 = local.pip_count < 2 ? [for a, b in range(local.pip_count) : {
+      name = [for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name != null ? [for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name : local.tp_object.hub_object.network.vpn != null ? replace(local.gateway_base_name, "gw", "gw-pip") : replace(local.gateway_base_name, "gw", "fw-pip")
+      vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
+      ddos_protection_mode = null
+      sku = "Standard"
+      sku_tier = "Regional"
+      allocation_method = "Static"
+    }
+  ] : []
 
   fw_object = !can(local.tp_object.hub_object.network.firewall) ? {} : local.tp_object.hub_object.network.firewall != null ? {for each in [for a, b in range(1) : {
     name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw")
@@ -212,7 +222,7 @@ locals {
   subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name => each}
   peering_objects = {for each in flatten([local.peering_objects_from_hub_to_spokes, local.peering_objects_from_spokes_to_hub]) : each.name => each }
   route_table_objects = {for each in local.route_table_objects_pre : each.name => each}
-  pip_objects = {for each in local.pip_objects_pre : each.name => each}
+  pip_objects = {for each in [for a, b in flatten([local.pip_objects_pre, local.pip_objects_pre_2]) : b if b != []] : each.name => each}
 
   ############################################
   ########## VARIABLE RETURN OBJECTS #########
