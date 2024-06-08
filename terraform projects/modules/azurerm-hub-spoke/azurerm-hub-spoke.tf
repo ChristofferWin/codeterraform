@@ -341,7 +341,7 @@ resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
 resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
   for_each = local.rt_return_objects
   route_table_id = each.value.id
-  subnet_id = [for a, b in local.subnet_return_helper_objects : b.id if length(regexall(b.name,"${split("-", each.value.name)[4]}-${split("-", each.value.name)[5]}")) > 0][0]
+  subnet_id = [for a, b in local.subnet_return_helper_objects : b.id if length(regexall(each.value.name, b.name)) > 0][0]
 }
 
 resource "azurerm_public_ip" "pip_object" {
