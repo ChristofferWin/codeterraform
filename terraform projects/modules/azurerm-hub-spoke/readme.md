@@ -402,7 +402,7 @@ module "show_case_object" {
 
         7. delegation = (optional) A list of objects structured as:
             1. name = optional(string) A custom name to add as the display name for the deletation added to the subnet
-            2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-"service_name_pattern") for more details
+            2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
 ### Attributes on the "spoke_objects" level of the "typology_object"
 1. Minimum of 1 spoke must be defined
@@ -445,7 +445,7 @@ See below list of possible return values:
 ### Simple examples - Separated on topics
 1. [Deploy a simple hub and 2 spokes with minimum config](#1-Deploy-a-simple-hub-and-2-spokes-with-minimum-config)
 2. [Simple hub-spoke and ready for Bastion](#2-Simple-hub-spoke-and-ready-for-Bastion)
-3. [Using the subnet delegation filter attribute called "service_name_pattern"](#3-Using-the-subnet-delegation-filter-attribute-called-"service_name_pattern")
+3. [Using the subnet delegation filter attribute called "service_name_pattern"](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern)
 
 
 
@@ -828,7 +828,7 @@ Terraform will perform the following actions:
 ```
 
 [Back to the Examples](#examples)
-### (3) Using the subnet delegation filter attribute called "service_name_pattern"
+### (3) Using the subnet delegation filter attribute called service_name_pattern
 ```hcl
 module "using_subnet_delegation" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
