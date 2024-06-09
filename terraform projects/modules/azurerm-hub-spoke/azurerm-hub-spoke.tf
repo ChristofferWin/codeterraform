@@ -174,7 +174,7 @@ locals {
     name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw")
     sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
     sku_tier = local.tp_object.hub_object.network.firewall.sku_tier != null ? local.tp_object.hub_object.network.firewall.sku_tier : "Standard"
-    threat_intel_mode = local.tp_object.hub_object.network.firewall.threat_intel_mode != null ? local.tp_object.hub_object.network.firewall.threat_intel_mode : "Standard"
+    threat_intel_mode = local.tp_object.hub_object.network.firewall.threat_intel_mode != null ? "Deny" : "Standard"
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
 
     ip_configuration = {
