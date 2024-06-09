@@ -91,7 +91,7 @@ locals {
   }]
 
   peering_objects_from_hub_to_spokes = [for a, b in range(length(local.vnet_objects_pre) -1) : {
-    name = local.tp_object.hub_object.network == null ? "peering-from-hub-to-spoke${a + 1}" : local.tp_object.hub_object.network.vnet_peering_name != null ? "${local.tp_object.hub_object.network.vnet_peering_name}${a}" : "peering-from-hub-to-spoke${a + 1}"
+    name = local.tp_object.hub_object.network == null ? "peering-from-hub-to-spoke${a + 1}" : local.tp_object.hub_object.network.vnet_peering_name != null ? "${local.tp_object.hub_object.network.vnet_peering_name}${a + 1}" : "peering-from-hub-to-spoke${a + 1}"
     vnet_name = [for c, d in local.vnet_objects_pre : d.name if d.is_hub][0]
     remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == local.vnet_objects_pre[a].address_spaces[0]][0]
     allow_virtual_network_access = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access : true
