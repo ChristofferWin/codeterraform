@@ -1077,7 +1077,9 @@ module "advanced_spoke_with_all_components" {
 }
 
 //TF Plan output (Only most interesting objects are shown):
-Plan: 31 to add, 0 to change, 0 to destroy.
+//Notice the "=> (Set by us)" Marks on specific object attributes
+//By default the module will both deploy log analytics, diagnostic settings, and 2 different network rules for the Azure Firewall, see more below
+Plan: 33 to add, 0 to change, 0 to destroy.
 # module.advanced_spoke_with_all_components.azurerm_log_analytics_workspace.fw_log_object["prod-contoso-hub-lab-log-fw"] will be created
   + resource "azurerm_log_analytics_workspace" "fw_log_object" {
       + allow_resource_only_permissions = true
@@ -1095,6 +1097,135 @@ Plan: 31 to add, 0 to change, 0 to destroy.
       + sku                             = (known after apply)
       + workspace_id                    = (known after apply)
     }
+  
+    # module.advanced_spoke_with_all_components.azurerm_monitor_diagnostic_setting.fw_diag_object["fw-logs-to-log-analytics"] will be created
+  + resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
+      + id                             = (known after apply)
+      + log_analytics_destination_type = "Dedicated"
+      + log_analytics_workspace_id     = (known after apply)
+      + name                           = (known after apply)
+      + target_resource_id             = (known after apply)
+
+      + enabled_log {
+          + category_group = "AllLogs"
+        }
+    }
+
+ # module.advanced_spoke_with_all_components.azurerm_firewall.fw_object["prod-contoso-hub-lab-fw"] will be created
+  + resource "azurerm_firewall" "fw_object" {
+      + dns_proxy_enabled   = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westus"
+      + name                = "prod-contoso-hub-lab-fw"
+      + resource_group_name = "prod-contoso-hub-lab-rg"
+      + sku_name            = "AZFW_VNet"
+      + sku_tier            = "Standard"
+      + threat_intel_mode   = "Deny" => (Set by us)
+
+      + ip_configuration {
+          + name                 = "fw-config"
+          + private_ip_address   = (known after apply)
+          + public_ip_address_id = (known after apply)
+          + subnet_id            = (known after apply)
+        }
+    }
+
+# module.advanced_spoke_with_all_components.azurerm_firewall_network_rule_collection.fw_rule_object["Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"] will be created
+  + resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
+      + action              = "Allow"
+      + azure_firewall_name = "prod-contoso-hub-lab-fw"
+      + id                  = (known after apply)
+      + name                = "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
+      + priority            = 200
+      + resource_group_name = "prod-contoso-hub-lab-rg"
+
+      + rule {
+          + destination_addresses = [
+              + "0.0.0.0/0",
+            ]
+          + destination_ports     = [
+              + "53",
+              + "80",
+              + "443",
+            ]
+          + name                  = "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
+          + protocols             = [
+              + "TCP",
+              + "UDP",
+            ]
+          + source_addresses      = [
+              + "10.0.1.0/24",
+              + "10.0.2.0/24",
+            ]
+        }
+    }
+
+  # module.advanced_spoke_with_all_components.azurerm_firewall_network_rule_collection.fw_rule_object["Allow-RDP-SSH-FROM-VPN-TO-SPOKES"] will be created
+  + resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
+      + action              = "Allow"
+      + azure_firewall_name = "prod-contoso-hub-lab-fw"
+      + id                  = (known after apply)
+      + name                = "Allow-RDP-SSH-FROM-VPN-TO-SPOKES"
+      + priority            = 100
+      + resource_group_name = "prod-contoso-hub-lab-rg"
+
+      + rule {
+          + destination_addresses = [
+              + "10.0.1.0/24",
+              + "10.0.2.0/24",
+            ]
+          + destination_ports     = [
+              + "22",
+              + "3389",
+            ]
+          + name                  = "Allow-RDP-SSH-FROM-VPN-TO-SPOKES"
+          + protocols             = [
+              + "TCP",
+            ]
+          + source_addresses      = [
+              + "192.168.0.0/24",
+            ]
+        }
+    }
+  + resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
+      + active_active                         = (known after apply)
+      + bgp_route_translation_for_nat_enabled = false
+      + enable_bgp                            = (known after apply)
+      + generation                            = "Generation2"
+      + id                                    = (known after apply)
+      + ip_sec_replay_protection_enabled      = true
+      + location                              = "westus"
+      + name                                  = "prod-contoso-hub-lab-gw"
+      + private_ip_address_enabled            = true
+      + remote_vnet_traffic_enabled           = true
+      + resource_group_name                   = "prod-contoso-hub-lab-rg"
+      + sku                                   = "VpnGw2"
+      + type                                  = "Vpn"
+      + virtual_wan_traffic_enabled           = false
+      + vpn_type                              = "RouteBased"
+
+      + ip_configuration {
+          + name                          = "vnetGatewayConfig"
+          + private_ip_address_allocation = "Dynamic"
+          + public_ip_address_id          = (known after apply)
+          + subnet_id                     = (known after apply)
+        }
+
+      + vpn_client_configuration {
+          + aad_audience         = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
+          + aad_issuer           = "https://sts.windows.net/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
+          + aad_tenant           = "https://login.microsoftonline.com/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
+          + address_space        = [
+              + "192.168.0.0/24", => (Set by us)
+            ]
+          + vpn_auth_types       = [
+              + "AAD",
+            ]
+          + vpn_client_protocols = [
+              + "OpenVPN",
+            ]
+        }
+    }  
 ```
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
