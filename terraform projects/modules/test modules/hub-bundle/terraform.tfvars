@@ -148,8 +148,7 @@ deployment_5_advanced_with_all_custom_values = {
   }
     network = {
       vnet_name = "hub-custom-vnet"
-      vnet_cidr_notation = "/26"
-      address_spaces = ["172.16.0.0"]
+      address_spaces = ["172.16.0.0/22"]
       dns_servers = ["1.1.1.1", "8.8.4.4"]
       vnet_peering_name = "custom-peering"
       vnet_peering_allow_virtual_network_access = false
@@ -181,6 +180,12 @@ deployment_5_advanced_with_all_custom_values = {
         {
           name = "subnet2-customhub"
           address_prefix = ["172.16.0.32/27"]
+        },
+        {
+          name = "AzureFirewallSubnet"
+        },
+        {
+          name = "GatewaySubnet"
         }
       ]
     }
