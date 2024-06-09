@@ -174,7 +174,7 @@ locals {
     name = replace(local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw"), "--", "-")
     sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
     sku_tier = local.tp_object.hub_object.network.firewall.sku_tier != null ? local.tp_object.hub_object.network.firewall.sku_tier : "Standard"
-    threat_intel_mode = local.tp_object.hub_object.network.firewall.threat_intel_mode != null ? "Deny" : "Standard"
+    threat_intel_mode = local.tp_object.hub_object.network.firewall.threat_intel_mode != null ? "Deny" : "Alert"
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
 
     ip_configuration = {
@@ -201,7 +201,7 @@ locals {
     category_group = "AllLogs" #Static
   }] : each.name => each} : {}
 
-  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(2) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
+  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(1) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
       name = a == 0 ? "Allow-RDP-SSH-FROM-VPN-TO-SPOKES" : "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
       priority = a == 0 ? 100 : 200
       action = "Allow"
