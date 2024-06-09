@@ -17,25 +17,33 @@ run "test_1_simple_deployment_apply" {
 }
 
 run "test_2_simple_deployment_with_vpn_apply" {
-  command = apply
+  command = plan
 
   plan_options {
     target = [module.deployment_2_simple_with_vpn]
   }
 }
-/*
+
 run "test_3_simple_deployment_with_firewall_apply" {
-  command = apply
+  command = plan
 
   plan_options {
     target = [module.deployment_3_simple_with_firewall]
   }
 }
-*/
+
 run "test_4_advanced_deployment_with_all_custom_values" {
-  command = apply
+  command = plan
 
   plan_options {
     target = [module.deployment_4_advanced_with_all_custom_values]
+  }
+}
+
+run "test_5_advanced_deployment_with_all_custom_values" {
+  command = plan
+
+  plan_options {
+    target = [module.deployment_5_advanced_with_all_custom_values]
   }
 }

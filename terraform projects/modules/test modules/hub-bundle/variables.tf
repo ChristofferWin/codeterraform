@@ -10,7 +10,7 @@ variable "deployment_3_simple_with_firewall" {
   type = any
 }
 
-variable "deployment_4_advanced_with_all_top_level_custom_values" {
+variable "deployment_4_mixed_settings" {
   type = any
 }
 
