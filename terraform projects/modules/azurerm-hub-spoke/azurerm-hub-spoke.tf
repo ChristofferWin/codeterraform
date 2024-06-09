@@ -202,13 +202,13 @@ locals {
   }] : each.name => each} : {}
 
   fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(1) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
-      name = a == 0 ? "Allow-RDP-SSH-FROM-VPN-TO-SPOKES" : "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
+      name = a == 0 ?  "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET" : "Allow-RDP-SSH-FROM-VPN-TO-SPOKES"
       priority = a == 0 ? 100 : 200
       action = "Allow"
-      source_addresses = a == 0 ? local.gw_return_helper_object[0].vpn_client_configuration[0].address_space : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
-      destination_ports = a == 0 ? ["22", "3389"] : ["53", "80", "443"]
+      source_addresses = a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : local.gw_return_helper_object[0].vpn_client_configuration[0].address_space
+      destination_ports = a == 0 ? ["53", "80", "443"] : ["22", "3389"]
       destination_addresses = a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : ["0.0.0.0/0"]
-      protocols = a == 0 ? ["TCP"] : ["TCP", "UDP"]
+      protocols = a == 0 ? ["TCP", "UDP"] : ["TCP"]
       vnet_name = [for c, d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
   }] : each.name => each} : {}
   
