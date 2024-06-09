@@ -60,7 +60,7 @@ locals {
   }] : each.name => each}
 
   vnet_objects_pre = [for a, b in range(local.rg_count) : {
-    name = a == local.rg_count -1 && local.tp_object.hub_object.network == null ? local.vnet_base_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name != null ? local.tp_object.hub_object.network.vnet_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name == null ? local.vnet_base_name : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network == null ? replace(local.vnet_base_name, "hub", "spoke${a + 1}") : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network.vnet_name != null ? local.tp_object.spoke_objects[a].network.vnet_name : replace(local.vnet_base_name, "hub", "spoke${a + 1}")
+    name = replace(a == local.rg_count -1 && local.tp_object.hub_object.network == null ? local.vnet_base_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name != null ? local.tp_object.hub_object.network.vnet_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name == null ? local.vnet_base_name : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network == null ? replace(local.vnet_base_name, "hub", "spoke${a + 1}") : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network.vnet_name != null ? local.tp_object.spoke_objects[a].network.vnet_name : replace(local.vnet_base_name, "hub", "spoke${a + 1}"), "--", "-")
     is_hub = a == local.rg_count - 1 ? true : false
     spoke_number = a != local.rg_count -1 ? a : null
     address_spaces = a == local.rg_count -1 && !can(local.tp_object.hub_object.network.address_spaces[0]) ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a == local.rg_count -1 && local.tp_object.hub_object.network.address_spaces != null ? local.tp_object.hub_object.network.address_spaces : a == local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.address_spaces[0]) ? [local.tp_object.spoke_objects[a].network.address_spaces[0]] : a != local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - local.vnet_cidr_notation_number_difference, a + 1)] : null
@@ -72,12 +72,12 @@ locals {
   }]
 
   wan_object = !can(local.tp_object.hub_object.network.wan) ? {} : local.tp_object.hub_object.network.wan != null ? {for each in [for a , b in [local.tp_object.hub_object.network.wan] : {
-    name = b.name != null ? b.name : replace(local.vnet_base_name, "vnet", "wan")
+    name = replace(b.name != null ? b.name : replace(local.vnet_base_name, "vnet", "wan"), "--", "-")
   }] : each.name => each} : {}
 
   subnet_objects_pre = [for a, b in local.vnet_objects_pre : {
     subnets = can(flatten(b.*.subnets)) ? [for c, d in ([for e, f in flatten(b.*.subnets) : f if f != null]) : {
-      name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}") 
+      name = replace(!can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}"), "--", "-")
       solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
       vnet_name = b.name
       address_prefix = can(d.address_prefix[0]) ? d.address_prefix : d.use_first_subnet != null && d.use_last_subnet == null && a == local.rg_count -1 ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)] : d.use_first_subnet == null && d.use_last_subnet != null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(split("/", b.address_spaces[0])[1]))), 2) -1 -c)] : [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)]
@@ -129,7 +129,7 @@ locals {
   ####################################################
   
   gw_object = local.tp_object.hub_object.network == null ? {} : local.tp_object.hub_object.network.vpn != null || local.tp_object.hub_object.network.vpn == {} ? {for each in [{
-    name = local.tp_object.hub_object.network.vpn.gw_name == null ? local.gateway_base_name : local.tp_object.hub_object.network.vpn.gw_name
+    name = replace(local.tp_object.hub_object.network.vpn.gw_name == null ? local.gateway_base_name : local.tp_object.hub_object.network.vpn.gw_name, "--", "-")
     vnet_name = [for a,b in local.vnet_objects_pre : b.name if a == local.rg_count -1][0]
     sku = local.tp_object.hub_object.network.vpn.gw_sku == null ? local.vpn_gateway_sku : local.tp_object.hub_object.network.vpn.gw_sku
     type = "Vpn"
@@ -151,7 +151,7 @@ locals {
   }] : each.name => each} : {}
 
   pip_objects_pre = local.pip_count == 2 ? [for a, b in range(local.pip_count) : {
-      name = a == 1 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 1 && local.tp_object.hub_object.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.tp_object.hub_object.network.firewall.pip_name == null ? replace(local.gateway_base_name, "gw", "fw-pip") : local.tp_object.hub_object.network.firewall.pip_name
+      name = replace(a == 1 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 1 && local.tp_object.hub_object.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.tp_object.hub_object.network.firewall.pip_name == null ? replace(local.gateway_base_name, "gw", "fw-pip") : local.tp_object.hub_object.network.firewall.pip_name, "--", "-")
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
       ddos_protection_mode = null
       sku = "Standard"
@@ -161,7 +161,7 @@ locals {
   ] : []
 
   pip_objects_pre_2 = local.pip_count < 2 ? [for a, b in range(local.pip_count) : {
-      name = [for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name != null ? [for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name : local.tp_object.hub_object.network.vpn != null ? replace(local.gateway_base_name, "gw", "gw-pip") : replace(local.gateway_base_name, "gw", "fw-pip")
+      name = replace([for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name != null ? [for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name : local.tp_object.hub_object.network.vpn != null ? replace(local.gateway_base_name, "gw", "gw-pip") : replace(local.gateway_base_name, "gw", "fw-pip"), "--", "-")
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
       ddos_protection_mode = null
       sku = "Standard"
@@ -171,7 +171,7 @@ locals {
   ] : []
 
   fw_object = !can(local.tp_object.hub_object.network.firewall) ? {} : local.tp_object.hub_object.network.firewall != null ? {for each in [for a, b in range(1) : {
-    name = local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw")
+    name = replace(local.tp_object.hub_object.network.firewall.name != null ? local.tp_object.hub_object.network.firewall.name : replace(local.gateway_base_name, "gw", "fw"), "--", "-")
     sku_name = local.wan_object == {} ? "AZFW_VNet" : "AZFW_Hub"
     sku_tier = local.tp_object.hub_object.network.firewall.sku_tier != null ? local.tp_object.hub_object.network.firewall.sku_tier : "Standard"
     threat_intel_mode = local.tp_object.hub_object.network.firewall.threat_intel_mode != null ? "Deny" : "Standard"
@@ -190,7 +190,7 @@ locals {
   }] : each.name => each} : {}
 
   fw_log_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ?  {for each in [for c, d in range(1) : {
-    name = local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw")
+    name = replace(local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw"), "--", "-")
     daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
   }] : each.name => each} : {}
 
