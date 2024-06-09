@@ -251,7 +251,7 @@ data "azurerm_client_config" "context_object"{
   ############ RESOURCE DEFINITIONS ##########
   ############################################
 
-resource "azurerm_resource_group" "rg_object" {
+resource "azurerm_resource_group" "rg_object" { 
   for_each = local.rg_objects
   name = each.value.solution_name == null ? each.key : replace(each.key, "spoke", "${each.value.solution_name}-spoke")
   location = each.value.location
