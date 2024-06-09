@@ -1231,100 +1231,649 @@ Plan: 33 to add, 0 to change, 0 to destroy.
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 ### (2) Use of default settings combined with specialized vm configurations on multiple vms
 ```hcl
-module "custom_combined_with_default" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-vm-bundle?ref=1.3.0"
+module "advanced_spoke_with_all_components2" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  //In this example we will use more custom names instead of naming injection
+  //Custom peering settings - WARNING - This might stop traffic from flowing to and from the hub vnet
+  //Adding tags - Tags append - Since we both defined them in the hub_object root and inside "network" Both tags will be added to the vnet
+  //We define custom FW settings such that the module will NOT deploy log analytics, diagnostic settings or FW network rules
+  //Because we define custom peering names, these will ONLY effect the peerings inside the hub - It will also use the same name twice and simply add +1 at the end of the name
 
-  rg_id = module.custom_advanced_settings.rg_object.id
+  typology_object = {
+    hub_object = {
+      rg_name = "custom-rg-hub"
+      location = "northeurope"
 
-  env_name = "prd" //prod, pd, and so on will indicate prod
-  create_nsg = true
-  create_public_ip = true //Will create a default public ip for each vm that does not have a specific public ip configuration set
-  create_diagnostic_settings = true //Will create a default storage account that will be used by any vm with NO specific configuration set
-  create_kv_for_vms = true //Will deploy keyvault + role assignment + secrets
-  
-  vm_linux_objects = [
-    {
-      name = "advanced-linux-redhat"
-      os_name = "redhat"
-      computer_name = "redhat"
-      secure_boot_enabled = true
+      tags = {
+        "custom" = "tag"
+      }
+        network = {
+          vnet_name = "hub-custom-vnet"
+          address_spaces = ["172.16.0.0/22"]
+          dns_servers = ["1.1.1.1", "8.8.4.4"]
+          vnet_peering_name = "custom-peering"
+          vnet_peering_allow_virtual_network_access = false //Only effects the peerings from the HUB to SPOKES
+          vnet_peering_allow_forwarded_traffic = false //Only effects the peerings from the HUB to SPOKES
 
-      os_disk = {
-        name = "advanced-os-disk-redhat"
-        caching = "ReadWrite"
-        disk_size_gb = 512
-        security_encryption_type = "asdasd"
-        write_accelerator_enabled = true
-        storage_account_type = "LRS"
+          tags = {
+            "custom2" = "tag"
+          }
+
+          vpn = {
+            gw_name = "advanced-gw"
+            address_space = ["192.168.0.0/24"]
+            pip_name = "advanced-pip"
+          }
+
+          firewall = {
+            name = "custom-fw"
+            threat_intel_mode = true
+            pip_name = "fw-custom-pip"
+            no_logs = true //Will make the module NOT make log analytics workspace + diag settings for FW
+            no_rules = true //Will make the module NOT make the 2 default FW rules as shown in advanced example 1
+          }
+
+          subnet_objects = [
+            {
+              name = "subnet1-customhub"
+              address_prefix = ["172.16.0.0/27"]
+            },
+            {
+              name = "subnet2-customhub"
+              address_prefix = ["172.16.0.32/27"]
+            }
+          ]
+        }
       }
 
-      admin_ssh_key = [
+      spoke_objects = [
         {
-          public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDjm7vUE6KhuZN3yWT+JirtSI62YsNyywvf6//IjTVQq/SLLfybSDerV9LsyHG7VaqAGqLGLfjwGDdGaSB++Tm9qfWne5oh0cS2wscHoCzzt1/3pBd8C1cq9GmWnVo5rAdHnRp/XUvVFortwR0DnIOvVnMJxK1mpnnHwLdqWmyb7msZhizc6T+ipzN2V7oYY01gbndsn0+ZYkBSWz22eEZoMRDUdgiE+ZeMnCRZLSMxIDSK+6cxaE7L+MFJU45KMPcvdD3ZM/WKiZl2knNbdJbuytOESyWgDxfnDMVO9YztH3sHRlIf1a/COfc7sKgQH0vXFf9GU0Uzf24pW9D9OdlJ"
-          username = "redhat"
-        }
-      ]
+          rg_name = "spoke1-custom-rg"
+          location = "eastus"
+          
+          tags = {
+            "custom2" = "tag"
+          }
 
-      boot_diagnostics = {
-        storage_account = {
-          name = "customstorage121das"
-          access_tier = "Hot"
-          public_network_access_enabled = false
-          account_replication_type = "LRS"
+          network = {
+            subnet_objects = [
+              {
+                name = "subnet-custom1-spoke1"
+                use_last_subnet = true
+              },
+              {
+                name = "subnet-custom2-spoke1"
+                use_last_subnet = true
+              },
+              {
+                name = "AzureFirewallSubnet"
+              },
+              {
+                name = "GatewaySubnet"
+              }
+            ]
+          }
+        },
+        {
+          rg_name = "spoke2-custom-rg"
+          location = "westus"
+          
+          tags = {
+            "custom1" = "tag"
+          }
 
-          network_rules = {
-            //By simply adding the block, the module will create a rule allowing the vm subnet to access the storage account
+          network = {
+            subnet_objects = [
+              {
+                name = "subnet-custom1-spoke2"
+                use_first_subnet = true
+              },
+              {
+                name = "subnet-custom2-spoke2"
+                use_first_subnet = true
+              }
+            ]
           }
         }
-      }
+      ]
+    }
+}
 
-      nic = {
-        name = "advanced-vm-nic" //Name must contain 'vm'
-        enable_ip_forwarding = true
+//TF Plan output (ALL resources are shown, to showcase that NO log space, diag settings and fw rules will be deployed):
+Plan: 34 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
 
-        ip_configuration = {
-          name = "advanced-config"
-          private_ip_address_version = "IPv4"
-          private_ip_address = "10.0.0.5"
-          private_ip_address_allocation = "Static"
+  # module.advanced_spoke_with_all_components2.azurerm_firewall.fw_object["custom-fw"] will be created
+  + resource "azurerm_firewall" "fw_object" {
+      + dns_proxy_enabled   = (known after apply)
+      + id                  = (known after apply)
+      + location            = "northeurope"
+      + name                = "custom-fw"
+      + resource_group_name = "custom-rg-hub"
+      + sku_name            = "AZFW_VNet"
+      + sku_tier            = "Standard"
+      + threat_intel_mode   = "Deny"
+
+      + ip_configuration {
+          + name                 = "fw-config"
+          + private_ip_address   = (known after apply)
+          + public_ip_address_id = (known after apply)
+          + subnet_id            = (known after apply)
         }
-      }
-
-      public_ip = {
-        name = "advanced-vm-pip"
-        sku = "Standard"
-        allocation_method = "static"
-      }
-
-      termination_notification = {
-        enabled = true
-        timeout = "PT10M"
-      }
-    },
-    {
-      name = "custom-sku-ubuntu"
-      os_name = "ubuntu"
-
-      source_image_reference = {
-        offer = "UbuntuServer"
-        publisher = "Canonical"
-        sku = "16.04.0-LTS"
-        version = "16.04.202109280"
-      }
     }
-  ]
 
-  vm_windows_objects = [
-    {
-      name = "Server2016-vm01"
-      os_name = "SERVER2016"
+  # module.advanced_spoke_with_all_components2.azurerm_public_ip.pip_object["advanced-pip"] will be created
+  + resource "azurerm_public_ip" "pip_object" {
+      + allocation_method       = "Static"
+      + ddos_protection_mode    = "VirtualNetworkInherited"
+      + fqdn                    = (known after apply)
+      + id                      = (known after apply)
+      + idle_timeout_in_minutes = 4
+      + ip_address              = (known after apply)
+      + ip_version              = "IPv4"
+      + location                = "northeurope"
+      + name                    = "advanced-pip"
+      + resource_group_name     = "custom-rg-hub"
+      + sku                     = "Standard"
+      + sku_tier                = "Regional"
     }
-  ]
-}
 
+  # module.advanced_spoke_with_all_components2.azurerm_public_ip.pip_object["fw-custom-pip"] will be created
+  + resource "azurerm_public_ip" "pip_object" {
+      + allocation_method       = "Static"
+      + ddos_protection_mode    = "VirtualNetworkInherited"
+      + fqdn                    = (known after apply)
+      + id                      = (known after apply)
+      + idle_timeout_in_minutes = 4
+      + ip_address              = (known after apply)
+      + ip_version              = "IPv4"
+      + location                = "northeurope"
+      + name                    = "fw-custom-pip"
+      + resource_group_name     = "custom-rg-hub"
+      + sku                     = "Standard"
+      + sku_tier                = "Regional"
+    }
 
-output "custom_combined_with_default" {
-  value = module.custom_combined_with_default
-}
+  # module.advanced_spoke_with_all_components2.azurerm_resource_group.rg_object["custom-rg-hub"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "northeurope"
+      + name     = "custom-rg-hub"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_resource_group.rg_object["spoke1-custom-rg"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "eastus"
+      + name     = "spoke1-custom-rg"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_resource_group.rg_object["spoke2-custom-rg"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westus"
+      + name     = "spoke2-custom-rg"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-AzureFirewallSubnet-to-hub"] will be created
+  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
+      + disable_bgp_route_propagation = false
+      + id                            = (known after apply)
+      + location                      = "eastus"
+      + name                          = "rt-to-hub-from-AzureFirewallSubnet-to-hub"
+      + resource_group_name           = "spoke1-custom-rg"
+      + route                         = [
+          + {
+              + address_prefix         = "0.0.0.0/0"
+              + name                   = "all-internet-traffic-from-AzureFirewallSubnet-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+          + {
+              + address_prefix         = "10.0.1.128/26"
+              + name                   = "all-traffic-from-AzureFirewallSubnet-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+        ]
+      + subnets                       = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-GatewaySubnet-to-hub"] will be created
+  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
+      + disable_bgp_route_propagation = false
+      + id                            = (known after apply)
+      + location                      = "eastus"
+      + name                          = "rt-to-hub-from-GatewaySubnet-to-hub"
+      + resource_group_name           = "spoke1-custom-rg"
+      + route                         = [
+          + {
+              + address_prefix         = "0.0.0.0/0"
+              + name                   = "all-internet-traffic-from-GatewaySubnet-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+          + {
+              + address_prefix         = "10.0.1.192/26"
+              + name                   = "all-traffic-from-GatewaySubnet-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+        ]
+      + subnets                       = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom1-spoke1-to-hub"] will be created
+  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
+      + disable_bgp_route_propagation = false
+      + id                            = (known after apply)
+      + location                      = "eastus"
+      + name                          = "rt-to-hub-from-subnet-custom1-spoke1-to-hub"
+      + resource_group_name           = "spoke1-custom-rg"
+      + route                         = [
+          + {
+              + address_prefix         = "0.0.0.0/0"
+              + name                   = "all-internet-traffic-from-subnet-custom1-spoke1-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+          + {
+              + address_prefix         = "10.0.1.192/26"
+              + name                   = "all-traffic-from-subnet-custom1-spoke1-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+        ]
+      + subnets                       = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom1-spoke2-to-hub"] will be created
+  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
+      + disable_bgp_route_propagation = false
+      + id                            = (known after apply)
+      + location                      = "westus"
+      + name                          = "rt-to-hub-from-subnet-custom1-spoke2-to-hub"
+      + resource_group_name           = "spoke2-custom-rg"
+      + route                         = [
+          + {
+              + address_prefix         = "0.0.0.0/0"
+              + name                   = "all-internet-traffic-from-subnet-custom1-spoke2-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+          + {
+              + address_prefix         = "10.0.2.0/26"
+              + name                   = "all-traffic-from-subnet-custom1-spoke2-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+        ]
+      + subnets                       = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom2-spoke1-to-hub"] will be created
+  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
+      + disable_bgp_route_propagation = false
+      + id                            = (known after apply)
+      + location                      = "eastus"
+      + name                          = "rt-to-hub-from-subnet-custom2-spoke1-to-hub"
+      + resource_group_name           = "spoke1-custom-rg"
+      + route                         = [
+          + {
+              + address_prefix         = "0.0.0.0/0"
+              + name                   = "all-internet-traffic-from-subnet-custom2-spoke1-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+          + {
+              + address_prefix         = "10.0.1.128/26"
+              + name                   = "all-traffic-from-subnet-custom2-spoke1-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+        ]
+      + subnets                       = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom2-spoke2-to-hub"] will be created
+  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
+      + disable_bgp_route_propagation = false
+      + id                            = (known after apply)
+      + location                      = "westus"
+      + name                          = "rt-to-hub-from-subnet-custom2-spoke2-to-hub"
+      + resource_group_name           = "spoke2-custom-rg"
+      + route                         = [
+          + {
+              + address_prefix         = "0.0.0.0/0"
+              + name                   = "all-internet-traffic-from-subnet-custom2-spoke2-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+          + {
+              + address_prefix         = "10.0.2.64/26"
+              + name                   = "all-traffic-from-subnet-custom2-spoke2-to-hub-first"
+              + next_hop_in_ip_address = (known after apply)
+              + next_hop_type          = "VirtualAppliance"
+            },
+        ]
+      + subnets                       = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["AzureFirewallSubnet"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.128/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "AzureFirewallSubnet"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "spoke1-custom-rg"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["GatewaySubnet"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.192/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "GatewaySubnet"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "spoke1-custom-rg"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom1-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.192/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet-custom1-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "spoke1-custom-rg"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom1-spoke2"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.2.0/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet-custom1-spoke2"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "spoke2-custom-rg"
+      + virtual_network_name                           = "vnet-spoke2"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom2-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.128/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet-custom2-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "spoke1-custom-rg"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom2-spoke2"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.2.64/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet-custom2-spoke2"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "spoke2-custom-rg"
+      + virtual_network_name                           = "vnet-spoke2"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet1-customhub"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "172.16.0.0/27",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet1-customhub"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "custom-rg-hub"
+      + virtual_network_name                           = "hub-custom-vnet"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet2-customhub"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "172.16.0.32/27",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet2-customhub"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "custom-rg-hub"
+      + virtual_network_name                           = "hub-custom-vnet"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-AzureFirewallSubnet-to-hub"] will be created   
+  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-GatewaySubnet-to-hub"] will be created
+  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom1-spoke1-to-hub"] will be created 
+  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom1-spoke2-to-hub"] will be created 
+  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom2-spoke1-to-hub"] will be created 
+  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom2-spoke2-to-hub"] will be created 
+  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network.vnet_object["hub-custom-vnet"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "172.16.0.0/22",
+        ]
+      + dns_servers         = [
+          + "1.1.1.1",
+          + "8.8.4.4",
+        ]
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "northeurope"
+      + name                = "hub-custom-vnet"
+      + resource_group_name = "custom-rg-hub"
+      + subnet              = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.1.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "eastus"
+      + name                = "vnet-spoke1"
+      + resource_group_name = "spoke1-custom-rg"
+      + subnet              = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network.vnet_object["vnet-spoke2"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.2.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westus"
+      + name                = "vnet-spoke2"
+      + resource_group_name = "spoke2-custom-rg"
+      + subnet              = (known after apply)
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_gateway.gw_vpn_object["advanced-gw"] will be created
+  + resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
+      + active_active                         = (known after apply)
+      + bgp_route_translation_for_nat_enabled = false
+      + enable_bgp                            = (known after apply)
+      + generation                            = "Generation2"
+      + id                                    = (known after apply)
+      + ip_sec_replay_protection_enabled      = true
+      + location                              = "northeurope"
+      + name                                  = "advanced-gw"
+      + private_ip_address_enabled            = true
+      + remote_vnet_traffic_enabled           = true
+      + resource_group_name                   = "custom-rg-hub"
+      + sku                                   = "VpnGw2"
+      + type                                  = "Vpn"
+      + virtual_wan_traffic_enabled           = false
+      + vpn_type                              = "RouteBased"
+
+      + ip_configuration {
+          + name                          = "vnetGatewayConfig"
+          + private_ip_address_allocation = "Dynamic"
+          + public_ip_address_id          = (known after apply)
+          + subnet_id                     = (known after apply)
+        }
+
+      + vpn_client_configuration {
+          + aad_audience         = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
+          + aad_issuer           = "https://sts.windows.net/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
+          + aad_tenant           = "https://login.microsoftonline.com/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
+          + address_space        = [
+              + "192.168.0.0/24",
+            ]
+          + vpn_auth_types       = [
+              + "AAD",
+            ]
+          + vpn_client_protocols = [
+              + "OpenVPN",
+            ]
+        }
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["custom-peering1"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = false
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = false
+      + id                           = (known after apply)
+      + name                         = "custom-peering1"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "custom-rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "hub-custom-vnet"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["custom-peering2"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = false
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = false
+      + id                           = (known after apply)
+      + name                         = "custom-peering2"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "custom-rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "hub-custom-vnet"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke1-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "spoke1-custom-rg"
+      + use_remote_gateways          = true
+      + virtual_network_name         = "vnet-spoke1"
+    }
+
+  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["peering-from-spoke2-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke2-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "spoke2-custom-rg"
+      + use_remote_gateways          = true
+      + virtual_network_name         = "vnet-spoke2"
+    }
+```
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
