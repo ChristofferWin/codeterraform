@@ -51,16 +51,15 @@ variable "typology_object" {
           name = optional(string)
           use_first_subnet = optional(bool)
           use_last_subnet = optional(bool)
-          cidr_notation = optional(string)
           address_prefix = optional(list(string))
           service_endpoints = optional(set(string))
           service_endpoint_policy_ids = optional(set(string))
 
-      delegation = optional(list(object({
-        name = optional(string)
-        service_name_pattern = optional(string)
-      })))
-    })))
+          delegation = optional(list(object({
+            name = optional(string)
+            service_name_pattern = optional(string)
+          })))
+        })))
 
         ddos_protection_plan = optional(object({
           name = optional(string)
@@ -94,7 +93,6 @@ variable "typology_object" {
           name = optional(string)
           use_first_subnet = optional(bool)
           use_last_subnet = optional(bool)
-          cidr_notation = optional(string)
           address_prefix = optional(list(string))
           service_endpoints = optional(set(string))
           service_endpoint_policy_ids = optional(set(string))
