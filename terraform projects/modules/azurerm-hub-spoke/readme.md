@@ -16,7 +16,7 @@ Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make
 
 OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
 
-Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the for the actual code.
+Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the [Examples](#examples) for the actual code.
 
 <b>Example 1: Deployment of a simple hub-spoke</b>
 </br>
@@ -866,8 +866,8 @@ module "using_subnet_delegation" {
   }
 }
 
+//TF Plan output:
 Plan: 7 to add, 0 to change, 0 to destroy.
-Terraform will perform the following actions:
 Terraform will perform the following actions:
 
   # module.using_subnet_delegation.azurerm_resource_group.rg_object["rg-hub"] will be created
@@ -1075,6 +1075,26 @@ module "advanced_spoke_with_all_components" {
     ]
   }
 }
+
+//TF Plan output (Only most interesting objects are shown):
+Plan: 31 to add, 0 to change, 0 to destroy.
+# module.advanced_spoke_with_all_components.azurerm_log_analytics_workspace.fw_log_object["prod-contoso-hub-lab-log-fw"] will be created
+  + resource "azurerm_log_analytics_workspace" "fw_log_object" {
+      + allow_resource_only_permissions = true
+      + daily_quota_gb                  = 5 => (Set by us)
+      + id                              = (known after apply)
+      + internet_ingestion_enabled      = true
+      + internet_query_enabled          = true
+      + local_authentication_disabled   = false
+      + location                        = "westus"
+      + name                            = "prod-contoso-hub-lab-log-fw"
+      + primary_shared_key              = (sensitive value)
+      + resource_group_name             = "prod-contoso-hub-lab-rg"
+      + retention_in_days               = (known after apply)
+      + secondary_shared_key            = (sensitive value)
+      + sku                             = (known after apply)
+      + workspace_id                    = (known after apply)
+    }
 ```
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
