@@ -201,7 +201,7 @@ locals {
     category_group = "AllLogs" #Static
   }] : each.name => each} : {}
 
-  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(local.pip_count) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
+  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_rules) ? {} : local.tp_object.hub_object.network.firewall.no_rules == null ? {for each in [for a, b in range(1) : { #Must be by itself so that the rule ONLY relies on the GW finishing deploying and not the FW
       name = a == 0 ? "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET" : "Allow-RDP-SSH-FROM-VPN-TO-SPOKES"
       priority = a == 0 ? 100 : 200
       action = "Allow"
