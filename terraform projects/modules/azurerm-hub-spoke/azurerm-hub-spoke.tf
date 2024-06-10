@@ -319,7 +319,7 @@ resource "azurerm_virtual_network_peering" "peering_object" {
   allow_gateway_transit = each.value.allow_gateway_transit
   use_remote_gateways = each.value.use_remote_gateways
 
-  depends_on = [ azurerm_virtual_network_gateway.gw_vpn_object ]
+  depends_on = [ azurerm_virtual_network_gateway.gw_vpn_object, azurerm_firewall.fw_object ]
 }
 
 resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
