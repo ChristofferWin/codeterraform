@@ -129,7 +129,7 @@ locals {
   ####################################################
   
   gw_object = local.tp_object.hub_object.network == null ? {} : local.tp_object.hub_object.network.vpn != null || local.tp_object.hub_object.network.vpn == {} ? {for each in [{
-    name = replace(local.tp_object.hub_object.network.vpn.gw_name == null ? local.gateway_base_name : local.tp_object.hub_object.network.vpn.gw_name, "/(--)|(^-)|(-$)/", "-")
+    name = replace(local.tp_object.hub_object.network.vpn.gw_name == null ? local.gateway_base_name : local.tp_object.hub_object.network.vpn.gw_name, "/(--)|(^-)|(-$)/", "")
     vnet_name = [for a,b in local.vnet_objects_pre : b.name if a == local.rg_count -1][0]
     sku = local.tp_object.hub_object.network.vpn.gw_sku == null ? local.vpn_gateway_sku : local.tp_object.hub_object.network.vpn.gw_sku
     type = "Vpn"
