@@ -108,7 +108,7 @@ locals {
     allow_virtual_network_access = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = false
-    use_remote_gateways = !can(local.tp_object.hub_object.network.firewall) ? false : local.tp_object.hub_object.network.firewall != null ? true : false
+    use_remote_gateways = local.tp_object.hub_object.network.firewall != null ? true : false
     solution_name = null
   }]
   
