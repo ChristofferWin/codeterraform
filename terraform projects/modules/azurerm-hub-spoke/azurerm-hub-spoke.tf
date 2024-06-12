@@ -20,6 +20,11 @@ terraform {
 ##                                                                                            ##
 ## -------------------------------------------------------------------------------------------##
 
+provider "azurerm" {
+  features {
+  }
+}
+
 locals {
 
   ############################################
@@ -37,10 +42,10 @@ locals {
   create_vpn = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vpn != null ? true : false
   rg_count = 1 + length(local.tp_object.spoke_objects)
   env_name = local.tp_object.env_name != null ? local.tp_object.env_name : ""
-  customer_name = local.tp_object.customer_name != null ? local.tp_object.customer_name : ""
+  project_name = local.tp_object.project_name != null ? local.tp_object.project_name : ""
   name_fix_pre = local.tp_object.name_prefix != null ? true : false
   name_fix = local.name_fix_pre ? local.name_fix_pre : local.tp_object.name_suffix != null ? false : false
-  base_name = local.name_fix == null ? null : local.name_fix && local.tp_object.env_name != null ? "${local.tp_object.name_prefix}-${local.customer_name}-open-${local.env_name}" : local.name_fix == false && local.tp_object.env_name != null ? "${local.env_name}-${local.customer_name}-open-${local.tp_object.name_suffix}" : local.name_fix && local.tp_object.env_name == null ? "${local.tp_object.name_prefix}-${local.customer_name}-open" : local.name_fix == false && local.tp_object.env_name == null && local.tp_object.name_suffix != null ? "${local.customer_name}-open-${local.tp_object.name_suffix}" : null
+  base_name = local.name_fix == null ? null : local.name_fix && local.tp_object.env_name != null ? "${local.tp_object.name_prefix}-${local.project_name}-open-${local.env_name}" : local.name_fix == false && local.tp_object.env_name != null ? "${local.env_name}-${local.project_name}-open-${local.tp_object.name_suffix}" : local.name_fix && local.tp_object.env_name == null ? "${local.tp_object.name_prefix}-${local.project_name}-open" : local.name_fix == false && local.tp_object.env_name == null && local.tp_object.name_suffix != null ? "${local.project_name}-open-${local.tp_object.name_suffix}" : null
   rg_name = local.name_fix ? "rg-${replace(local.base_name, "-open", "-hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "-hub")}-rg" : "rg-hub"
   vnet_base_name = local.name_fix ? "vnet-${replace(local.base_name, "-open", "-hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "-hub")}-vnet" : "vnet-hub"
   gateway_base_name = local.name_fix ? "gw-${replace(local.base_name, "-open", "-hub")}" : local.base_name != null ? "${replace(local.base_name, "-open", "-hub")}-gw" : "gw-hub-p2s"
@@ -60,7 +65,7 @@ locals {
   }] : each.name => each}
 
   vnet_objects_pre = [for a, b in range(local.rg_count) : {
-    name = replace(a == local.rg_count -1 && local.tp_object.hub_object.network == null ? local.vnet_base_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name != null ? local.tp_object.hub_object.network.vnet_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name == null ? local.vnet_base_name : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network == null ? replace(local.vnet_base_name, "hub", "spoke${a + 1}") : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network.vnet_name != null ? local.tp_object.spoke_objects[a].network.vnet_name : replace(local.vnet_base_name, "hub", "spoke${a + 1}"), "/(--|^-|-$)/", "")
+    name = a == local.rg_count -1 && local.tp_object.hub_object.network == null ? local.vnet_base_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name != null ? local.tp_object.hub_object.network.vnet_name : a == local.rg_count -1 && local.tp_object.hub_object.network.vnet_name == null ? local.vnet_base_name : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network == null ? replace(local.vnet_base_name, "hub", "spoke${a + 1}") : a != local.rg_count - 1 && local.tp_object.spoke_objects[a].network.vnet_name != null ? local.tp_object.spoke_objects[a].network.vnet_name : replace(local.vnet_base_name, "hub", "spoke${a + 1}")
     is_hub = a == local.rg_count - 1 ? true : false
     spoke_number = a != local.rg_count -1 ? a : null
     address_spaces = a == local.rg_count -1 && !can(local.tp_object.hub_object.network.address_spaces[0]) ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a == local.rg_count -1 && local.tp_object.hub_object.network.address_spaces != null ? local.tp_object.hub_object.network.address_spaces : a == local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.address_spaces[0]) ? [local.tp_object.spoke_objects[a].network.address_spaces[0]] : a != local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - local.vnet_cidr_notation_number_difference, a + 1)] : null
@@ -253,13 +258,13 @@ data "azurerm_client_config" "context_object"{
 
 resource "azurerm_resource_group" "rg_object" { 
   for_each = local.rg_objects
-  name = each.value.solution_name == null ? each.key : replace(each.key, "spoke", "${each.value.solution_name}-spoke")
+  name = each.key
   location = each.value.location
 }
 
 resource "azurerm_virtual_network" "vnet_object" {
   for_each = local.vnet_objects
-  name = each.value.solution_name == null ? each.key : replace(each.key, "spoke", "${each.value.solution_name}-spoke")
+  name = each.key
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.key][0]
   resource_group_name = each.value.solution_name == null ? [for a in local.rg_objects : a.name if a.vnet_name == each.key][0] : replace(replace(each.key, "spoke", "${each.value.solution_name}-spoke"), "vnet", "rg")
   address_space = each.value.address_spaces
@@ -439,3 +444,20 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
 
   depends_on = [ azurerm_firewall.fw_object ]
 }
+
+output "base_name" {
+  value = local.base_name
+}
+
+output "rg_base_name" {
+  value = local.rg_name
+}
+
+output "vnet_name" {
+  value = local.vnet_base_name
+}
+
+output "gateway_base_name" {
+  value = local.gateway_base_name
+}
+
