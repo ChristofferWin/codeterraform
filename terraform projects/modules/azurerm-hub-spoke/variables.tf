@@ -1,7 +1,7 @@
 variable "typology_object" {
   description = "a list of objects describing information about the hub and spoke environments"
   type = object({
-    customer_name = optional(string)
+    project_name = optional(string)
     location = optional(string)
     name_prefix = optional(string)
     name_suffix = optional(string)
@@ -44,6 +44,7 @@ variable "typology_object" {
           log_name = optional(string)
           log_daily_quota_gb = optional(number)
           no_logs = optional(bool)
+          no_internet = optional(bool)
           no_rules = optional(bool)
         }))
 

@@ -28,5 +28,8 @@ output "pip_return_object" {
 }
 
 output "log_return_object" {
-  value = local.log_return_object
+  value = can(local.log_return_helper_object[0]) ? {
+    id = local.log_return_helper_object[0].id
+    workspace_id = local.log_return_helper_object[0].workspace_id
+  } : {}
 }
