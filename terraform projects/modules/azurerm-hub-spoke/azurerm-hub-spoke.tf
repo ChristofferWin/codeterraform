@@ -218,7 +218,7 @@ locals {
       vnet_name = [for c, d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
   }] : each.name => each} : {}
   
-  fw_rule_objects = local.fw_rule_objects_pre == {} ? {} : local.tp_object.hub_object.network.firewall.no_internet != null ? {for each in [values(local.fw_rule_objects_pre)[1]] : each.name => each} : local.fw_rule_objects_pre
+  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_internet) ? {} : local.tp_object.hub_object.network.firewall.no_internet != null ? {for each in [values(local.fw_rule_objects_pre)[1]] : each.name => each} : local.fw_rule_objects_pre
   vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
   subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name => each}
   peering_objects = {for each in flatten([local.peering_objects_from_hub_to_spokes, local.peering_objects_from_spokes_to_hub]) : each.name => each }
