@@ -118,7 +118,7 @@ locals {
   }]
   
   route_table_objects_pre = (local.wan_object == {} && !can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
-    name = "rt-from-spoke${a + 1}-to-hub"
+    name = "rt-from-${b.name}-to-hub"
     vnet_name = b.vnet_name
     subnet_name = b.name
 
