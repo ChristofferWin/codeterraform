@@ -123,7 +123,7 @@ locals {
     subnet_name = b.name
 
     route = [for a in range(2) : { 
-      name = a == 0 ? "all-internet-traffic-from-spoke${a + 1}-to-hub-first" : "all-traffic-from-spoke${a + 1}-to-hub-first"
+      name = a == 0 ? "all-internet-traffic-from-subnet-to-hub-first" : "all-internal-traffic-from-subnet-to-hub-first"
       address_prefix = a == 0 ? "0.0.0.0/0" : b.address_prefix[0]
       next_hop_type = "VirtualAppliance"
       next_hop_in_ip_address = local.fw_return_helper_object[0].ip_configuration[0].private_ip_address
