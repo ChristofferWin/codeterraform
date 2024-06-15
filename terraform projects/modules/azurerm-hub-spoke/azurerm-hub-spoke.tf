@@ -211,7 +211,7 @@ locals {
       name = a == 0 ? "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET" : "Allow-RDP-SSH-FROM-MGMT-TO-SPOKES"
       priority = a == 0 ? 100 : 200
       action = "Allow"
-      source_addresses = a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : can([for c, d in local.subnet_objects_pre : d.address_prefix if length(regexall("", d.name)) > 0][0]) ? [for c, d in local.subnet_objects_pre : d.address_prefix if length(regexall("mgmt|management", lower(d.name))) > 0][0] : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name == [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
+      source_addresses = a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : [for c, d in local.subnet_objects_pre : [for c, d in local.subnet_objects_pre : d.address_prefix if length(regexall("mgmt|management", lower(d.name))) > 0]][0]
       destination_ports = a == 0 ? ["53", "80", "443"] : ["22", "3389"]
       destination_addresses = a == 0 ? ["0.0.0.0/0"] : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
       protocols = a == 0 ? ["TCP", "UDP"] : ["TCP"]
