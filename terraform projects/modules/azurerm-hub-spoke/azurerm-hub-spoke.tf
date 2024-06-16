@@ -197,7 +197,6 @@ locals {
 
   fw_diag_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
     name = "fw-logs-to-log-analytics" #Static
-    unique_name = "fw-logs-to-log-analytics-${split("-",uuid())[0]}"
     log_analytics_destination_type = "Dedicated" #Static
     category_group = "AllLogs" #Static
   }] : each.name => each} : {}
@@ -431,7 +430,7 @@ resource "azurerm_log_analytics_workspace" "fw_log_object" {
 
 resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   for_each = local.fw_diag_object
-  name = each.value.unique_name
+  name = each.key
   log_analytics_destination_type = each.value.log_analytics_destination_type
   log_analytics_workspace_id = local.log_return_helper_object[0].id
   target_resource_id = local.fw_return_helper_object[0].id
