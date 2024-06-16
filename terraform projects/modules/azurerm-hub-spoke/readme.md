@@ -1252,7 +1252,8 @@ module "advanced_spoke_with_all_components2" {
         network = {
           vnet_name = "hub-custom-vnet"
           address_spaces = ["172.16.0.0/22"]
-          dns_servers = ["1.1.1.1", "8.8.4.4"]
+          #Since we wont allow the spoke vms to use the internet, we must create some private dns service
+          #After the private DNS service is created, we can then ADD private DNS server addresses for the hub vnet by simply using the attribute "dns_servers"
           vnet_peering_name = "custom-peering"
           vnet_peering_allow_virtual_network_access = false //Only effects the peerings from the HUB to SPOKES
           vnet_peering_allow_forwarded_traffic = false //Only effects the peerings from the HUB to SPOKES
