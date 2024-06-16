@@ -1915,8 +1915,8 @@ module "control_subnet_used_for_fw_rule_rdp_ssh" {
         subnet_objects = [
              {
                name = "use-this-subnet-mgmt" #Because we have the segment "mgmt" In the subnet name, THIS SPECIFIC subnet will be used as the source address for the firewall rule to allow rdp and ssh to spoke vms
-               address_prefix = ["192.168.0.0/26"] #Because we did NOT define an "address_spaces" For this spoke, the vnet address space will by default be /24 and the 3rd octect will be the spoke number
-               #SO in this case, the overall vnet address space is [10.0.1.0/24] So if we want to use a custom "address_prefix" We MUST be within this address space
+               address_prefix = ["192.168.0.0/26"] #Because we did NOT define an "address_spaces"
+               #SO in this case, the overall vnet address space is ["192.168.0.0/22"] So if we want to use a custom "address_prefix" We MUST be within this address space
              },
              {
                name = "AzureFirewallSubnet" #Since we deploy the firewall, we must define the firewall subnet
@@ -1968,7 +1968,7 @@ module "control_subnet_used_for_fw_rule_rdp_ssh" {
   }
 }
 
-//TF plan output
+//TF plan output (Only most interesting objects are shown)
 
 ```
-
+[Back to the Examples](#advanced-examples---seperated-on-topics)
