@@ -1906,7 +1906,7 @@ module "control_subnet_used_for_fw_rule_rdp_ssh" {
         
         firewall = {
           #Simply using naming injection for the firewall's name
-          no_internet = true #Stops the module from deploying the firwall rule that allows https / http / dns'
+          no_internet = true #Stops the module from deploying the firwall rule that allows https / http / dns to the internet'
         }
 
         subnet_objects = [
