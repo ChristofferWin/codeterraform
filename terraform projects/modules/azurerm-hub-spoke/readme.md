@@ -980,8 +980,8 @@ Terraform will perform the following actions:
 [Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
 1. [Hub-spoke with both firewall and vpn](#1-Hub-spoke-with-both-firewall-and-vpn)
-2. [Use of default settings combined with specialized vm configurations on multiple vms](#2)
-3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-use-a-specific-subnet-as-the-only-subnet-to-allow-rdp-and-ssh-to-spoke-vms)
+2. [Custom settings for peerings between the hub and the spokes](#2-custom-settings-for-peerings-between-the-hub-and-the-spokes)
+3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-use-a-specific-subnet-as-the-only-subnet-to-use-rdp-and-ssh-to-spoke-vms)
 
 ### (1) Hub-spoke with both firewall and vpn
 ```hcl
@@ -1231,7 +1231,10 @@ Plan: 33 to add, 0 to change, 0 to destroy.
 ```
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
-### (2) Use of default settings combined with specialized vm configurations on multiple vms
+### (2) Custom settings for peerings between the hub and the spokes
+Its possible to further secure which what is allowed on the peering FROM the hub and TO the spokes
+Only change such setting if your sure of the effect - It might stop connectivity from working
+
 ```hcl
 module "advanced_spoke_with_all_components2" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
