@@ -981,7 +981,7 @@ Terraform will perform the following actions:
 ### Advanced examples - Seperated on topics
 1. [Hub-spoke with both firewall and vpn](#1-Hub-spoke-with-both-firewall-and-vpn)
 2. [Custom settings for peerings between the hub and the spokes](#2-custom-settings-for-peerings-between-the-hub-and-the-spokes)
-3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-use-a-specific-subnet-as-the-only-subnet-to-use-rdp-and-ssh-to-spoke-vms)
+3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-Use-a-specific-subnet-as-the-only-allowed-subnet-to-use-rdp-and-ssh-to-spoke-vms)
 
 ### (1) Hub-spoke with both firewall and vpn
 ```hcl
