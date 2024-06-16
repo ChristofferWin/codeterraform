@@ -4,8 +4,7 @@
 
 | Table of Contents | GIF |
 | --- | --- |
-| ## Table of Contents
-
+|
 1. [Description](#description)
 2. [Prerequisites](#prerequisites)
 3. [Getting Started](#getting-started)
