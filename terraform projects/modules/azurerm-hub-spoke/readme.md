@@ -1,25 +1,23 @@
 # Azure Hub-Spoke Terraform module
 
 ## Table of Contents
+  <tr>
+    <td style="vertical-align: top;">
+      ## Table of Contents
 
-<div style="display: flex; align-items: flex-start;">
-  <div style="flex: 1;">
-    
-    ## Table of Contents
-
-    1. [Description](#description)
-    2. [Prerequisites](#prerequisites)
-    3. [Getting Started](#getting-started)
-    4. [Versions](#versions)
-    5. [Parameters](#parameters)
-    6. [Return Values](#return-values)
-    7. [Examples](#examples)
-
-  </div>
-  <div style="flex: 1; padding-left: 20px;">
-    <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/Gifs/Terraform%20Core%20Cheat%20sheet.gif" alt="Descriptive alt text" style="max-width: 100%; height: auto;" />
-  </div>
-</div>
+      1. [Description](#description)
+      2. [Prerequisites](#prerequisites)
+      3. [Getting Started](#getting-started)
+      4. [Versions](#versions)
+      5. [Parameters](#parameters)
+      6. [Return Values](#return-values)
+      7. [Examples](#examples)
+    </td>
+    <td style="vertical-align: top;">
+      <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/Gifs/Terraform%20Core%20Cheat%20sheet.gif" alt="Descriptive alt text" width="300"/>
+    </td>
+  </tr>
+</table>
 
 ## Description
 
