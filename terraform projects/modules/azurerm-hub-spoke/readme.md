@@ -373,7 +373,7 @@ module "show_case_object" {
 
         2. sku_tier = (optional) A string defining the SKU tier of the Azure Firewall resource. Defaults to "Standard"
 
-        3. threat_intel_mode = (optional) A bool defining whether the mode of the automatic detection shall be set to "Deny" Mode. Defaults to "Alert"
+        3. threat_intel_mode = (optional) A bool defining whether the mode of the automatic detection shall be set to "Deny" Mode.
 
         4. pip_name = (optional) A string defining the custom name of the Azure Public IP to be used on the Firewall (Overwrites any naming injection defined in the top level object)
 
