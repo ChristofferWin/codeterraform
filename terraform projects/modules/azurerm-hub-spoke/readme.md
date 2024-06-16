@@ -2,13 +2,39 @@
 
 ## Table of Contents
 
-1. [Description](#description)
-2. [Prerequisites](#prerequisites)
-3. [Getting Started](#getting-started)
-4. [Versions](#versions)
-5. [Parameters](#parameters)
-6. [Return Values](#return-values)
-7. [Examples](#examples)
+<style>
+.container {
+    display: flex;
+}
+.left {
+    flex: 1;
+    padding: 10px;
+}
+.right {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+
+<div class="container">
+    <div class="left">
+        ## Table of Contents
+
+        1. [Description](#description)
+        2. [Prerequisites](#prerequisites)
+        3. [Getting Started](#getting-started)
+        4. [Versions](#versions)
+        5. [Parameters](#parameters)
+        6. [Return Values](#return-values)
+        7. [Examples](#examples)
+    </div>
+    <div class="right">
+        <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/Gifs/Terraform%20Core%20Cheat%20sheet.gif" alt="Descriptive alt text" style="height: auto; max-height: 100%;">
+    </div>
+</div>
 
 ## Description
 
