@@ -25,7 +25,7 @@ Just below here, two different visual examples of types of hub-spokes can be see
 </br>
 </br>
 </br>
-<b>Example 2: Deployment of an advanced hub-spoke. As of version 1.0.0 the entire typology MUST be created within the same subscription</b>
+<b>Example 2: Deployment of an advanced hub-spoke (As of version 1.0.0 the entire typology MUST be created within the same subscription)</b>
 </br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/DrawIO/Simple-hub-spoke-Complex%20Hub-Spoke.drawio.png"/>
