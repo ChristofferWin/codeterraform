@@ -35,8 +35,7 @@ Just below here, two different visual examples of types of hub-spokes can be see
 
 Before using this module, make sure you have the following:
 - Active Azure Subscription
-  - Must either have RBAC roles:
-    - Contributor
+  - Must be able to WRITE to the subscription
 - Installed terraform (download [here](https://www.terraform.io/downloads.html))
 - Azure CLI installed for authentication (download [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli))
 
@@ -288,7 +287,7 @@ module "show_case_object" {
           //Specific attributes related to configuring a Point-2-Site VPN. See below the code snippet for details.
         }
 
-        firewall = { //The object "vpn" is an OBJECT - Object path is then <typology_object.hub_object.network.firewall>
+        firewall = { //The object "firewall" is an OBJECT - Object path is then <typology_object.hub_object.network.firewall>
           //Specific attributes related to configuring an Azure Firewall. See below the code snippet for details.
         }
 
@@ -320,7 +319,7 @@ module "show_case_object" {
 ```
 
 ### Attributes on the "top" Level of the "typology_object"
-1. customer_name = (optional) A string defining the name of the customer. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
+1. project_name = (optional) A string defining the name of the project / landing zone. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
 
 2. location = (optional) A string defining the location of ALL resources deployed (overwrites ANY lower set location)
 
@@ -328,7 +327,7 @@ module "show_case_object" {
 
 4. name_suffix = (optional) A string to inject a suffix into all resource names - This variable also makes names follow a naming standard: <Identifier, either "hub" or "spoke">\-\<name_suffix>\-\<resource abbreviation>
 
-5. env_name = (optional) A string defining an environment name to inject into all resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "customer_name" To be provided as well
+5. env_name = (optional) A string defining an environment name to inject into all resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "project_name" To be provided as well
 
 6. dns_servers = (optional) A list of strings defining DNS server IP  to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
 
@@ -981,7 +980,8 @@ Terraform will perform the following actions:
 [Back to the Examples](#examples)
 ### Advanced examples - Seperated on topics
 1. [Hub-spoke with both firewall and vpn](#1-Hub-spoke-with-both-firewall-and-vpn)
-2. [Use of default settings combined with specialized vm configurations on multiple vms](#2-use-of-default-settings-combined-with-specialized-vm-configurations-on-multiple-vms)
+2. [Use of default settings combined with specialized vm configurations on multiple vms](#2)
+3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-use-a-specific-subnet-as-the-only-subnet-to-allow-rdp-and-ssh-to-spoke-vms)
 
 ### (1) Hub-spoke with both firewall and vpn
 ```hcl
@@ -996,8 +996,8 @@ module "advanced_spoke_with_all_components" {
   //We want to deploy 2 spokes, each with 2 subnets, where we will use a mix of first possible CIDR block and last possible
   typology_object = {
     name_suffix = "lab"
-    customer_name = "contoso"
-    env_name = "prod" //Because the customer name is defined, we must also define an env_name
+    project_name = "contoso"
+    env_name = "prod" //Because the project name is defined, we must also define an env_name
     location = "westus" //Forcing the location of ALL resources to be set location
     address_spaces = ["172.16.0.0/20"] //Custom CIDR block to replace the default within the module of ["10.0.0.0/16"]
     dns_servers = ["8.8.8.8", "8.8.4.4"] //Forcing DNS to be google for ALL vnets
@@ -1877,5 +1877,93 @@ Terraform will perform the following actions:
       + virtual_network_name         = "vnet-spoke2"
     }
 ```
-
 [Back to the Examples](#advanced-examples---seperated-on-topics)
+
+### (3) Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms
+Imagine a scenario where you want a typology setup with many different custom CIDR subnetting and naming settings
+We want to have an Azure Firewall with no allowed internet access and we want to control the specific subnet of which is used as the source address for the firewall rule to allow rdp / ssh to spoke vms
+
+Take the below example code snippet and please pay close attention to the comments
+
+```hcl
+module "control_subnet_used_for_fw_rule_rdp_ssh" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  
+  typology_object = {
+    name_suffix = "contoso"
+    project_name = "security"
+    location = "westus"
+    subnets_cidr_notation = "/27" #Forcing ALL subnets who has not been assigned a specific prefix
+    dns_servers = ["1.1.1.1", "8.8.8.8"] #Forcing ALL vnets to use these DNS servers
+
+    hub_object = {
+      
+      network = {
+        vnet_name = "custom-vnet-name" #Ignoring ALL naming injection from the top level object
+        address_spaces = ["192.168.0.0/22"] #Using a custom address space
+        
+        firewall = {
+          #Simply using naming injection for the firewall's name
+          no_internet = true #Stops the module from deploying the firwall rule that allows https / http / dns'
+        }
+
+        subnet_objects = [
+             {
+               name = "use-this-subnet-mgmt" #Because we have the segment "mgmt" In the subnet name, THIS SPECIFIC subnet will be used as the source address for the firewall rule to allow rdp and ssh to spoke vms
+               address_prefix = ["192.168.0.0/26"] #Because we did NOT define an "address_spaces" For this spoke, the vnet address space will by default be /24 and the 3rd octect will be the spoke number
+               #SO in this case, the overall vnet address space is [10.0.1.0/24] So if we want to use a custom "address_prefix" We MUST be within this address space
+             },
+             {
+               name = "AzureFirewallSubnet" #Since we deploy the firewall, we must define the firewall subnet
+               address_prefix = ["192.168.0.64/26"] #Since we forced all subnets to default CIDR to /27, we must manually create a address prefix of /26, which we do by taking the 2nd possible CIDR of /26 from the vnet address space of ["192.168.0.0/22"]
+             },
+             {
+               name = "custom-subnet2" #Ignoring naming injection
+               use_last_subnet = true #Will then use the LAST CIDR block of /27 available from the address space ["192.168.0.0/22"]
+               #OBS. Because we MANUALLY defined subnet 1 and 2's address prefix's the module cannot know which CIDR blocks from the original of /22 has been taken
+               #Therefor make sure you know whether any subnet address prefixes begin to collide
+               #From the 2 subnets defined above´s example, since we manually take the first possible CIDR blok of the "/22" for subnet1 and the 2nd for subnet2, we can still begin to take subnets from the other end of the CIDR block using the bool "use_last_subnet"
+               #If we instead used the switch "use_first_subnet" For subnet 2's address prefix, the module would make a collision causing the deployment to fail
+             }
+           ]
+      }
+    }
+
+    spoke_objects = [ #We MUST define at least 1 spoke
+      {
+        rg_name = "custom-spoke-rg" #Ignoring naming injection for the spoke rg
+        
+        network = {
+           #We will use the default address space CIDR block of [10.0.0.0/16]
+           vnet_name = "test-vnet-spoke"
+
+           subnet_objects = [
+             {
+               #Using naming injection for the subnet1's name
+               address_prefix = ["10.0.1.0/26"] #Because we did NOT define an "address_spaces" For this spoke, the vnet address space will by default be /24 and the 3rd octect will be the spoke number
+               #SO in this case, the overall vnet address space is [10.0.1.0/24] So if we want to use a custom "address_prefix" We MUST be within this address space
+             },
+             {
+               name = "custom-subnet2" #Ignoring naming injection
+               use_last_subnet = true #Will then use the LAST CIDR block of /27 available from the address space ["10.0.1.0/24"]
+               #OBS. Because we MANUALLY defined subnet 1's address prefix the module cannot know which CIDR blocks from the original of /24 has been taken
+               #Therefor make sure you know whether any subnet address prefixes begin to collide
+               #From the 2 subnets defined above´s example, since we manually take the first possible CIDR blok of the "/24" for subnet1, we can still begin to take subnets from the other end of the CIDR block using the bool "use_last_subnet"
+               #If we instead used the switch "use_first_subnet" For subnet 2's address prefix, the module would make a collision causing the deployment to fail
+             },
+             {
+              #Subnet3 simply using naming injection for the name
+              use_last_subnet = true #Using the 2nd last subnet of CIDR "/27" From the address space ["10.0.1.0/24"]
+              #The module knows that subnet2 already has the ABSOLUT last subnet, therefor this subnet will take the 2nd last
+             }
+           ]
+        }
+      }
+    ]
+  }
+}
+
+//TF plan output
+
+```
+
