@@ -1881,6 +1881,7 @@ Terraform will perform the following actions:
 
 ### (3) Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms
 Imagine a scenario where you want a typology setup with many different custom CIDR subnetting and naming settings
+
 We want to have an Azure Firewall with no allowed internet access and we want to control the specific subnet of which is used as the source address for the firewall rule to allow rdp / ssh to spoke vms
 
 Take the below example code snippet and please pay close attention to the comments
