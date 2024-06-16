@@ -384,6 +384,8 @@ module "show_case_object" {
 
         7. no_logs = (optional) A bool to determine whether the module shall NOT create an Azure Log Analytics workspace and Azure Diagnostic settings for the Azure Firewall. Pr. default both resources will be created IF the Firewall is also created
 
+        8. no_internet = (optional) A bool to determine whether the specific Firewall Rule "ALLOW INTERNET FROM SPOKES" shall NOT be deployed. OBS. Using this bool is overwritten by the Bool "no_rules"
+
         8. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
     
     10. subnet_objects = (optional) A list og objects structured as:
