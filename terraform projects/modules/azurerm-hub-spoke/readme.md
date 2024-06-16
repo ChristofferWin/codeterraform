@@ -1232,7 +1232,7 @@ Plan: 33 to add, 0 to change, 0 to destroy.
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 ### (2) Custom settings for peerings between the hub and the spokes
-Its possible to further secure which what is allowed on the peering FROM the hub and TO the spokes
+Its possible to further secure what is allowed on the peering FROM the hub and TO the spokes
 Only change such setting if your sure of the effect - It might stop connectivity from working
 
 ```hcl
