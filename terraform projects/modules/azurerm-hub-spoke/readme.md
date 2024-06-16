@@ -2,9 +2,6 @@
 
 ## Table of Contents
 
-| Table of Contents | GIF |
-| --- | --- |
-|
 1. [Description](#description)
 2. [Prerequisites](#prerequisites)
 3. [Getting Started](#getting-started)
@@ -12,7 +9,10 @@
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
 7. [Examples](#examples)
- | ![Your GIF]("https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/Gifs/Terraform%20Core%20Cheat%20sheet.gif") |
+
+<div style="float: right; width: 300px;">
+    <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/Gifs/Terraform%20Core%20Cheat%20sheet.gif" alt="Descriptive alt text" style="width: 100%;" />
+</div>
 
 ## Description
 
