@@ -389,7 +389,7 @@ module "show_case_object" {
     
     10. subnet_objects = (optional) A list og objects structured as:
         
-        1. name = (optional) A string defining the custom name of the Azure Subnet (Overwrites any naming injection defined in the top level object). If you include the segnemt: "mgmt" OR "management" the subnet will be used as the ONLY subnet to be allowed access to rdp / ssh for spoke vms via the firewall rule, if no subnet name is custom and includes the segnment, the entire vnet hub address space will be used as the source address for the firewall rule
+        1. name = (optional) A string defining the custom name of the Azure Subnet (Overwrites any naming injection defined in the top level object). If you include the segnemt: "mgmt" OR "management" the subnet will be used as the ONLY subnet to be allowed access to rdp / ssh for spoke vms via the firewall rule, if no subnet name is custom and includes the segnment, the entire vnet hub address space will be used as the source address for the firewall rule (This ONLY has impact if the firewall is also created)
         
         2. use_first_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the START of the CIDR block used in the deployment. See the [Examples](#examples) for more details
 
