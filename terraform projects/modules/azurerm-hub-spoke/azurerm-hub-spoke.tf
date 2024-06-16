@@ -77,8 +77,8 @@ locals {
 
   subnet_objects_pre = [for a, b in local.vnet_objects_pre : {
     subnets = can(flatten(b.*.subnets)) ? [for c, d in ([for e, f in flatten(b.*.subnets) : f if f != null]) : {
-      name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}-${c}-unique") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}")
-      name_unique = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? "${d.name}-${c}-unique" : replace(b.name, "vnet", "subnet${c + 1}-${c}-unique")
+      name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}")
+      name_unique = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}-${c}-unique") : d.name != null ? "${d.name}-${c}-unique" : replace(b.name, "vnet", "subnet${c + 1}-${c}-unique")
       solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
       vnet_name = b.name
       address_prefix = can(d.address_prefix[0]) ? d.address_prefix : d.use_first_subnet != null && d.use_last_subnet == null && a == local.rg_count -1 ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)] : d.use_first_subnet == null && d.use_last_subnet != null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(split("/", b.address_spaces[0])[1]))), 2) -1 -c)] : [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)]
