@@ -78,6 +78,7 @@ locals {
   subnet_objects_pre = [for a, b in local.vnet_objects_pre : {
     subnets = can(flatten(b.*.subnets)) ? [for c, d in ([for e, f in flatten(b.*.subnets) : f if f != null]) : {
       name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}")
+      name_unique = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? "${d.name}-${c}-unique" : replace(b.name, "vnet", "subnet${c + 1}")
       solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
       vnet_name = b.name
       address_prefix = can(d.address_prefix[0]) ? d.address_prefix : d.use_first_subnet != null && d.use_last_subnet == null && a == local.rg_count -1 ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)] : d.use_first_subnet == null && d.use_last_subnet != null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(split("/", b.address_spaces[0])[1]))), 2) -1 -c)] : [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)]
@@ -214,7 +215,7 @@ locals {
   
   fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_internet) ? {} : local.tp_object.hub_object.network.firewall.no_internet != null ? {for each in [values(local.fw_rule_objects_pre)[1]] : each.name => each} : local.fw_rule_objects_pre
   vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
-  subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name => each}
+  subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name_unique => each}
   peering_objects = {for each in flatten([local.peering_objects_from_hub_to_spokes, local.peering_objects_from_spokes_to_hub]) : each.name => each }
   route_table_objects = {for each in local.route_table_objects_pre : each.name => each}
   pip_objects = {for each in [for a, b in flatten([local.pip_objects_pre, local.pip_objects_pre_2]) : b if b != []] : each.name => each}
@@ -288,7 +289,7 @@ resource "azurerm_virtual_wan" "wan_object" {
 
 resource "azurerm_subnet" "subnet_object" {
   for_each = local.subnet_objects
-  name = each.key
+  name = each.value.name
   resource_group_name = each.value.solution_name == null ? [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0] : replace(replace(each.value.vnet_name, "spoke", "${each.value.solution_name}-spoke"), "vnet", "rg")
   virtual_network_name = each.value.vnet_name
   address_prefixes = each.value.address_prefix
