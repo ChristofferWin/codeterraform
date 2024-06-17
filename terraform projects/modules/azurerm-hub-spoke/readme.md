@@ -17,6 +17,10 @@ Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make
 
 OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
 
+OBS. I plan to release multiple blog posts about the use of this module in different scenarios over on <a href="https://codeterraform.com/blog">Codeterraform</a>, so stay tuned!
+
+I really appriciate you - I would really appriciate any criticism / feedback, possible feature improvements and overall good karma :)
+
 Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the [Examples](#examples) for the actual code.
 
 <b>Example 1: Deployment of a simple hub-spoke</b>
