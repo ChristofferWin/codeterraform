@@ -1,6 +1,6 @@
 deployment_1_simple_hub_spoke = {
 
-  name_prefix = "test1"
+  name_suffix = "test1"
   
   hub_object = {
     network = {
@@ -81,6 +81,9 @@ deployment_3_simple_with_firewall = {
       subnet_objects = [
         {
           name = "AzureFirewallSubnet"
+        },
+        {
+          name = "AzureBastionSubnet"
         }
       ]
     }
@@ -99,12 +102,21 @@ deployment_3_simple_with_firewall = {
           }
         ]
       }
+    },
+    {
+      network = {
+        subnet_objects = [
+          {
+
+          }
+        ]
+      }
     }
   ]
 }
 
 deployment_4_mixed_settings = {
-  customer_name = "contoso"
+  project_name = "contoso"
   name_prefix = "test4"
   env_name = "prod"
   dns_servers = ["8.8.8.8", "8.8.4.4"]
@@ -113,12 +125,27 @@ deployment_4_mixed_settings = {
     "environment" = "prod"
   }
 
-  address_spaces = ["172.16.0.0/22"]
   subnets_cidr_notation = "/27"
 
   hub_object = {
     network = {
+      address_spaces = ["172.16.0.0/22"]
+      
+      firewall = {}
 
+      subnet_objects = [
+        {
+          name = "something-MGMT-something"
+        },
+        {
+          name = "something-else-something"
+          address_prefix = ["172.16.1.0/26"]
+        },
+        {
+          name = "AzureFirewallSubnet"
+          address_prefix = ["172.16.1.64/26"]
+        }
+      ]
     }
   }
 
@@ -127,10 +154,10 @@ deployment_4_mixed_settings = {
       network = {
         subnet_objects = [
         {
-
+          address_prefix = ["10.0.1.0/26"]
         },
         {
-          
+          address_prefix = ["10.0.1.64/26"]
         }
       ]
       }

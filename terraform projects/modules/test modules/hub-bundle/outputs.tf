@@ -14,3 +14,6 @@ output "vnets_test_4" {
   value = values(module.deployment_4_advanced_with_all_custom_values.vnet_return_objects)
 }
 
+output "vnets_test_5" {
+  value = values(module.deployment_5_advanced_with_all_custom_values.vnet_return_objects)
+}
