@@ -269,7 +269,7 @@ resource "azurerm_virtual_network" "vnet_object" {
   for_each = local.vnet_objects
   name = each.key
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.key][0]
-  resource_group_name = each.value.solution_name == null ? [for a in local.rg_objects : a.name if a.vnet_name == each.key][0] : replace(replace(each.key, "spoke", "${each.value.solution_name}-spoke"), "vnet", "rg")
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.key][0]
   address_space = each.value.address_spaces
   dns_servers = each.value.dns_servers
   tags = each.value.tags
