@@ -12,7 +12,7 @@
 
 ## Description
 
-Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network topology as easy as 1-2-3. The module is built on a concept of a single input variable called 'Typology_object', which can then contain a huge subset of custom configurations. The module supports name injection, automatic subnetting, Point-to-Site VPN, firewall, routing, and much more! Because it's built for Azure, it uses the architectural design from the Microsoft CAF concepts, which can be read more about at <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke typology</a>
+Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network topology as easy as 1-2-3. The module is built on a concept of a single input variable called 'typology_object', which can then contain a huge subset of custom configurations. The module supports name injection, automatic subnetting, Point-to-Site VPN, firewall, routing, and much more! Because it's built for Azure, it uses the architectural design from the Microsoft CAF concepts, which can be read more about at <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke typology</a>
 
 OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
 
@@ -25,7 +25,7 @@ Just below here, two different visual examples of types of hub-spokes can be see
 </br>
 </br>
 </br>
-<b>Example 2: Deployment of an advanced hub-spoke (As of version 1.0.0 the entire typology MUST be created within the same subscription)</b>
+<b>Example 2: Deployment of an advanced hub-spoke (As of version 1.0.0-hub-spoke the entire typology MUST be created within the same subscription)</b>
 </br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/DrawIO/Simple-hub-spoke-Complex%20Hub-Spoke.drawio.png"/>
@@ -58,7 +58,7 @@ az login //Web browser interactive prompt.
 4. Define the module definition
 ```hcl
 module "simple_hub_spoke" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0" //Always use a specific version of the module
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke" //Always use a specific version of the module
   
   typology_object = {
     name_prefix = "test" #Will add a prefix of "test" On all resources - Can also be set as "name_suffix" Which will rotate names. See the input variables description for more details
@@ -219,7 +219,7 @@ The table below outlines the compatibility of the module:
 
 Please take note of the 'Module version' among the provider utilized by the module. Keep in mind that there WILL be a required minimum version, and this requirement can vary with each module version.
 
-<b>"Module version" 1.0.0 requires the following provider versions:</b>
+<b>"Module version" 1.0.0-hub-spoke requires the following provider versions:</b>
 
 | Provider name | Provider url | Minimum version |
 | -------------- | ------------ | ---------------- |
@@ -273,7 +273,7 @@ Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/mai
 For assisting in understanding the actual structure of the only input variable "typology_object" Please see below code:
 ```hcl
 module "show_case_object" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   typology_object = { //The "root" is an OBJECT
     //Many different overall settings for the entire deployment can be set here. See below the code snippet for details.
 
@@ -986,7 +986,7 @@ Terraform will perform the following actions:
 ### (1) Hub-spoke with both firewall and vpn
 ```hcl
 module "advanced_spoke_with_all_components" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to use name injection on all resources + add a few custom names
   //We want to use top level attributes, to enforce location, a custom CIDR block for ALL vnets to use and more
   //We want to deploy a hub with 3 subnets, 1 for Bastion, 1 for the Firewall and 1 for the VPN
