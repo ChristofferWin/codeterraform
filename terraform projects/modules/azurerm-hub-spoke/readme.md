@@ -1001,18 +1001,21 @@ All objects added is ONLY done so to make the code deployable - The important po
         }
 
         network = {
+          tags = {
+            "hub-vnet-level-tags" = "tag3"
+          }
           #No subnets to create, this is simply to showcase tags - But this code will STILL deploy
         }
       }
 
       spoke_objects = [
         tags = {
-          "spoke1-level-tags" = "tag3" #This tag will apply to ONLY the SPOKE1 RG - This tag will NOT append on VNETS or anything else within the spoke
+          "spoke1-level-tags" = "tag4" #This tag will apply to ONLY the SPOKE1 RG - This tag will NOT append on VNETS or anything else within the spoke
         }
 
         network = {
           tags = {
-            "spoke1-vnet-level-tags" = "tag4" #This tag will apply to ONLY the SPOKE1 VNET
+            "spoke1-vnet-level-tags" = "tag5" #This tag will apply to ONLY the SPOKE1 VNET
           }
 
           subnet_objects = [
