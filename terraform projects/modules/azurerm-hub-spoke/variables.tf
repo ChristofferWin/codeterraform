@@ -33,6 +33,7 @@ variable "typology_object" {
           gw_sku = optional(string)
           pip_name = optional(string)
           pip_ddos_protection_mode = optional(string)
+          tags = optional(map(string))
         }))
 
         firewall = optional(object({
@@ -46,6 +47,7 @@ variable "typology_object" {
           no_logs = optional(bool)
           no_internet = optional(bool)
           no_rules = optional(bool)
+          tags = optional(map(string))
         }))
 
         subnet_objects = optional(list(object({
@@ -74,7 +76,6 @@ variable "typology_object" {
       rg_name = optional(string)
       location = optional(string)
       tags = optional(map(string))
-      solution_name = optional(string)
 
       network = object({
         vnet_name = optional(string)
