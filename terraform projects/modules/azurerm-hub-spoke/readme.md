@@ -460,7 +460,7 @@ See below list of possible return values:
 ### (1) Deploy a simple hub and 2 spokes with minimum config
 ```hcl
 module "hub_and_2_spokes" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to deploy a hub with 0 subnets and default settings
   //We want to deploy 2 spokes, with 2 subnets in each
   typology_object = {
@@ -694,7 +694,7 @@ Please pay close attention to the comments within the code-snippet below
 
 ```hcl
 module "hub_and_1_spoke_custom_subnets" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to deploy a hub with 1 subnet with a custom "name" So that its a valid Bastion subnet
   //We want to deploy 1 spoke, with 1 subnet and a custom "address_prefix" Which will consume the entire default address space provided to the spoke vnet
   typology_object = {
@@ -839,7 +839,7 @@ Terraform will perform the following actions:
 ### (3) Using the subnet delegation filter attribute called service_name_pattern
 ```hcl
 module "using_subnet_delegation" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to deploy a hub with 0 subnets and default settings
   //We want to deploy 1 spoke, with 1 subnet which must be delegated to server farms
   typology_object = {
@@ -1297,7 +1297,7 @@ Only change such setting if your sure of the effect - It might stop connectivity
 
 ```hcl
 module "advanced_spoke_with_all_components2" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //In this example we will use more custom names instead of naming injection
   //Custom peering settings - WARNING - This might stop traffic from flowing to and from the hub vnet
   //Adding tags - Tags append - Since we both defined them in the hub_object root and inside "network" Both tags will be added to the vnet
@@ -1951,7 +1951,7 @@ Take the below example code snippet and please pay close attention to the commen
 
 ```hcl
 module "control_subnet_used_for_fw_rule_rdp_ssh" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   
   typology_object = {
     name_suffix = "contoso"
