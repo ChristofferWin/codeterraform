@@ -367,7 +367,7 @@ module "show_case_object" {
 
         4. pip_name = (optional) A string defining the custom name of the Azure Public IP to be used on the VPN (Overwrites any naming injection defined in the top level object)
 
-        5. tags = (optional) A map of strings defining any tags to set for the VPN - Since tags can be set on many different levels see the How to work with tags example for more details on tags
+        5. tags = (optional) A map of strings defining any tags to set for the VPN - Since tags can be set on many different levels see the [Using tags at different levels of the typology object](#4-using-tags-at-different-levels-of-the-typology-object) example for more details on tags
     
     9. firewall = (optional) An object structured as:
         
@@ -389,7 +389,7 @@ module "show_case_object" {
 
         8. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
 
-        9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the How to work with tags example for more details on tags
+        9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the [Using tags at different levels of the typology object](#4-using-tags-at-different-levels-of-the-typology-object) example for more details on tags
     
     10. subnet_objects = (optional) A list og objects structured as:
         
