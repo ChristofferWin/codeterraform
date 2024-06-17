@@ -9,6 +9,7 @@
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
 7. [Examples](#examples)
+8. [Known errors](#known-errors)
 
 ## Description
 
@@ -1278,8 +1279,8 @@ Plan: 33 to add, 0 to change, 0 to destroy.
 
       + vpn_client_configuration {
           + aad_audience         = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-          + aad_issuer           = "https://sts.windows.net/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
-          + aad_tenant           = "https://login.microsoftonline.com/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
+          + aad_issuer           = "https://sts.windows.net/00000000-0000-0000-0000-000000000000/"
+          + aad_tenant           = "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/"
           + address_space        = [
               + "192.168.0.0/24", => (Set by us)
             ]
@@ -1877,8 +1878,8 @@ Terraform will perform the following actions:
 
       + vpn_client_configuration {
           + aad_audience         = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-          + aad_issuer           = "https://sts.windows.net/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
-          + aad_tenant           = "https://login.microsoftonline.com/b2e2b68f-665c-452e-9d72-986fa4c0f4a0/"
+          + aad_issuer           = "https://sts.windows.net/00000000-0000-0000-0000-000000000000/"
+          + aad_tenant           = "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/"
           + address_space        = [
               + "192.168.0.0/24",
             ]
@@ -2037,3 +2038,111 @@ module "control_subnet_used_for_fw_rule_rdp_ssh" {
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 
 [Back to the top](#table-of-contents)
+
+## Known errors
+This chapter is all about understanding the different errors that you can encount while using the module. Use this chapter as a reference to different "error" Codes and their solution
+
+### (1) Resource names has incorrect names, like missing a seperator, having double seperators and missing segments like project name or env name within names
+
+#### Example of this issue:
+
+ In the below incorrect name, we have ONLY filled out the attributes "env_name" And "name_suffix" - As it states in the [Parameters](#parameters) we need to ALSO define a project_name if the 2 other attributes are also filled out
+ ```hcl
+ name                    = "prodhub-contoso-fw-pip" //Missing "-" Between "prod" And "hub"
+ ```
+
+ In the below incorrect name, we are missing the project_name entirely, because we only defined the attributes "name_suffix" And "project_name" But forgetting the attribute "env_name"
+ ```hcl
+ name                    = "hub-contoso-fw" //Missing the "project_name" From the name
+```
+
+### (2) Module fails while deploying subnets due to overlapping address_prefixes
+This error can occur in 1 of 2 ways:
+1. While creating the list of subnets, either in the hub or any spokes, we mix subnets having address_prefix defined by us, to other subnets in the same vnet using either of the attributes "use_first_subnet" Or "use_last_subnet" To easiliest solve this, lower the complexity of the exact configuration of how each subnet gets a calculated CIDR - E.g say you have the following config but recieve the error about overlapping subnets:
+
+```hcl
+module "overlap_example" {
+   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+   typology_object = {
+     hub_object = {
+        network = {} //Just use all defaults for the hub, not important for the example
+     }
+
+     spoke_objects = [
+       {
+         network = {
+           subnet_objects = [
+              {
+                address_prefix = ["10.0.1.0/27"] //We will use default address block of 10.0.x.0/24 As provided by the module, where x is the spoke number, which is 1 in this case
+              },
+              {
+                use_last_subnet = true //Wont collide
+              },
+              {
+                use_last_subnet = true //Wont collide with anything because the module will take the last possible subnet
+              },
+              {
+                use_last_subnet = true //Will collide with subnet1, for an explanation, see below the error defined
+              }
+
+              //NOW, depending on the number of subnets we create now and how large they are, we can create another collision simply by trying to subnet the original /24 more than it can
+           ]
+         }
+       }
+     ]
+   }
+}
+
+   //The above is rather a complex subnetting setup and it actually creates a specific collision on subnet2, which will look like the following in terraform:
+    │ Error: creating Subnet (Subscription: "00000000-0000-0000-0000-000000000000"
+    │ Resource Group Name: "rg-spoke1"
+    │ Virtual Network Name: "vnet-spoke1"
+    │ Subnet Name: "subnet3-spoke1"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: NetcfgSubnetRangesOverlap: Subnet 'subnet3-spoke1' is not valid because its IP address range overlaps with that of an existing subnet in virtual network 'vnet-spoke1'.
+    │
+    │   with module.overlap_example.azurerm_subnet.subnet_object["subnet3-2-unique-spoke1"],
+    │   on .terraform\modules\overlap_example\terraform projects\modules\azurerm-hub-spoke\azurerm-hub-spoke.tf line 293, in resource "azurerm_subnet" "subnet_object":
+    │  293: resource "azurerm_subnet" "subnet_object" 
+
+  //This issue comes because we use index 0 of the subnets to reserve a custom address prefix and then on index 1 use the attribute "use_last_subnet"
+  //This will cause the module to use have already reserved the first possible last CIDR of /26 to index 0 EVEN though we didnt even use the attribute "use_last_subnet"
+  //The side effect of this, causes the 4th subnet creation to fail, because its overlaps with our first subnet, simply because we lost the last /26 CIDR subnet
+  //To fix this issue, either manually define the 2nd subnet manually with the correct CIDR subnetting to reach the last possible subnet in the /24 block
+  //Then for the last 2 subnets, contintue to use the attribute "use_last_subnet" This way, the module can once again automically handle the subnetting for the last 2 subnets
+
+  //Notice the change in subnet2 to use an manual address prefix now instead to solve the collision
+  //Also - In general I recommend to simply use the attributes "use_last_subnet" And "use_first_subnet" To let the module subnet for you
+
+  module "overlap_example" {
+   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+   typology_object = {
+     hub_object = {
+        network = {} //Just use all defaults for the hub, not important for the example
+     }
+
+     spoke_objects = [
+       {
+         network = {
+           subnet_objects = [
+              {
+                address_prefix = ["10.0.1.0/27"] //We will use default address block of 10.0.x.0/24 As provided by the module, where x is the spoke number, which is 1 in this case
+              },
+              {
+                address_prefix = ["10.0.1.192/26] //Helping the module by manually defining the now FIRST subnet to have the LAST possible CIDR subnet
+              },
+              {
+                use_last_subnet = true //Wont collide with anything because the module will take the last possible subnet
+              },
+              {
+                use_last_subnet = true //Will collide with subnet1, for an explanation, see below the error defined
+              }
+
+              //NOW, depending on the number of subnets we create now and how large they are, we can create another collision simply by trying to subnet the original /24 more than it can
+           ]
+         }
+       }
+     ]
+   }
+}
+```
+[Known errors](#known-errors)
+[To the top](#table-of-contents)
