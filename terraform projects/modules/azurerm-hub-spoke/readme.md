@@ -999,28 +999,29 @@ This example simply showcases all the possible levels of which to set tags in th
 All objects added is ONLY done so to make the code deployable - The important points are the tags themselves - Please notice the exact behaviour within the comments of the code-snippet
 
 ```hcl
-  module "tags_at_all_possible_levels" {
-    source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
+ module "tags_at_all_possible_levels" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
 
-    typology_object = {
+  typology_object = {
+    tags = {
+      "top-level-tags" = "tag1" #This tag will append to ALL RGs, VNETS, Firewall, VPN and Log space
+    }
+
+    hub_object = {
       tags = {
-        "top-level-tags" = "tag1" #This tag will append to ALL RGs, VNETS, Firewall, VPN and Log space
+        "hub-rg-level-tags" = "tag2" #This tag will apply to ONLY the HUB RG - This tag will NOT append on VNETS or anything else within the HUB
       }
 
-      hub_object = {
+      network = {
         tags = {
-          "hub-rg-level-tags" = "tag2" #This tag will apply to ONLY the HUB RG - This tag will NOT append on VNETS or anything else within the HUB
+          "hub-vnet-level-tags" = "tag3"
         }
-
-        network = {
-          tags = {
-            "hub-vnet-level-tags" = "tag3"
-          }
-          #No subnets to create, this is simply to showcase tags - But this code will STILL deploy
-        }
+        #No subnets to create, this is simply to showcase tags - But this code will STILL deploy
       }
+    }
 
-      spoke_objects = [
+    spoke_objects = [
+      {
         tags = {
           "spoke1-level-tags" = "tag4" #This tag will apply to ONLY the SPOKE1 RG - This tag will NOT append on VNETS or anything else within the spoke
         }
@@ -1037,10 +1038,116 @@ All objects added is ONLY done so to make the code deployable - The important po
             }
           ]
         }
-      ]
-    }
+      }
+    ]
   }
+}
 
+//TF Plan output: (Notice how all the resource have BOTH the top level tags AND EITHER the vnet or rg tags depending on the resource type ofc)
+//In other words - If tags are defined under the root of "typology_object" These will be inherited by almost all resource types
+Plan: 7 to add, 0 to change, 0 to destroy.
+Terraform will perform the following actions:
+
+  # module.tags_at_all_possible_levels.azurerm_resource_group.rg_object["rg-hub"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-hub"
+      + tags     = {
+          + "hub-rg-level-tags" = "tag2"
+          + "top-level-tags"    = "tag1"
+        }
+    }
+
+  # module.tags_at_all_possible_levels.azurerm_resource_group.rg_object["rg-spoke1"] will be created
+  + resource "azurerm_resource_group" "rg_object" {
+      + id       = (known after apply)
+      + location = "westeurope"
+      + name     = "rg-spoke1"
+      + tags     = {
+          + "spoke1-level-tags" = "tag4"
+          + "top-level-tags"    = "tag1"
+        }
+    }
+
+  # module.tags_at_all_possible_levels.azurerm_subnet.subnet_object["subnet1-0-unique-spoke1"] will be created
+  + resource "azurerm_subnet" "subnet_object" {
+      + address_prefixes                               = [
+          + "10.0.1.0/26",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "subnet1-spoke1"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-spoke1"
+      + virtual_network_name                           = "vnet-spoke1"
+    }
+
+  # module.tags_at_all_possible_levels.azurerm_virtual_network.vnet_object["vnet-hub"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.0.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-hub"
+      + resource_group_name = "rg-hub"
+      + subnet              = (known after apply)
+      + tags                = {
+          + "hub-vnet-level-tags" = "tag3"
+          + "top-level-tags"      = "tag1"
+        }
+    }
+
+  # module.tags_at_all_possible_levels.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
+  + resource "azurerm_virtual_network" "vnet_object" {
+      + address_space       = [
+          + "10.0.1.0/24",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "westeurope"
+      + name                = "vnet-spoke1"
+      + resource_group_name = "rg-spoke1"
+      + subnet              = (known after apply)
+      + tags                = {
+          + "spoke1-vnet-level-tags" = "tag5"
+          + "top-level-tags"         = "tag1"
+        }
+    }
+
+  # module.tags_at_all_possible_levels.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = true
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-hub-to-spoke1"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-hub"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-hub"
+    }
+
+  # module.tags_at_all_possible_levels.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
+  + resource "azurerm_virtual_network_peering" "peering_object" {
+      + allow_forwarded_traffic      = true
+      + allow_gateway_transit        = false
+      + allow_virtual_network_access = true
+      + id                           = (known after apply)
+      + name                         = "peering-from-spoke1-to-hub"
+      + remote_virtual_network_id    = (known after apply)
+      + resource_group_name          = "rg-spoke1"
+      + use_remote_gateways          = false
+      + virtual_network_name         = "vnet-spoke1"
+    }
 ```
 [Back to the Examples](#examples)
 
@@ -2037,7 +2144,37 @@ module "control_subnet_used_for_fw_rule_rdp_ssh" {
 }
 
 //TF plan output (Only most interesting objects are shown)
+Plan: 23 to add, 0 to change, 0 to destroy.
+//All subnets will use /27 as the attribute "subnet_cidr_notation" Is set in the top level object, but the custom address prefixes will ignore this
 
+ module.control_subnet_used_for_fw_rule_rdp_ssh.azurerm_firewall_network_rule_collection.fw_rule_object["Allow-RDP-SSH-FROM-MGMT-TO-SPOKES"] will be created
+  + resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
+      + action              = "Allow"
+      + azure_firewall_name = "hub-contoso-fw"
+      + id                  = (known after apply)
+      + name                = "Allow-RDP-SSH-FROM-MGMT-TO-SPOKES"
+      + priority            = 200
+      + resource_group_name = "hub-contoso-rg"
+
+      + rule {
+          + destination_addresses = [
+              + "10.0.1.0/24",
+            ]
+          + destination_ports     = [
+              + "22",
+              + "3389",
+            ]
+          + name                  = "Allow-RDP-SSH-FROM-MGMT-TO-SPOKES"
+          + protocols             = [
+              + "TCP",
+            ]
+          + source_addresses      = [
+              + "192.168.0.0/26", => (Set by us) //Only the specific subnet "use-this-subnet-mgmt" Because of the "mgmt" But its NOT case sensetive, and it can also be "management" 
+            ]
+        }
+    }
+
+//The internet rule is NOT created - Because we set the flag "no_internet" Under the "firewall" Object
 ```
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 
