@@ -261,6 +261,7 @@ resource "azurerm_resource_group" "rg_object" {
   for_each = local.rg_objects
   name = each.key
   location = each.value.location
+  tags = each.value.tags
 }
 
 resource "azurerm_virtual_network" "vnet_object" {
@@ -334,6 +335,7 @@ resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
   route = each.value.route
+  tags = each.value.tags
 
   depends_on = [ azurerm_resource_group.rg_object ]
 }
@@ -352,6 +354,7 @@ resource "azurerm_public_ip" "pip_object" {
   sku = each.value.sku
   sku_tier = each.value.sku_tier
   allocation_method = each.value.allocation_method
+  tags = each.value.tags
 
   depends_on = [ azurerm_resource_group.rg_object ]
 }
@@ -366,6 +369,7 @@ resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
   generation = each.value.generation
   private_ip_address_enabled = each.value.private_ip_address_enabled
   remote_vnet_traffic_enabled = each.value.remote_vnet_traffic_enabled
+  tags = each.value.tags
   
   ip_configuration {
     subnet_id = each.value.ip_configuration.subnet_id
@@ -390,6 +394,7 @@ resource "azurerm_firewall" "fw_object" {
   sku_name = each.value.sku_name
   sku_tier = each.value.sku_tier
   threat_intel_mode = each.value.threat_intel_mode
+  tags = each.value.tags 
   
   ip_configuration {
     name = each.value.ip_configuration.name
@@ -428,6 +433,7 @@ resource "azurerm_log_analytics_workspace" "fw_log_object" {
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == [for b, c in local.vnet_objects_pre : c.name if b == local.rg_count -1][0]][0]
   daily_quota_gb = each.value.daily_quota_gb
+  tags = each.value.tags
 
   depends_on = [ azurerm_firewall.fw_object ]
 }
@@ -445,20 +451,3 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
 
   depends_on = [ azurerm_firewall.fw_object ]
 }
-
-output "base_name" {
-  value = local.base_name
-}
-
-output "rg_base_name" {
-  value = local.rg_name
-}
-
-output "vnet_name" {
-  value = local.vnet_base_name
-}
-
-output "gateway_base_name" {
-  value = local.gateway_base_name
-}
-
