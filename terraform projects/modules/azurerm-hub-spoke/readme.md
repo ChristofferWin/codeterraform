@@ -335,6 +335,8 @@ module "show_case_object" {
 
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
 
+Its possible to define VERY little attributes on the top level "typology_object" See the [Simply examples](#examples) For details
+
 ### Attributes on the "hub_object" level of the "typology_object"
 1. rg_name = (optional) A string defining the specific name of the hub resource group resource (Overwrites any name injection defined in the top level attributes)
 
@@ -408,6 +410,8 @@ module "show_case_object" {
         7. delegation = (optional) A list of objects structured as:
             1. name = optional(string) A custom name to add as the display name for the deletation added to the subnet
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
+
+Its possible to define VERY little attributes on the hub / spoke level of the "typology_object" See the [Simply examples](#examples) For details
 
 ### Attributes on the "spoke_objects" level of the "typology_object"
 1. Minimum of 1 spoke must be defined
