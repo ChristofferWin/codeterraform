@@ -54,9 +54,8 @@ locals {
   rg_objects = {for each in [for a, b in range(local.rg_count) : {
     name = replace(replace(replace((a == local.rg_count - 1 && local.tp_object.hub_object.rg_name != null ? local.tp_object.hub_object.rg_name : local.rg_name != null && a == (local.rg_count - 1) ? local.rg_name : local.tp_object.spoke_objects[a].rg_name != null ? local.tp_object.spoke_objects[a].rg_name : replace(local.rg_name, "hub", "spoke${a + 1}")), "^-.+|.+-$", "/"), "/(^-|-$)/", ""), "--", "-")
     location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : !can(local.tp_object.spoke_objects[a].location) ? "westeurope" : local.tp_object.spoke_objects[a].location != null ? local.tp_object.spoke_objects[a].location : "westeurope"
-    solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
-    tags = a == local.rg_count - 1 && local.tp_object.hub_object.tags != null ? local.tp_object.hub_object.tags : a != local.rg_count - 1 ? local.tp_object.spoke_objects[a].tags : null
     vnet_name = local.vnet_objects_pre[a].name
+    tags = a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.tags) : merge(local.tp_object.tags, local.tp_object.spoke_objects[a].tags)
   }] : each.name => each}
 
   vnet_objects_pre = [for a, b in range(local.rg_count) : {
@@ -64,9 +63,8 @@ locals {
     is_hub = a == local.rg_count - 1 ? true : false
     spoke_number = a != local.rg_count -1 ? a : null
     address_spaces = a == local.rg_count -1 && !can(local.tp_object.hub_object.network.address_spaces[0]) ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a == local.rg_count -1 && local.tp_object.hub_object.network.address_spaces != null ? local.tp_object.hub_object.network.address_spaces : a == local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")), 0)] : a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.address_spaces[0]) ? [local.tp_object.spoke_objects[a].network.address_spaces[0]] : a != local.rg_count -1 ? [cidrsubnet(local.vnet_cidr_total[0], 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - local.vnet_cidr_notation_number_difference, a + 1)] : null
-    solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
+    tags = a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)
     dns_servers = local.tp_object.dns_servers != null ? local.tp_object.dns_servers : a == local.rg_count - 1 && can(local.tp_object.hub_object.network.dns_servers[0]) ? local.tp_object.hub_object.network.dns_servers : a != local.rg_count - 1 && can(local.tp_object.spoke_objects[a].network.dns_servers) ? local.tp_object.spoke_objects[a].network.dns_servers : null
-    tags = local.tp_object.tags != null && can(local.tp_object.hub_object.network.tags) && a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : local.tp_object.tags != null && a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.tags) ? merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags) : local.tp_object.tags
     subnets = a == local.rg_count -1 && local.tp_object.hub_object.network == null ? null : a == local.rg_count -1 && can(local.tp_object.hub_object.network.subnet_objects) ? local.tp_object.hub_object.network.subnet_objects : a != local.rg_count -1 && local.tp_object.spoke_objects[a].network == null ? null : a != local.rg_count -1 && can(local.tp_object.spoke_objects[a].network.subnet_objects) ? local.tp_object.spoke_objects[a].network.subnet_objects : []
     ddos_protection_plan = can(local.tp_object.spoke_objects[a].network.ddos_protection_plan) ? local.tp_object.spoke_objects[a].network.ddos_protection_plan : null
   }]
@@ -94,17 +92,18 @@ locals {
   peering_objects_from_hub_to_spokes = [for a, b in range(length(local.vnet_objects_pre) -1) : {
     name = local.tp_object.hub_object.network == null ? "peering-from-hub-to-spoke${a + 1}" : local.tp_object.hub_object.network.vnet_peering_name != null ? "${local.tp_object.hub_object.network.vnet_peering_name}${a + 1}" : "peering-from-hub-to-spoke${a + 1}"
     vnet_name = [for c, d in local.vnet_objects_pre : d.name if d.is_hub][0]
+    tags = a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)
     remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == local.vnet_objects_pre[a].address_spaces[0]][0]
     allow_virtual_network_access = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = true
     use_remote_gateways = false
-    solution_name = null
   }]
 
   peering_objects_from_spokes_to_hub = [for a, b in range(length(local.vnet_objects_pre) -1) : {
     name = local.tp_object.spoke_objects[a].network == null ? "peering-from-spoke${a + 1}-to-hub" : local.tp_object.spoke_objects[a].network.vnet_peering_name != null ? "${local.tp_object.spoke_objects[a].network.vnet_peering_name}${a}" : "peering-from-spoke${a + 1}-to-hub"
     vnet_name = local.vnet_objects_pre[a].name
+    tags = a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)
     remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == ([for e, f in local.vnet_objects_pre : f.address_spaces[0] if f.is_hub])[0]][0]
     allow_virtual_network_access = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic : true
@@ -117,6 +116,7 @@ locals {
     name = "rt-from-${b.name}-to-hub"
     vnet_name = b.vnet_name
     subnet_name = b.name
+    tags = can(merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)) ? merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags) : {}
 
     route = [for a in range(2) : { 
       name = a == 0 ? "all-internet-traffic-from-subnet-to-hub-first" : "all-internal-traffic-from-subnet-to-hub-first"
@@ -134,6 +134,7 @@ locals {
     name = replace(replace(local.tp_object.hub_object.network.vpn.gw_name == null ? local.gateway_base_name : local.tp_object.hub_object.network.vpn.gw_name, "/|(^-)|(-$)/", ""), "--", "-")
     vnet_name = [for a,b in local.vnet_objects_pre : b.name if a == local.rg_count -1][0]
     sku = local.tp_object.hub_object.network.vpn.gw_sku == null ? local.vpn_gateway_sku : local.tp_object.hub_object.network.vpn.gw_sku
+    tags = merge(local.tp_object.tags, local.tp_object.hub_object.network.tags, local.tp_object.hub_object.network.vpn.tags)
     type = "Vpn"
     remote_vnet_traffic_enabled = true
     generation = "Generation2"
@@ -155,6 +156,7 @@ locals {
   pip_objects_pre = local.pip_count == 2 ? [for a, b in range(local.pip_count) : {
       name = replace(a == 1 && local.tp_object.hub_object.network.vpn.pip_name != null ? local.tp_object.hub_object.network.vpn.pip_name : a == 1 && local.tp_object.hub_object.network.vpn.pip_name == null ? replace(local.gateway_base_name, "gw", "gw-pip") : a == 0 && local.tp_object.hub_object.network.firewall.pip_name == null ? replace(local.gateway_base_name, "gw", "fw-pip") : local.tp_object.hub_object.network.firewall.pip_name, "/(--)|(^-)|(-$)/", "")
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
+      tags = merge(local.tp_object.tags, local.tp_object.hub_object.network.tags)
       ddos_protection_mode = null
       sku = "Standard"
       sku_tier = "Regional"
@@ -165,6 +167,7 @@ locals {
   pip_objects_pre_2 = local.pip_count < 2 ? [for a, b in range(local.pip_count) : {
       name = replace([for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name != null ? [for c, d in [local.tp_object.hub_object.network.vpn, local.tp_object.hub_object.network.firewall] : d if d != null][0].pip_name : local.tp_object.hub_object.network.vpn != null ? replace(local.gateway_base_name, "gw", "gw-pip") : replace(local.gateway_base_name, "gw", "fw-pip"), "/(--)|(^-)|(-$)/", "")
       vnet_name = [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]
+      tags = merge(local.tp_object.tags, local.tp_object.hub_object.network.tags)
       ddos_protection_mode = null
       sku = "Standard"
       sku_tier = "Regional"
@@ -178,6 +181,7 @@ locals {
     sku_tier = local.tp_object.hub_object.network.firewall.sku_tier != null ? local.tp_object.hub_object.network.firewall.sku_tier : "Standard"
     threat_intel_mode = local.tp_object.hub_object.network.firewall.threat_intel_mode != null ? "Deny" : "Alert"
     vnet_name = [for c , d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
+    tags = merge(local.tp_object.tags, local.tp_object.hub_object.network.tags, local.tp_object.hub_object.network.firewall.tags)
 
     ip_configuration = {
       name = "fw-config"
@@ -194,6 +198,7 @@ locals {
   fw_log_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ?  {for each in [for c, d in range(1) : {
     name = replace(replace(local.tp_object.hub_object.network.firewall.log_name != null ? local.tp_object.hub_object.network.firewall.log_name : replace(local.gateway_base_name, "gw", "log-fw"), "/(^-)|(-$)/", ""), "--", "-")
     daily_quota_gb = local.tp_object.hub_object.network.firewall.log_daily_quota_gb
+    tags = merge(local.tp_object.tags, local.tp_object.hub_object.network.tags)
   }] : each.name => each} : {}
 
   fw_diag_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
