@@ -41,7 +41,7 @@ Before using this module, make sure you have the following:
 
 [Back to the top](#table-of-contents)
 ## Getting Started
-Remember to have read the chapter <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke-/readme.md#prerequisites">Prerequisites</a> before getting started.
+Remember to have read the chapter [Prerequisites](#prerequisites) before getting started.
 
 1. Create a new terraform script file in any folder
 2. Define terraform boilerplate code
