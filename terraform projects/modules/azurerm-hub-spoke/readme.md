@@ -331,7 +331,7 @@ module "show_case_object" {
 
 6. dns_servers = (optional) A list of strings defining DNS server IP  to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
 
-7. tags = (optional) A map of strings defining any tags to set on ALL vnets and resource groups (Any tags set lower will be appended to these tags set here)
+7. tags = (optional) A map of strings defining any tags to set on ALL vnets and resource groups, VPN and Firewall (Any tags set lower will be appended to these tags set here)
 
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
 
@@ -351,7 +351,7 @@ module "show_case_object" {
 
     4. dns_servers = (optional) A list of strings defining DNS server IP addresses to set for the spoke Azure Virtual Network resource (Will be overwritten in case the attribute is set on the top level object)
 
-    5. tags = (optional) A map og strings defining any tags to set on the spoke resources
+    5. tags = (optional) A map og strings defining any tags to set on the hub vnets - Tags here will append to all other tags
 
     6. vnet_peering_allow_virtual_network_access = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the spoke vnet´s Azure Virtual machine resources can reach the hub
 
@@ -366,6 +366,8 @@ module "show_case_object" {
         3. gw_sku = (optional) (NOT RECOMMENDED TO CHANGE) A string used to define the SKU for the Azure Virtual Gateway resource. Defaults to "VpnGw2"
 
         4. pip_name = (optional) A string defining the custom name of the Azure Public IP to be used on the VPN (Overwrites any naming injection defined in the top level object)
+
+        5. tags = (optional) A map of strings defining any tags to set for the VPN - Since tags can be set on many different levels see the How to work with tags example for more details on tags
     
     9. firewall = (optional) An object structured as:
         
@@ -386,6 +388,8 @@ module "show_case_object" {
         8. no_internet = (optional) A bool to determine whether the specific Firewall Rule "ALLOW INTERNET FROM SPOKES" shall NOT be deployed. OBS. Using this bool is overwritten by the Bool "no_rules"
 
         8. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
+
+        9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the How to work with tags example for more details on tags
     
     10. subnet_objects = (optional) A list og objects structured as:
         
@@ -447,8 +451,7 @@ See below list of possible return values:
 1. [Deploy a simple hub and 2 spokes with minimum config](#1-Deploy-a-simple-hub-and-2-spokes-with-minimum-config)
 2. [Simple hub-spoke and ready for Bastion](#2-Simple-hub-spoke-and-ready-for-Bastion)
 3. [Using the subnet delegation filter attribute called "service_name_pattern"](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern)
-
-
+4. [Using tags at different levels of the typology object](#4-using-tags-at-different-levels-of-the-typology-object)
 
 ### (1) Deploy a simple hub and 2 spokes with minimum config
 ```hcl
@@ -978,12 +981,23 @@ Terraform will perform the following actions:
 <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf" target="_blank">source code of the module</a>
 
 [Back to the Examples](#examples)
+
+### (4) Using tags at different levels of the typology object
+Some description
+
+```hcl
+  #Some code here
+```
+[Back to the Examples](#examples)
+
 ### Advanced examples - Seperated on topics
 1. [Hub-spoke with both firewall and vpn](#1-Hub-spoke-with-both-firewall-and-vpn)
 2. [Custom settings for peerings between the hub and the spokes](#2-custom-settings-for-peerings-between-the-hub-and-the-spokes)
 3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-Use-a-specific-subnet-as-the-only-allowed-subnet-to-use-rdp-and-ssh-to-spoke-vms)
 
 ### (1) Hub-spoke with both firewall and vpn
+Some description
+
 ```hcl
 module "advanced_spoke_with_all_components" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
