@@ -334,8 +334,7 @@ resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
   route = each.value.route
-  tags = each.value.tags
-
+  
   depends_on = [ azurerm_resource_group.rg_object ]
 }
 
