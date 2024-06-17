@@ -416,7 +416,7 @@ See the [Simply examples](#examples) For details
 
 ### Attributes on the "spoke_objects" level of the "typology_object" (This is a list of objects described as typology_object.spoke_objects[index] = [{}])
 1. network = (<b>required</b>) An object describing the network structure of the spoke
-   1. same attributes can be set here, as for the "network" Block under the hub
+   1. same attributes can be set here, as for the "network" object under the hub
    2. subnet_objects = (<b>required</b>) A list of objects describing each subnet, at least 1 subnet must be created, which is different from the hub, where the attribute can even be null
 
 See the [Examples](#examples) for more details
