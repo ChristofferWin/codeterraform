@@ -2106,13 +2106,14 @@ module "overlap_example" {
     │  293: resource "azurerm_subnet" "subnet_object" 
 
   //This issue comes because we use index 0 of the subnets to reserve a custom address prefix and then on index 1 use the attribute "use_last_subnet"
-  //This will cause the module to use have already reserved the first possible last CIDR of /26 to index 0 EVEN though we didnt even use the attribute "use_last_subnet"
-  //The side effect of this, causes the 4th subnet creation to fail, because its overlaps with our first subnet, simply because we lost the last /26 CIDR subnet
+  //Because we used index 0 of the subnets to define a custom prefix, the module will not be able to use the last possible CIDR block of /26 from the original /24 address space automatically
+  //The side effect of this, causes the 4th subnet creation to fail, because it overlaps with our first subnet, simply because we lost the last /26 CIDR subnet
   //To fix this issue, either manually define the 4th (last) subnet manually with the correct CIDR subnetting to reach the last possible subnet in the /24 block
   //Then for the last 2 subnets, contintue to use the attribute "use_last_subnet" This way, the module can once again automically handle the subnetting for the last 2 subnets
 
-  //Notice the change in subnet4 to use an manual address prefix now instead to solve the collision
+  //Notice the change in subnet4 to use a manual address prefix now instead to solve the collision
   //Also - In general I recommend to simply use the attributes "use_last_subnet" And "use_first_subnet" To let the module subnet for you
+  //The 2 attributes can easily be mixed with each other - As the module will then have full control over ALL indexes of the subnets
 
   module "overlap_example" {
    source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
