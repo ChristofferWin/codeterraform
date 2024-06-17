@@ -24,7 +24,7 @@ locals {
 
   ############################################
   ###### SIMPLE VARIABLES TRANSFORMATION #####
-  ############################################
+  ############################################ 
 
   tp_object = var.topology_object
   tenant_id = data.azurerm_client_config.context_object.tenant_id
