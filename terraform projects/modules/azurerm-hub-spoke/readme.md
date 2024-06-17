@@ -2236,13 +2236,13 @@ module "overlap_example" {
    }
 }
 
-   //The above is rather a complex subnetting setup and it actually creates a specific collision on subnet2, which will look like the following in terraform:
+   //The above is rather a complex subnetting setup and it actually creates a specific collision on subnet4, which will look like the following in terraform:
     │ Error: creating Subnet (Subscription: "00000000-0000-0000-0000-000000000000"
     │ Resource Group Name: "rg-spoke1"
     │ Virtual Network Name: "vnet-spoke1"
-    │ Subnet Name: "subnet3-spoke1"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: NetcfgSubnetRangesOverlap: Subnet 'subnet3-spoke1' is not valid because its IP address range overlaps with that of an existing subnet in virtual network 'vnet-spoke1'.
+    │ Subnet Name: "subnet4-spoke1"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: NetcfgSubnetRangesOverlap: Subnet 'subnet4-spoke1' is not valid because its IP address range overlaps with that of an existing subnet in virtual network 'vnet-spoke1'.
     │
-    │   with module.overlap_example.azurerm_subnet.subnet_object["subnet3-2-unique-spoke1"],
+    │   with module.overlap_example.azurerm_subnet.subnet_object["subnet4-2-unique-spoke1"],
     │   on .terraform\modules\overlap_example\terraform projects\modules\azurerm-hub-spoke\azurerm-hub-spoke.tf line 293, in resource "azurerm_subnet" "subnet_object":
     │  293: resource "azurerm_subnet" "subnet_object" 
 
@@ -2257,7 +2257,7 @@ module "overlap_example" {
   //The 2 attributes can easily be mixed with each other - As the module will then have full control over ALL indexes of the subnets
 
   module "overlap_example" {
-   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
    typology_object = {
      hub_object = {
         network = {} //Just use all defaults for the hub, not important for the example
