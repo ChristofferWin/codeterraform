@@ -337,14 +337,14 @@ module "show_case_object" {
 
 Its possible to define VERY little attributes on the top level "typology_object" See the [Simply examples](#examples) For details
 
-### Attributes on the "hub_object" level of the "typology_object"
+### Attributes on the "hub_object" level of the "typology_object" (This is an object described as typology_object.hub_object = {})
 1. rg_name = (optional) A string defining the specific name of the hub resource group resource (Overwrites any name injection defined in the top level attributes)
 
 2. location = (optional) A string defining the location of which to deploy the hub to (If the top level location is set, this will be overwritten)
 
 3. tags = (optional) A map og strings defining any tags to set on the hub resources
 
-4. network = (required) An object structured as:
+4. network = (<b>required</b>) An object structured as: (Object can be left as {} which will cause the module to create a hub with 0 subnets)
     1. vnet_name = (optional) A string defining the name of the hub Azure Virtual Network resource (Overwrites any name injection defined in the top level attributes)
 
     2. vnet_cidr_notation = (optional) A string to be used in case you do NOT parse the attribute "address_spaces" The module will then instead use a base CIDR block of ["10.0.0.0/16] and use the attribute "vnet_cidr_notation" to subnet the "address_spaces" for the hub Azure Virtual Network resource. Must be parsed in the form of "/\<CIDR>" e.g "/24"
@@ -411,12 +411,15 @@ Its possible to define VERY little attributes on the top level "typology_object"
             1. name = optional(string) A custom name to add as the display name for the deletation added to the subnet
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
-Its possible to define VERY little attributes on the hub / spoke level of the "typology_object" See the [Simply examples](#examples) For details
+Its possible to define VERY little attributes on the hub / spoke level of the "typology_object" 
+See the [Simply examples](#examples) For details
 
-### Attributes on the "spoke_objects" level of the "typology_object"
-1. Minimum of 1 spoke must be defined
-2. All attributes on the top level of this object can be defined exactly as for the "hub_object"
-3. The "network" Block is described exactly the same as for the "hub_object" With the ONLY differences being you can ONLY define "subnet_objects", no Firewall or VPN settings. See the [Examples](#examples) for more details
+### Attributes on the "spoke_objects" level of the "typology_object" (This is a list of objects described as typology_object.spoke_objects[index] = [{}])
+1. network = (<b>required</b>) An object describing the network structure of the spoke
+   1. same attributes can be set here, as for the "network" Block under the hub
+   2. subnet_objects = (<b>required</b>) A list of objects describing each subnet, at least 1 subnet must be created, which is different from the hub, where the attribute can even be null
+
+See the [Examples](#examples) for more details
 
 [Back to the top](#table-of-contents)
 
@@ -438,7 +441,7 @@ See below list of possible return values:
 
 6. gw_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/Azurerm/latest/docs/resources/virtual_network_gateway#attributes-reference">Azurerm Virtual network gateway</a>
 
-7. pip_return_object = map of object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip#attributes-reference">Azurerm Public IP</a>
+7. pip_return_objects = map of object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip#attributes-reference">Azurerm Public IP</a>
 
 8. log_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/log_analytics_workspace.html#attributes-reference">Azurerm Log Analytics workspace</a>
 

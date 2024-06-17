@@ -23,7 +23,7 @@ output "gw_return_object" {
   value = local.gw_return_object
 }
 
-output "pip_return_object" {
+output "pip_return_objects" {
   value = local.pip_return_object
 }
 
