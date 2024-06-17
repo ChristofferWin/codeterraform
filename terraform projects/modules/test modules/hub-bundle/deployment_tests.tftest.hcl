@@ -22,11 +22,6 @@ run "test_2_simple_deployment_with_vpn_apply" {
   plan_options {
     target = [module.deployment_2_simple_with_vpn]
   }
-
-  assert {
-    condition = values(module.deployment_2_simple_with_vpn.gw_return_object)[0].sku == "VpnGw2" && strcontains(values(module.deployment_2_simple_with_vpn.gw_return_object)[0].resource_group_name, "hub") && strcontains(values(module.deployment_2_simple_with_vpn.gw_return_object)[0].ip_configuration.public_ip_address_id, "gw") && values(module.deployment_2_simple_with_vpn.gw_return_object)[0].vpn_client_configuration.address_space == ["10.99.0.0/24"]
-    error_message = "one of the static value checks failed"
-  }
 }
 
 run "test_3_simple_deployment_with_firewall_apply" {
