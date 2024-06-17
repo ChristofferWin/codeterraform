@@ -2106,10 +2106,10 @@ module "overlap_example" {
   //This issue comes because we use index 0 of the subnets to reserve a custom address prefix and then on index 1 use the attribute "use_last_subnet"
   //This will cause the module to use have already reserved the first possible last CIDR of /26 to index 0 EVEN though we didnt even use the attribute "use_last_subnet"
   //The side effect of this, causes the 4th subnet creation to fail, because its overlaps with our first subnet, simply because we lost the last /26 CIDR subnet
-  //To fix this issue, either manually define the 2nd subnet manually with the correct CIDR subnetting to reach the last possible subnet in the /24 block
+  //To fix this issue, either manually define the 4th (last) subnet manually with the correct CIDR subnetting to reach the last possible subnet in the /24 block
   //Then for the last 2 subnets, contintue to use the attribute "use_last_subnet" This way, the module can once again automically handle the subnetting for the last 2 subnets
 
-  //Notice the change in subnet2 to use an manual address prefix now instead to solve the collision
+  //Notice the change in subnet4 to use an manual address prefix now instead to solve the collision
   //Also - In general I recommend to simply use the attributes "use_last_subnet" And "use_first_subnet" To let the module subnet for you
 
   module "overlap_example" {
@@ -2127,13 +2127,13 @@ module "overlap_example" {
                 address_prefix = ["10.0.1.0/27"] //We will use default address block of 10.0.x.0/24 As provided by the module, where x is the spoke number, which is 1 in this case
               },
               {
-                address_prefix = ["10.0.1.192/26] //Helping the module by manually defining the now FIRST subnet to have the LAST possible CIDR subnet
+                use_last_subnet = true //Wont collide with anything, but because subnet1 is manual, and this subnet is index 1, we wont take the last possible of .192 but instead the 2nd last
               },
               {
-                use_last_subnet = true //Wont collide with anything because the module will take the last possible subnet
+                use_last_subnet = true //Wont collide with anything because the module will take the last possible subnet, will be closest POSSIBLE subnet to subnet1,
               },
               {
-                use_last_subnet = true //Will collide with subnet1, for an explanation, see below the error defined
+                 address_prefix = ["10.0.1.192/26] //Helping the module by manually taking the last possible subnet, as subnet2 was only able to take the 2nd last /26 CIDR
               }
 
               //NOW, depending on the number of subnets we create now and how large they are, we can create another collision simply by trying to subnet the original /24 more than it can
