@@ -114,7 +114,6 @@ locals {
     name = "rt-from-${b.name}-to-hub"
     vnet_name = b.vnet_name
     subnet_name = b.name
-    tags = can(merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)) ? merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags) : {}
 
     route = [for a in range(2) : { 
       name = a == 0 ? "all-internet-traffic-from-subnet-to-hub-first" : "all-internal-traffic-from-subnet-to-hub-first"
