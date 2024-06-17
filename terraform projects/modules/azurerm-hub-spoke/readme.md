@@ -2205,7 +2205,7 @@ This error can occur in 1 of 2 ways:
 
 ```hcl
 module "overlap_example" {
-   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
+   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
    typology_object = {
      hub_object = {
         network = {} //Just use all defaults for the hub, not important for the example
