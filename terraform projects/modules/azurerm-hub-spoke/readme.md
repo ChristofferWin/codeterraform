@@ -454,8 +454,8 @@ See below list of possible return values:
 ## Examples
 <b>This section is split into 2 different sub sections:</b>
 
-- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase how to deploy simple hub-spoke typologies
-- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase how to deploy advanced hub-spoke typologies
+- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase how to deploy simple hub-spoke topologies
+- <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase how to deploy advanced hub-spoke topologies
 
 [Back to the top](#table-of-contents)
 
