@@ -26,4 +26,4 @@ module "deployment_4_advanced_with_all_custom_values" {
 module "deployment_5_advanced_with_all_custom_values" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=main"
   typology_object = var.deployment_5_advanced_with_all_custom_values
-}
+} 
