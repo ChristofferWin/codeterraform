@@ -77,7 +77,6 @@ locals {
     subnets = can(flatten(b.*.subnets)) ? [for c, d in ([for e, f in flatten(b.*.subnets) : f if f != null]) : {
       name = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}") : d.name != null ? d.name : replace(b.name, "vnet", "subnet${c + 1}")
       name_unique = !can(d.name) ? replace(b.name, "vnet", "subnet${c + 1}-${c}-unique") : d.name != null ? "${d.name}-${c}-unique" : replace(b.name, "vnet", "subnet${c + 1}-${c}-unique")
-      solution_name = a == local.rg_count -1 ? null : can(local.tp_object.spoke_objects[a].solution_name) ? local.tp_object.spoke_objects[a].solution_name : null
       vnet_name = b.name
       address_prefix = can(d.address_prefix[0]) ? d.address_prefix : d.use_first_subnet != null && d.use_last_subnet == null && a == local.rg_count -1 ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)] : d.use_first_subnet == null && d.use_last_subnet != null ? [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), pow((32 - tonumber(replace(local.subnets_cidr_notation, "/", "")) - (32 - tonumber(split("/", b.address_spaces[0])[1]))), 2) -1 -c)] : [cidrsubnet(b.address_spaces[0], tonumber(replace(local.subnets_cidr_notation, "/", "")) - tonumber(split("/", b.address_spaces[0])[1]), c)]
 
@@ -109,7 +108,6 @@ locals {
     allow_forwarded_traffic = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = false
     use_remote_gateways = local.gw_object != {} ? true : false
-    solution_name = null
   }]
   
   route_table_objects_pre = (local.wan_object == {} && !can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
@@ -295,7 +293,7 @@ resource "azurerm_virtual_wan" "wan_object" {
 resource "azurerm_subnet" "subnet_object" {
   for_each = local.subnet_objects
   name = each.value.name
-  resource_group_name = each.value.solution_name == null ? [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0] : replace(replace(each.value.vnet_name, "spoke", "${each.value.solution_name}-spoke"), "vnet", "rg")
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   virtual_network_name = each.value.vnet_name
   address_prefixes = each.value.address_prefix
   service_endpoints = can(each.value.service_endpoints) ? each.value.service_endpoints : null
@@ -321,7 +319,7 @@ resource "azurerm_virtual_network_peering" "peering_object" {
   name = each.key
   virtual_network_name = each.value.vnet_name
   remote_virtual_network_id = each.value.remote_virtual_network_id
-  resource_group_name = each.value.solution_name == null ? [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0] : replace(replace(each.value.vnet_name, "spoke", "${each.value.solution_name}-spoke"), "vnet", "rg")
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   allow_virtual_network_access = each.value.allow_virtual_network_access
   allow_forwarded_traffic = each.value.allow_forwarded_traffic
   allow_gateway_transit = each.value.allow_gateway_transit
