@@ -1043,7 +1043,7 @@ All objects added is ONLY done so to make the code deployable - The important po
   }
 }
 
-//TF Plan output: (Notice how all the resource have BOTH the top level tags AND EITHER the vnet or rg tags depending on the resource type ofc)
+//TF Plan output: (Notice how all the resources have BOTH the top level tags AND EITHER the vnet or rg tags depending on the resource type ofc)
 //In other words - If tags are defined under the root of "typology_object" These will be inherited by almost all resource types
 Plan: 7 to add, 0 to change, 0 to destroy.
 Terraform will perform the following actions:
