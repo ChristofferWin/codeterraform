@@ -1075,7 +1075,7 @@ module "advanced_spoke_with_all_components" {
         }
 
         vpn = {
-          address_space = ["192.168.0.0/24"]
+          address_space = ["192.168.0.0/24"] //Changing the default address space used by the Point-2-Site VPN, default is 172.16.99.0/24
         }
 
         subnet_objects = [
