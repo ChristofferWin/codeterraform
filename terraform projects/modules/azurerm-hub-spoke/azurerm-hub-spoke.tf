@@ -37,7 +37,7 @@ locals {
   create_vpn = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vpn != null ? true : false
   rg_count = 1 + length(local.tp_object.spoke_objects)
   env_name = local.tp_object.env_name != null ? local.tp_object.env_name : ""
-  project_name = local.tp_object.project_name != null ? local.tp_object.project_name : ""
+  project_name = local.tp_object.project_name != null ? local.tp_object.project_name : "" 
   name_fix_pre = local.tp_object.name_prefix != null ? true : false
   name_fix = local.name_fix_pre ? local.name_fix_pre : local.tp_object.name_suffix != null ? false : false
   base_name = local.name_fix && local.tp_object.env_name != null ? "${local.tp_object.name_prefix}-${local.project_name}-open-${local.env_name}" : local.name_fix == false && local.tp_object.env_name != null ? "${local.env_name}-${local.project_name}-open-${local.tp_object.name_suffix}" : local.name_fix && local.tp_object.env_name == null ? "${local.tp_object.name_prefix}-open" : local.name_fix == false && local.tp_object.env_name == null && local.tp_object.name_suffix != null ? "open-${local.tp_object.name_suffix}" : null
