@@ -2040,7 +2040,7 @@ module "control_subnet_used_for_fw_rule_rdp_ssh" {
 [Back to the top](#table-of-contents)
 
 ## Known errors
-This chapter is all about understanding the different errors that you can encount while using the module. Use this chapter as a reference to different "error" Codes and their solution
+This chapter is all about understanding the different errors that you can encounter while using the module. Use this chapter as a reference to different "error" Codes and their solution
 
 ### (1) Resource names has incorrect names, like missing a seperator, having double seperators and missing segments like project name or env name within names
 
@@ -2058,7 +2058,9 @@ This chapter is all about understanding the different errors that you can encoun
 
 ### (2) Module fails while deploying subnets due to overlapping address_prefixes
 This error can occur in 1 of 2 ways:
-1. While creating the list of subnets, either in the hub or any spokes, we mix subnets having address_prefix defined by us, to other subnets in the same vnet using either of the attributes "use_first_subnet" Or "use_last_subnet" To easiliest solve this, lower the complexity of the exact configuration of how each subnet gets a calculated CIDR - E.g say you have the following config but recieve the error about overlapping subnets:
+1. While creating the list of subnets, either in the hub or any spokes, we mix subnets having address_prefix defined by us, to other subnets in the same vnet using either of the attributes "use_first_subnet" Or "use_last_subnet" To easiliest solve this, lower the complexity of the exact configuration of how each subnet gets a calculated CIDR
+
+2. Creating too many or too large subnets for the vnets address space. Both scenarios can occur together - E.g say you have the following config but recieve the error about overlapping subnets:
 
 ```hcl
 module "overlap_example" {
