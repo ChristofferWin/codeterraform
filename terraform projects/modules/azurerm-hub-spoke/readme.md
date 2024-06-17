@@ -983,10 +983,49 @@ Terraform will perform the following actions:
 [Back to the Examples](#examples)
 
 ### (4) Using tags at different levels of the typology object
-Some description
+This example simply showcases all the possible levels of which to set tags in the "typology_object"
+All objects added is ONLY done so to make the code deployable - The important points are the tags themselves - Please notice the exact behaviour within the comments of the code-snippet
 
 ```hcl
-  #Some code here
+  module "tags_at_all_possible_levels" {
+    source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
+
+    typology_object = {
+      tags = {
+        "top-level-tags" = "tag1" #This tag will append to ALL RGs, VNETS, Firewall, VPN and Log space
+      }
+
+      hub_object = {
+        tags = {
+          "hub-rg-level-tags" = "tag2" #This tag will apply to ONLY the HUB RG - This tag will NOT append on VNETS or anything else within the HUB
+        }
+
+        network = {
+          #No subnets to create, this is simply to showcase tags - But this code will STILL deploy
+        }
+      }
+
+      spoke_objects = [
+        tags = {
+          "spoke1-level-tags" = "tag3" #This tag will apply to ONLY the SPOKE1 RG - This tag will NOT append on VNETS or anything else within the spoke
+        }
+
+        network = {
+          tags = {
+            "spoke1-vnet-level-tags" = "tag4" #This tag will apply to ONLY the SPOKE1 VNET
+          }
+
+          subnet_objects = [
+            {
+              #The module requires a minimum of 1 subnet in 1 spoke to be created. This example only wants to showcase the function of the tags
+              #Therefor this subnet is ONLY applied to make the code valid for the module to comsume
+            }
+          ]
+        }
+      ]
+    }
+  }
+
 ```
 [Back to the Examples](#examples)
 
@@ -996,7 +1035,7 @@ Some description
 3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-Use-a-specific-subnet-as-the-only-allowed-subnet-to-use-rdp-and-ssh-to-spoke-vms)
 
 ### (1) Hub-spoke with both firewall and vpn
-Some description
+Deploy an advanced hub-spoke typology containing both an Azure Firewall and Azure Point-2-site VPN. Because we deploy the Firewall, route tables are also created. Please note that a lot more specific configuration can be achieved on the "vpn" And "firewall" Objects respectively - See the [Parameters](#parameters) Section for more details
 
 ```hcl
 module "advanced_spoke_with_all_components" {
