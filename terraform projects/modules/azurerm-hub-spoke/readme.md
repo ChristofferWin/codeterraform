@@ -13,7 +13,7 @@
 
 ## Description
 
-Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network topology as easy as 1-2-3. The module is built on a concept of a single input variable called 'typology_object', which can then contain a huge subset of custom configurations. The module supports name injection, automatic subnetting, Point-to-Site VPN, firewall, routing, and much more! Because it's built for Azure, it uses the architectural design from the Microsoft CAF concepts, which can be read more about at <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke typology</a>
+Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network topology as easy as 1-2-3. The module is built on a concept of a single input variable called 'topology object', which can then contain a huge subset of custom configurations. The module supports name injection, automatic subnetting, Point-to-Site VPN, firewall, routing, and much more! Because it's built for Azure, it uses the architectural design from the Microsoft CAF concepts, which can be read more about at <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke topology</a>
 
 OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
 
@@ -30,7 +30,7 @@ Just below here, two different visual examples of types of hub-spokes can be see
 </br>
 </br>
 </br>
-<b>Example 2: Deployment of an advanced hub-spoke (As of version 1.0.0-hub-spoke the entire typology MUST be created within the same subscription)</b>
+<b>Example 2: Deployment of an advanced hub-spoke (As of version 1.0.0-hub-spoke the entire topology MUST be created within the same subscription)</b>
 </br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/DrawIO/Simple-hub-spoke-Complex%20Hub-Spoke.drawio.png"/>
@@ -65,7 +65,7 @@ az login //Web browser interactive prompt.
 module "simple_hub_spoke" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke" //Always use a specific version of the module
   
-  typology_object = {
+  topology object = {
     name_prefix = "test" #Will add a prefix of "test" On all resources - Can also be set as "name_suffix" Which will rotate names. See the input variables description for more details
 
     hub_object = {
@@ -275,28 +275,28 @@ Please see the <a href="https://github.com/ChristofferWin/codeterraform/tree/mai
 
 [Back to the top](#table-of-contents)
 ## Parameters
-For assisting in understanding the actual structure of the only input variable "typology_object" Please see below code:
+For assisting in understanding the actual structure of the only input variable "topology object" Please see below code:
 ```hcl
 module "show_case_object" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
-  typology_object = { //The "root" is an OBJECT
+  topology object = { //The "root" is an OBJECT
     //Many different overall settings for the entire deployment can be set here. See below the code snippet for details.
 
-    hub_object = { //The "hub_object" is an OBJECT - Object path is then <typology_object.hub_object>
+    hub_object = { //The "hub_object" is an OBJECT - Object path is then <topology object.hub_object>
       //Less but specific attributes can be set for the hub here. See below the code snippet for details.
 
-      network = { //The object "network" is an OBJECT - Object path is then <typology_object.hub_object.network>
+      network = { //The object "network" is an OBJECT - Object path is then <topology object.hub_object.network>
         //Multiple different attributes with relevance to network can be set for the hub here. See below the code snippet for details.
 
-        vpn = { //The object "vpn" is an OBJECT - Object path is then <typology_object.hub_object.network.vpn>
+        vpn = { //The object "vpn" is an OBJECT - Object path is then <topology object.hub_object.network.vpn>
           //Specific attributes related to configuring a Point-2-Site VPN. See below the code snippet for details.
         }
 
-        firewall = { //The object "firewall" is an OBJECT - Object path is then <typology_object.hub_object.network.firewall>
+        firewall = { //The object "firewall" is an OBJECT - Object path is then <topology object.hub_object.network.firewall>
           //Specific attributes related to configuring an Azure Firewall. See below the code snippet for details.
         }
 
-        subnet_objects = [ //The list of objects "subnet_objects" is a LIST OF OBJECT - Object path is then <typology_object.hub_object.network.subnet_objects[index]>
+        subnet_objects = [ //The list of objects "subnet_objects" is a LIST OF OBJECT - Object path is then <topology object.hub_object.network.subnet_objects[index]>
           {
             //For each {} block, define specific attributes related to Azure subnets. See below the code snippet for details.
           }
@@ -304,14 +304,14 @@ module "show_case_object" {
       }
     }
 
-    spoke_objects = [ //The list of objects "spoke_objects" is a LIST OF OBJECT - Object path is then <typology_object.spoke_objects[index]>
+    spoke_objects = [ //The list of objects "spoke_objects" is a LIST OF OBJECT - Object path is then <topology object.spoke_objects[index]>
       {
         //For each {} block, many spokes can be deployed. Minimum 1. See below the code snippet for details.
       
-        network = { //The object "network" is an OBJECT - Object path is then <typology_object.spoke_objects[index].network>
+        network = { //The object "network" is an OBJECT - Object path is then <topology object.spoke_objects[index].network>
           //Multiple different attributes with relevance to network can be set for each spoke here. See below the code snippet for details.
 
-          subnet_objects = [ //The list of objects "subnet_objects" is a LIST OF OBJECT - Object path is then <typology_object.spoke_objects[index].network.subnet_objects[index]>
+          subnet_objects = [ //The list of objects "subnet_objects" is a LIST OF OBJECT - Object path is then <topology object.spoke_objects[index].network.subnet_objects[index]>
             {
               //For each {} block, define specific attributes related to Azure subnets. See below the code snippet for details.
             }
@@ -323,7 +323,7 @@ module "show_case_object" {
 }
 ```
 
-### Attributes on the "top" Level of the "typology_object"
+### Attributes on the "top" Level of the "topology object"
 1. project_name = (optional) A string defining the name of the project / landing zone. Will be injected into the overall resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "env_name" to be provided as well
 
 2. location = (optional) A string defining the location of ALL resources deployed (overwrites ANY lower set location)
@@ -334,15 +334,15 @@ module "show_case_object" {
 
 5. env_name = (optional) A string defining an environment name to inject into all resource names. OBS. Using this variable requires both either "name_prefix" OR "name_suffix" AND "project_name" To be provided as well
 
-6. dns_servers = (optional) A list of strings defining DNS server IP  to set for ALL vnets in the typology (overwrites ANY lower set DNS servers)
+6. dns_servers = (optional) A list of strings defining DNS server IP  to set for ALL vnets in the topology (overwrites ANY lower set DNS servers)
 
 7. tags = (optional) A map of strings defining any tags to set on ALL vnets and resource groups, VPN and Firewall (Any tags set lower will be appended to these tags set here)
 
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
 
-Its possible to define VERY little attributes on the top level "typology_object" See the [Simply examples](#examples) For details
+Its possible to define VERY little attributes on the top level "topology object" See the [Simply examples](#examples) For details
 
-### Attributes on the "hub_object" level of the "typology_object" (This is an object described as typology_object.hub_object = {})
+### Attributes on the "hub_object" level of the "topology object" (This is an object described as topology object.hub_object = {})
 1. rg_name = (optional) A string defining the specific name of the hub resource group resource (Overwrites any name injection defined in the top level attributes)
 
 2. location = (optional) A string defining the location of which to deploy the hub to (If the top level location is set, this will be overwritten)
@@ -374,7 +374,7 @@ Its possible to define VERY little attributes on the top level "typology_object"
 
         4. pip_name = (optional) A string defining the custom name of the Azure Public IP to be used on the VPN (Overwrites any naming injection defined in the top level object)
 
-        5. tags = (optional) A map of strings defining any tags to set for the VPN - Since tags can be set on many different levels see the [Using tags at different levels of the typology object](#4-using-tags-at-different-levels-of-the-typology-object) example for more details on tags
+        5. tags = (optional) A map of strings defining any tags to set for the VPN - Since tags can be set on many different levels see the [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object) example for more details on tags
     
     9. firewall = (optional) An object structured as:
         
@@ -396,7 +396,7 @@ Its possible to define VERY little attributes on the top level "typology_object"
 
         8. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
 
-        9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the [Using tags at different levels of the typology object](#4-using-tags-at-different-levels-of-the-typology-object) example for more details on tags
+        9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object) example for more details on tags
     
     10. subnet_objects = (optional) A list og objects structured as:
         
@@ -416,10 +416,10 @@ Its possible to define VERY little attributes on the top level "typology_object"
             1. name = optional(string) A custom name to add as the display name for the deletation added to the subnet
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
-Its possible to define VERY little attributes on the hub / spoke level of the "typology_object" 
+Its possible to define VERY little attributes on the hub / spoke level of the "topology object" 
 See the [Simply examples](#examples) For details
 
-### Attributes on the "spoke_objects" level of the "typology_object" (This is a list of objects described as typology_object.spoke_objects[index] = [{}])
+### Attributes on the "spoke_objects" level of the "topology object" (This is a list of objects described as topology object.spoke_objects[index] = [{}])
 1. network = (<b>required</b>) An object describing the network structure of the spoke
    1. same attributes can be set here, as for the "network" object under the hub
    2. subnet_objects = (<b>required</b>) A list of objects describing each subnet, at least 1 subnet must be created, which is different from the hub, where the attribute can even be null
@@ -463,7 +463,7 @@ See below list of possible return values:
 1. [Deploy a simple hub and 2 spokes with minimum config](#1-Deploy-a-simple-hub-and-2-spokes-with-minimum-config)
 2. [Simple hub-spoke and ready for Bastion](#2-Simple-hub-spoke-and-ready-for-Bastion)
 3. [Using the subnet delegation filter attribute called "service_name_pattern"](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern)
-4. [Using tags at different levels of the typology object](#4-using-tags-at-different-levels-of-the-typology-object)
+4. [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object)
 
 ### (1) Deploy a simple hub and 2 spokes with minimum config
 ```hcl
@@ -471,7 +471,7 @@ module "hub_and_2_spokes" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to deploy a hub with 0 subnets and default settings
   //We want to deploy 2 spokes, with 2 subnets in each
-  typology_object = {
+  topology object = {
     
     hub_object = {
       network = {
@@ -705,7 +705,7 @@ module "hub_and_1_spoke_custom_subnets" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to deploy a hub with 1 subnet with a custom "name" So that its a valid Bastion subnet
   //We want to deploy 1 spoke, with 1 subnet and a custom "address_prefix" Which will consume the entire default address space provided to the spoke vnet
-  typology_object = {
+  topology object = {
     
     hub_object = {
       network = {
@@ -850,7 +850,7 @@ module "using_subnet_delegation" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   //We want to deploy a hub with 0 subnets and default settings
   //We want to deploy 1 spoke, with 1 subnet which must be delegated to server farms
-  typology_object = {
+  topology object = {
     
     hub_object = {
       network = {
@@ -994,15 +994,15 @@ Terraform will perform the following actions:
 
 [Back to the Examples](#examples)
 
-### (4) Using tags at different levels of the typology object
-This example simply showcases all the possible levels of which to set tags in the "typology_object"
+### (4) Using tags at different levels of the topology object
+This example simply showcases all the possible levels of which to set tags in the "topology object"
 All objects added is ONLY done so to make the code deployable - The important points are the tags themselves - Please notice the exact behaviour within the comments of the code-snippet
 
 ```hcl
  module "tags_at_all_possible_levels" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
 
-  typology_object = {
+  topology object = {
     tags = {
       "top-level-tags" = "tag1" #This tag will append to ALL RGs, VNETS, Firewall, VPN and Log space
     }
@@ -1044,7 +1044,7 @@ All objects added is ONLY done so to make the code deployable - The important po
 }
 
 //TF Plan output: (Notice how all the resources have BOTH the top level tags AND EITHER the vnet or rg tags depending on the resource type ofc)
-//In other words - If tags are defined under the root of "typology_object" These will be inherited by almost all resource types
+//In other words - If tags are defined under the root of "topology object" These will be inherited by almost all resource types
 Plan: 7 to add, 0 to change, 0 to destroy.
 Terraform will perform the following actions:
 
@@ -1157,7 +1157,7 @@ Terraform will perform the following actions:
 3. [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-Use-a-specific-subnet-as-the-only-allowed-subnet-to-use-rdp-and-ssh-to-spoke-vms)
 
 ### (1) Hub-spoke with both firewall and vpn
-Deploy an advanced hub-spoke typology containing both an Azure Firewall and Azure Point-2-site VPN. Because we deploy the Firewall, route tables are also created. Please note that a lot more specific configuration can be achieved on the "vpn" And "firewall" Objects respectively - See the [Parameters](#parameters) Section for more details
+Deploy an advanced hub-spoke topology containing both an Azure Firewall and Azure Point-2-site VPN. Because we deploy the Firewall, route tables are also created. Please note that a lot more specific configuration can be achieved on the "vpn" And "firewall" Objects respectively - See the [Parameters](#parameters) Section for more details
 
 ```hcl
 module "advanced_spoke_with_all_components" {
@@ -1169,7 +1169,7 @@ module "advanced_spoke_with_all_components" {
   //We want to deploy the Point-2-Site VPN wih a custom address space for the VPN DHCP
   //We want to customize the firewall object
   //We want to deploy 2 spokes, each with 2 subnets, where we will use a mix of first possible CIDR block and last possible
-  typology_object = {
+  topology object = {
     name_suffix = "lab"
     project_name = "contoso"
     env_name = "prod" //Because the project name is defined, we must also define an env_name
@@ -1419,7 +1419,7 @@ module "advanced_spoke_with_all_components2" {
   //We define custom FW settings such that the module will NOT deploy log analytics, diagnostic settings or FW network rules
   //Because we define custom peering names, these will ONLY effect the peerings inside the hub - It will also use the same name twice and simply add +1 at the end of the name
 
-  typology_object = {
+  topology object = {
     hub_object = {
       rg_name = "custom-rg-hub"
       location = "northeurope"
@@ -2058,7 +2058,7 @@ Terraform will perform the following actions:
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 
 ### (3) Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms
-Imagine a scenario where you want a typology setup with many different custom CIDR subnetting and naming settings
+Imagine a scenario where you want a topology setup with many different custom CIDR subnetting and naming settings
 
 We want to have an Azure Firewall with no allowed internet access and we want to control the specific subnet of which is used as the source address for the firewall rule to allow rdp / ssh to spoke vms
 
@@ -2068,7 +2068,7 @@ Take the below example code snippet and please pay close attention to the commen
 module "control_subnet_used_for_fw_rule_rdp_ssh" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
   
-  typology_object = {
+  topology object = {
     name_suffix = "contoso"
     project_name = "security"
     location = "westus"
@@ -2206,7 +2206,7 @@ This error can occur in 1 of 2 ways:
 ```hcl
 module "overlap_example" {
    source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
-   typology_object = {
+   topology object = {
      hub_object = {
         network = {} //Just use all defaults for the hub, not important for the example
      }
@@ -2258,7 +2258,7 @@ module "overlap_example" {
 
   module "overlap_example" {
    source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke"
-   typology_object = {
+   topology object = {
      hub_object = {
         network = {} //Just use all defaults for the hub, not important for the example
      }

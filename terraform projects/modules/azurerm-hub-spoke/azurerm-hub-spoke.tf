@@ -26,7 +26,7 @@ locals {
   ###### SIMPLE VARIABLES TRANSFORMATION #####
   ############################################
 
-  tp_object = var.typology_object
+  tp_object = var.topology_object
   tenant_id = data.azurerm_client_config.context_object.tenant_id
   vnet_cidr_notation = can(local.tp_object.hub_object.network.address_spaces[0]) ? "/${split("/", local.tp_object.hub_object.network.address_spaces[0])[1]}" : "/24"
   vnet_cidr_notation_number_difference = tonumber(replace(local.vnet_cidr_notation, "/", "")) < 24 ? 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - 8 : tonumber(replace(local.vnet_cidr_notation, "/", "")) > 24 ? (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - 8) * -1 : 0

@@ -1,4 +1,4 @@
-variable "typology_object" {
+variable "topology_object" {
   description = "a list of objects describing information about the hub and spoke environments"
   type = object({
     project_name = optional(string)
