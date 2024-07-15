@@ -8,16 +8,24 @@
 4. [Versions](#versions)
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
-7. [Examples](#examples)
+7. [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only)
+8. [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-1.0.0-different-subs-only)
 8. [Known errors](#known-errors)
 
 ## Description
 
 Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make the deployment of any hub-spoke network topology as easy as 1-2-3. The module is built on a concept of a single input variable called 'topology object', which can then contain a huge subset of custom configurations. The module supports name injection, automatic subnetting, Point-to-Site VPN, firewall, routing, and much more! Because it's built for Azure, it uses the architectural design from the Microsoft CAF concepts, which can be read more about at <a href="https://learn.microsoft.com/en-us/azure/architecture/networking/architecture/hub-spoke?tabs=cli">Hub-Spoke topology</a>
 
-OBS. The module does NOT support building hub-spokes over multiple subscriptions YET, but is planned to be released in version 1.1.0
+<b>ATTENTION:</b> The module can run in 2 different modes: 
+1. Deploy both hub & spokes to the same Azure Subscription
+2. Deploy the hub in 1 subscription and 1 to MANY spokes in 1 Azure subscription
+   1. To deploy spokes in different Subscriptions, simply define more module calls. See below for details!
 
-OBS. I plan to release multiple blog posts about the use of this module in different scenarios over on <a href="https://codeterraform.com/blog">Codeterraform</a>, so stay tuned!
+The module behaves a little different & has different requirements depending on the mode that is used - The mode is determined by the VERSION of the module that is called. See the [Versions](#versions) for details on that.
+
+Also for specific release notes for the newest release, please see the <a href="https://github.com/ChristofferWin/codeterraform/releases">Releases page</a> for more details.
+
+I plan to release multiple blog posts about the use of this module in different scenarios over on <a href="https://codeterraform.com/blog">Codeterraform</a>, so stay tuned!
 
 I really appriciate you - I would really appriciate any criticism / feedback, possible feature improvements and overall good karma :)
 
@@ -30,10 +38,11 @@ Just below here, two different visual examples of types of hub-spokes can be see
 </br>
 </br>
 </br>
-<b>Example 2: Deployment of an advanced hub-spoke (As of version 1.0.0-hub-spoke the entire topology MUST be created within the same subscription)</b>
+<b>Example 2: Deployment of an advanced hub-spoke (As of version 2.0.0-hub-spoke the entire topology in DIFFERENT SUBS)</b>
 </br>
 </br>
 <img src="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/Graphic%20material/DrawIO/Simple-hub-spoke-Complex%20Hub-Spoke.drawio.png"/>
+</br>
 
 [Back to the top](#table-of-contents)
 ## Prerequisites
@@ -43,6 +52,7 @@ Before using this module, make sure you have the following:
   - Must be able to WRITE to the subscription
 - Installed terraform (download [here](https://www.terraform.io/downloads.html))
 - Azure CLI installed for authentication (download [here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli))
+- Make sure that the user context used by Terraform has WRITE access to all Azure Subscriptions
 
 [Back to the top](#table-of-contents)
 ## Getting Started
@@ -60,7 +70,79 @@ provider "azurerm" {
 ```powershell
 az login //Web browser interactive prompt.
 ```
-4. Define the module definition
+4. Define the module definition (VERSION 2.0.0 used = MULTIPLE SUBS)
+```hcl
+//We need to define a minimum of 2 providers as the module requires this
+//In this example we will simply use the default azurerm provider + 1 alias provider
+
+provider "azurerm" { //Because no alias is defined, this will be the default
+  features {}
+  //We can add a subscription_id here explicity if we want to
+  //But for this example we simply use whatever subscription az cli logged into in-line from step 3
+}
+
+provider "azurerm" {
+  features {}
+  alias = "hubsub" //Our custom name for the hub sub context
+  subscription_id = "<a valid subscription>"
+}
+
+//We define a module call to ONLY create the hub (Spokes can still be created here though)
+//We will simply use default values, look through the input variables & examples for more advanced setups
+//Even though we do NOT create any direct spokes in the hub module call, we still ALWAYS must parse the spoke provider
+module "our_hub" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+
+  topology_object = {
+
+    hub_object = {
+      network = {
+        //We use all default values
+      }
+    }
+  }
+
+  //Inside the module call to create the hub, both providers must be parsed, otherwise Terraform will fail
+  providers = {
+    azurerm.hub = azurerm.hubsub //The azurern.hub part is the specific alias name from the module. Parse the hub provider here
+    azurerm.spoke = azurerm //The azurerm.spoke part is the alias name from the module. Parse the spoke provider, in this case we will use our default provider
+  }
+}
+
+//Create 1 default spoke and connect it to the hub above
+//ATTENTION: The hub MUST be deployed before running the deployment of ANY spoke, otherwise Terraform will fail
+
+module "only_simple_spoke" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+
+  topology_object = {
+    //No hub will be deployed, but we must as a MINIMUM define the below to tell the module to connect to the specific HUB
+    hub_object = {
+      network = {
+        vnet_resource_id = values(module.our_hub.vnet_return_objects)[0].id //We must parse the deployed HUB vnet resource ID
+      }
+    }
+
+    spoke_objects = [
+      {
+        network = {
+          subnet_objects = [
+            {
+              //Nothing defined = Using only default values
+            }
+          ]
+        }
+      }
+    ]
+  }
+ 
+ providers = {
+    azurerm.hub = azurerm.hubsub //The azurern.hub part is the specific alias name from the module. Parse the hub provider here
+    azurerm.spoke = azurerm //The azurerm.spoke part is the alias name from the module. Parse the spoke provider, in this case we will use our default provider
+  }
+}
+```
+5. Define the module definition (VERSION 1.0.0 used = ONLY SAME SUB FOR ALL COMPONENTS)
 ```hcl
 module "simple_hub_spoke" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke" //Always use a specific version of the module
@@ -96,125 +178,6 @@ module "simple_hub_spoke" {
 }
 ```
 5. Run terraform init & terraform apply
-```hcl
-terraform init
-terraform apply
-
-//Plan output
-Plan: 8 to add, 0 to change, 0 to destroy.
-Terraform will perform the following actions:
-
-  # module.simple_hub_spoke.azurerm_resource_group.rg_object["rg-test-hub"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "westeurope"
-      + name     = "rg-test-hub"
-    }
-
-  # module.simple_hub_spoke.azurerm_resource_group.rg_object["rg-test-spoke1"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "westeurope"
-      + name     = "rg-test-spoke1"
-    }
-
-  # module.simple_hub_spoke.azurerm_subnet.subnet_object["subnet1-test-spoke1"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "172.16.0.0/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet1-test-spoke1"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "rg-test-spoke1"
-      + virtual_network_name                           = "vnet-test-spoke1"
-    }
-
-  # module.simple_hub_spoke.azurerm_subnet.subnet_object["subnet2-test-spoke1"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "172.16.8.128/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet2-test-spoke1"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "rg-test-spoke1"
-      + virtual_network_name                           = "vnet-test-spoke1"
-    }
-
-  # module.simple_hub_spoke.azurerm_virtual_network.vnet_object["vnet-test-hub"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "10.0.0.0/24",
-        ]
-      + dns_servers         = (known after apply)
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "westeurope"
-      + name                = "vnet-test-hub"
-      + resource_group_name = "rg-test-hub"
-      + subnet              = (known after apply)
-    }
-
-  # module.simple_hub_spoke.azurerm_virtual_network.vnet_object["vnet-test-spoke1"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "172.16.0.0/20",
-        ]
-      + dns_servers         = (known after apply)
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "westeurope"
-      + name                = "vnet-test-spoke1"
-      + resource_group_name = "rg-test-spoke1"
-      + subnet              = (known after apply)
-    }
-
-  # module.simple_hub_spoke.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = true
-      + allow_gateway_transit        = true
-      + allow_virtual_network_access = true
-      + id                           = (known after apply)
-      + name                         = "peering-from-hub-to-spoke1"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "rg-test-hub"
-      + use_remote_gateways          = false
-      + virtual_network_name         = "vnet-test-hub"
-    }
-
-  # module.simple_hub_spoke.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = true
-      + allow_gateway_transit        = false
-      + allow_virtual_network_access = true
-      + id                           = (known after apply)
-      + name                         = "peering-from-spoke1-to-hub"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "rg-test-spoke1"
-      + use_remote_gateways          = false
-      + virtual_network_name         = "vnet-test-spoke1"
-    }
-
-Plan: 8 to add, 0 to change, 0 to destroy.
-────────────────────────────────────────────────────────────────────────────────── 
-
-//press yes
-yes
-
-//apply output
-Apply complete! Resources: 8 added, 0 changed, 0 destroyed.
-```
 
 6. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#examples">Examples</a> for details
 
@@ -224,7 +187,7 @@ The table below outlines the compatibility of the module:
 
 Please take note of the 'Module version' among the provider utilized by the module. Keep in mind that there WILL be a required minimum version, and this requirement can vary with each module version.
 
-<b>"Module version" 1.0.0-hub-spoke requires the following provider versions:</b>
+<b>"Module version" '1.0.0-hub-spoke' & '2.0.0-hub-spoke' requires the following provider versions:</b>
 
 | Provider name | Provider url | Minimum version |
 | -------------- | ------------ | ---------------- |
@@ -354,17 +317,23 @@ Its possible to define VERY little attributes on the top level "topology object"
 
     2. vnet_cidr_notation = (optional) A string to be used in case you do NOT parse the attribute "address_spaces" The module will then instead use a base CIDR block of ["10.0.0.0/16] and use the attribute "vnet_cidr_notation" to subnet the "address_spaces" for the hub Azure Virtual Network resource. Must be parsed in the form of "/\<CIDR>" e.g "/24"
 
-    3. address_spaces = (optional) A list of strings to be used in case you do NOT provide the attribute "vnet_cidr_notation" By providing a value for this attribute, you completely define the exact CIDR block for the hub Azure Virtual Network resource
+    3. address_spaces = (optional) A list of strings to be used in case you do NOT provide the attribute "vnet_cidr_notation" By providing a value for this attribute, you completely define the exact CIDR block for the hub Azure Virtual Network resourc
+    
+    4. vnet_spoke_address_spaces (SPECIFIC TO VERSION 2.0.0) (optional) A list of strings defining all the SPOKE Azure Virtual Networks address spaces. This attribute MUST be used in case the hub has a Azure Firewall defined as the address spaces will be parsed to the Firewall rules
 
-    4. dns_servers = (optional) A list of strings defining DNS server IP addresses to set for the spoke Azure Virtual Network resource (Will be overwritten in case the attribute is set on the top level object)
+    5. dns_servers = (optional) A list of strings defining DNS server IP addresses to set for the spoke Azure Virtual Network resource (Will be overwritten in case the attribute is set on the top level object)
 
-    5. tags = (optional) A map og strings defining any tags to set on the hub vnets - Tags here will append to all other tags
+    6. tags = (optional) A map og strings defining any tags to set on the hub vnets - Tags here will append to all other tags
 
-    6. vnet_peering_allow_virtual_network_access = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the spoke vnet´s Azure Virtual machine resources can reach the hub
+    7. vnet_peering_allow_virtual_network_access = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the spoke vnet´s Azure Virtual machine resources can reach the hub
 
-    7. vnet_peering_allow_forwarded_traffic = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the hub vnet can recieve forwarded traffic from the spoke vnet
+    8. vnet_peering_allow_forwarded_traffic = (optional) (NOT RECOMMENDED TO CHANGE) A bool used to disable whether the hub vnet can recieve forwarded traffic from the spoke vnet
 
-    8. vpn = (optional) An object structured as:
+    9. fw_resource_id = (SPECIFIC TO VERSION 2.0.0) (optional) The string resource id of the hub Azure Firewall - MUST be defined in the module call for where SPOKES are created IF the HUB defined also has a Azure Firewall defined.
+
+    10. fw_private_ip = (SPECIFIC TO VERSION 2.0.0) (optional) The string private IP of the hub Azure Firewall - Can be used INSTEAD OF attribute "fw_resource_id" This attribute stops the module from having to retrieve the Azure Firewall from the hub to automatically retrieve the Azure Firewall private ip
+
+    10. vpn = (optional) An object structured as:
        
        1. gw_name = (optional) A string to define the custom name of the Azure Virtual Network Gateway resource (Overwrites any naming injection defined in the top level object)
 
@@ -376,7 +345,7 @@ Its possible to define VERY little attributes on the top level "topology object"
 
         5. tags = (optional) A map of strings defining any tags to set for the VPN - Since tags can be set on many different levels see the [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object) example for more details on tags
     
-    9. firewall = (optional) An object structured as:
+    12. firewall = (optional) An object structured as:
         
         1. name = (optional) A string to define the custom name of the Azure Firewall resource (Overwrites any naming injection defined in the top level object)
 
@@ -398,13 +367,13 @@ Its possible to define VERY little attributes on the top level "topology object"
 
         9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object) example for more details on tags
     
-    10. subnet_objects = (optional) A list og objects structured as:
+    13. subnet_objects = (optional) A list og objects structured as:
         
         1. name = (optional) A string defining the custom name of the Azure Subnet (Overwrites any naming injection defined in the top level object). If you include the segnemt: "mgmt" OR "management" the subnet will be used as the ONLY subnet to be allowed access to rdp / ssh for spoke vms via the firewall rule, if no subnet name is custom and includes the segnment, the entire vnet hub address space will be used as the source address for the firewall rule (This ONLY has impact if the firewall is also created) See the [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-use-a-specific-subnet-as-the-only-allowed-subnet-to-use-rdp-and-ssh-to-spoke-vms)
         
-        2. use_first_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the START of the CIDR block used in the deployment. See the [Examples](#examples) for more details
+        2. use_first_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the START of the CIDR block used in the deployment. See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) for more details
 
-        3. use_last_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the END of the CIDR block used in the deployment. See the [Examples](#examples) for more details
+        3. use_last_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the END of the CIDR block used in the deployment. See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) for more details
 
         4. address_prefix = (optional) An address space specifically defined for the subnet. Its NOT recommended to define this manually in case the overall vnets "address_spaces" Attribute is NOT populated.
 
@@ -417,14 +386,14 @@ Its possible to define VERY little attributes on the top level "topology object"
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
 Its possible to define VERY little attributes on the hub / spoke level of the "topology object" 
-See the [Simply examples](#examples) For details
+See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) For details
 
 ### Attributes on the "spoke_objects" level of the "topology object" (This is a list of objects described as topology object.spoke_objects[index] = [{}])
-1. network = (<b>required</b>) An object describing the network structure of the spoke
+1. network = (<b>required</b>) An object describing the network structure of the spoke (NOT REQUIRED IN VERSION 2.0.0 to allow ONLY creating a hub and then spokes seperately)
    1. same attributes can be set here, as for the "network" object under the hub
    2. subnet_objects = (<b>required</b>) A list of objects describing each subnet, at least 1 subnet must be created, which is different from the hub, where the attribute can even be null
 
-See the [Examples](#examples) for more details
+See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) OR [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-2.0.0-different-subs-only) for more details
 
 [Back to the top](#table-of-contents)
 
