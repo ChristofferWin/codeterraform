@@ -10,7 +10,7 @@
 6. [Return Values](#return-values)
 7. [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only)
 8. [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-1.0.0-different-subs-only)
-8. [Known errors](#known-errors)
+9. [Known errors](#known-errors)
 
 ## Description
 
@@ -21,7 +21,7 @@ Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make
 2. Deploy the hub in 1 subscription and 1 to MANY spokes in 1 Azure subscription
    1. To deploy spokes in different Subscriptions, simply define more module calls. See below for details!
 
-The module behaves a little different & has different requirements depending on the mode that is used - The mode is determined by the VERSION of the module that is called. See the [Versions](#versions) for details on that.
+The module behaves a little different & has different requirements depending on the mode that is used - The mode is determined by the VERSION of the module that is called. See the [Getting Started](#getting-started) for details on that.
 
 Also for specific release notes for the newest release, please see the <a href="https://github.com/ChristofferWin/codeterraform/releases">Releases page</a> for more details.
 
@@ -420,7 +420,7 @@ See below list of possible return values:
 8. log_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/log_analytics_workspace.html#attributes-reference">Azurerm Log Analytics workspace</a>
 
 [Back to the top](#table-of-contents)
-## Examples
+## Examples version 1.0.0 SAME SUB ONLY
 <b>This section is split into 2 different sub sections:</b>
 
 - <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase how to deploy simple hub-spoke topologies
