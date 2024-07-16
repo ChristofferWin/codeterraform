@@ -179,7 +179,7 @@ module "simple_hub_spoke" {
 ```
 5. Run terraform init & terraform apply
 
-6. There is a ton more to explore with the module, see the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#examples">Examples</a> for details
+6. There is a ton more to explore with the module, see the [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-different-subs-only) for details
 
 [Back to the top](#table-of-contents)
 ## Versions
@@ -388,7 +388,7 @@ Its possible to define VERY little attributes on the top level "topology object"
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
 Its possible to define VERY little attributes on the hub / spoke level of the "topology object" 
-See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-100-same-sub-only) & [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-200-different-subs-only) For details
+See the [Examples version 1.0.0 SAME SUB ONLY](#examples-same-sub-only) & [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-different-subs-only) For details
 
 
 ### Attributes on the "spoke_objects" level of the "topology object" (This is a list of objects described as topology object.spoke_objects[index] = [{}])
@@ -396,7 +396,7 @@ See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-100-same-sub-on
    1. same attributes can be set here, as for the "network" object under the hub
    2. subnet_objects = (<b>required</b>) A list of objects describing each subnet, at least 1 subnet must be created, which is different from the hub, where the attribute can even be null
 
-See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) OR [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-2.0.0-different-subs-only) for more details
+See the [Examples version 1.0.0 SAME SUB ONLY](#examples-same-sub-only) OR [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-different-subs-only) for more details
 
 [Back to the top](#table-of-contents)
 
