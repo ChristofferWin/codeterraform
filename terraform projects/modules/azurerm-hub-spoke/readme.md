@@ -1367,7 +1367,7 @@ Plan: 23 to add, 0 to change, 0 to destroy.
 
 [Back to the top](#table-of-contents)
 
-## Examples Different Subs only NEWEST VERSION ONLY
+## Examples DIFFERENT SUBS ONLY
 This section contains only advanced examples as using the module on different subscriptions by seperating the hub / spoke typology the setup becomes "advanced" Regardless
 
 These examples shall be used on enterprise level Azure environments where landing zones are typically required to be seperated on subscriptions
@@ -1494,7 +1494,7 @@ module "hub_and_spoke_same_module_call" {
 Plan: 24 to add, 0 to change, 0 to destroy.
 ```
 
-[Back to Examples](#examples-different-subs-only-newest-version-only)
+[Back to Examples](#examples-different-subs-only)
 
 ### (2) Deploy hub and spokes in 2 module calls
 Different from example 1, we here want to create more than 1 spoke and each spoke must be in different subscriptions - For this, we need to define at least 1 of the 2 spokes in an isolated module call. We can still let the last spoke be created directly with the hub - Safes the amount of code required.
@@ -1604,7 +1604,7 @@ Plan: 5 to add, 0 to change, 0 to destroy.
 //BOTH spoke 1 and 2 are now linked via peerings to the HUB and ALL 3 elements in the topology are in different subscriptions. EVEN the spoke defined within the hub.
 ```
 
-[Back to Examples](#examples-different-subs-only-newest-version-only)
+[Back to Examples](#examples-different-subs-only)
 
 ### (3) Deploy hub and spokes with custom settings
 This example expands on the idea from example 2 - The use of multiple module calls to allow the creation of multiple spokes in different subscriptions. 
@@ -1788,7 +1788,7 @@ module "spoke_2_advanced" {
 Plan: 16 to add, 0 to change, 0 to destroy.
 ```
 
-[Back to Examples](#examples-different-subs-only-newest-version-only)
+[Back to Examples](#examples-different-subs-only)
 
 ## Known errors
 This chapter is all about understanding the different errors that you can encounter while using the module. Use this chapter as a reference to different "error" Codes and their solution
