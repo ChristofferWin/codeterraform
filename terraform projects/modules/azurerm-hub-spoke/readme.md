@@ -1405,7 +1405,7 @@ provider "azurerm" {
 //The Spoke objects will deploy in the SPOKE provider context parsed and NOT the hub provider context
 
 module "hub_and_spoke_same_module_call" {
-  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+  source = "./.." #github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke
   topology_object = {
     env_name = "test" //Custom naming injection via using all 3 naming attributes - If any SPECIFIC names are set on attributes below, they will overrule this
     name_suffix = "contoso" //Custom naming injection via using all 3 naming attributes - If any SPECIFIC names are set on attributes below, they will overrule this
@@ -1429,7 +1429,8 @@ module "hub_and_spoke_same_module_call" {
         firewall = {
           name = "helloworld-fw"
           no_internet = true
-          log_name = "tester-diag" 
+          log_name = "tester-diag-log"
+          log_diag_name = "tester-diag"
           log_daily_quota_gb = 10 //Per default there is no data limit / quota but we define 1 to be 10gb
           pip_name = "fw-tester"
         }
@@ -1502,6 +1503,8 @@ Different from example 1, we here want to create more than 1 spoke and each spok
 
 Remember - Because we create an isolated spoke from the hub module call, the hub module block MUST be deployed ahead of time, otherwise it will fail.
 
+The below code snippet is using default values - See example 3 for a more complex example
+
 ```hcl
 //Creating 3 providers, 2 custom for the spokes, and the hub will use default context
 
@@ -1524,15 +1527,268 @@ provider "azurerm" {
   subscription_id = "<Subscription_id_2>"
 }
 
+//DEPLOY WHEN HUB AND 1st SPOKE IS ALREADY DEPLOYED
 module "hub_and_first_of_2_spokes" {
-  source = 
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+  
+  topology_object = {
+    
+    hub_object = {
+      network = {
+        //All default
+      }
+    }
+
+    spoke_objects = [ //All default values for the spoke defined'
+      {
+        network = {
+
+          subnet_objects = [
+            {
+
+            }
+          ]
+        }
+      }
+    ]
+  }
 }
 
+//Parsing the hub and spoke1 provider alias from the top of the code snippet
+  providers = {
+    azurerm.spoke = azurerm.spoke1
+    azurerm.hub = azurerm
+  }
+
+  //TF Plan output:
+  Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+
+  //DEFINE SPOKE2 MODULE CALL AND LINK IT TO THE HUB
+  module "second_spoke_alone" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+
+  topology_object = {
+    
+    hub_object = {
+      network = {
+         vnet_resource_id = values(module.hub_and_first_of_2_spokes.vnet_return_objects)[0].id //The index 0 is ALWAYS the HUB vnet IF the module call creates a hub, which we do
+          //By parsing the resource id of the hub vnet already deployed, the module is able to peer the "isolated" Spoke2 to and from the hub
+          //NO NEW HUB WILL BE CREATED
+
+          vnet_peering_name = "custom-peering-name-from-hub" //We can create a custom peering name for the peering from the hub to spoke 2
+      }
+    }
+
+    spoke_objects = [
+      {
+        network = {
+          vnet_peering_name = "custom-peering-name-to-hub" //We can create a custom peering name for the peering from the spoke 2 and to the hub
+
+          subnet_objects = [
+            {
+              //Default subnet config
+            }
+          ]
+        }
+      }
+    ]
+  }
+
+  providers = {
+    azurerm.spoke = azurerm.spoke2 //We use spoke2 provider context here, BUT SAME HUB CONTEXT
+    azurerm.hub = azurerm.hub
+  }
+}
+
+//TF Plan output
+Plan: 5 to add, 0 to change, 0 to destroy.
+
+//BOTH spoke 1 and 2 are now linked via peerings to the HUB and ALL 3 elements in the topology are in different subscriptions. EVEN the spoke defined within the hub.
 ```
 
 [Back to Examples](#examples-different-subs-only-newest-version-only)
 
 ### (3) Deploy hub and spokes with custom settings
+This example expands on the idea from example 2 - The use of multiple module calls to allow the creation of multiple spokes in different subscriptions. 
+
+In this example we focus on a more custom configuration. Its very important to node that all custom configuration when it comes to all the attributes defined in "parameters" Around 95% has the exact same behaviour as for the module in version 1.0.0.
+
+Because we split the module calls, we MUST be aware of the "default behaviour" Of how the module creates all the address spaces / CIDR´s for each virtual vnet, especially the spoke vnets - This will make more sense in the example
+
+We will define both Firewall, VPN and more below.
+
+```hcl
+//Creating 3 providers, 2 custom for the spokes, and the hub will use default context
+
+//Will be hub
+provider "azurerm" {
+  features {} //Will not define alias nor subcription_id for the default provider - Instead we rely on command line az logn for that
+}
+
+//Will be spoke 1
+provider "azurerm" {
+  features {}
+  alias = "spoke1"
+  subscription_id = "<Subscription_id_1>"
+}
+
+//Will be spoke 2
+provider "azurerm" {
+  features {}
+  alias = "spoke1"
+  subscription_id = "<Subscription_id_2>"
+}
+
+//Deploy the module for the hub ALONE FIRST - NOTICE the larger comment block as its very important information about the module behaviour
+module "hub_by_itself" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+
+  topology_object = {
+    name_prefix = "contoso" //This naming injection will only affect hub resources and NOT any spokes linked to it OUTSIDE of this module call
+    env_name = "prod"
+    project_name = "connectivity"
+
+    hub_object = {
+      location = "northeurope" //Effects any sub component that are part of the hub
+
+      network = {
+
+        address_spaces = ["172.16.0.0/16"]
+        vnet_spoke_address_spaces = ["10.0.1.0/24", "192.168.0.0/16"] //In order for the module during the creation of Firewall rules, it must know the comming spoke vnet address spaces AHEAD of time
+        //As the hub must be deployed alone first, its recommended to use static values for this attribute
+        //The first address space in the attribute comes from using a default config for spoke 1´s network address spaces, but for spoke 2, we configure a custom address space
+        //There is a very important reason for this and it all comes down to how the module behaves when all the automatic subnetting is being done
+        //The module always calculates address spaces for spokes (default behaviour) by starting with a /24 and x.x.1.x and then incrementing by 1
+        //The problem then arrises when 2 different module calls are made which both create 1 to many spokes - As BOTH SPOKE module calls will SUBNET THE SAME WAY which causes collisions between the vnets when peering
+        //To avoid this issue, we can take FULL control over all address spaces being created for the spoke vnets - We can even control each single subnet´s address prefix if we want to
+
+        firewall = {
+          no_internet = true //Will stop the module from creating a Firewall rule ALLOW to 443, 80 and 53 for any spoke vnet
+          log_diag_name = "custom-diag-settings-name"
+          pip_name = "custom-fw-pip-name" //Overwrites naming injection defined in the top level object
+          //Rest default
+        }
+
+        vpn = {
+          pip_name = "gw-custom-pip-name" //Overwrites naming injection defined in the top level object
+          //Rest default
+        }
+
+        //Because we define both the VPN and FW objects, we must add the required Microsoft defined subnet names
+        subnet_objects = [
+          {
+            name = "AzureFirewallSubnet"
+            use_last_subnet = true //Module will CIDR subnet /26 the last possible subnet from the custom defined hub vnet address space of ["172.16.0.0/16"]
+          },
+          {
+            name = "GatewaySubnet" //By not defining an attribute to tell the module how to subnet CIDR this subnet´s address space, the module will use the first possible CIDR of the hub vnet address space
+          }
+        ]
+      }
+    }
+    //NO SPOKE OBJECTS DEFINED HERE
+  }
+
+  providers = {
+    azurerm.spoke = azurerm
+    azurerm.hub = azurerm.hub
+  }
+}
+
+//TF Plan output
+Plan: 10 to add, 0 to change, 0 to destroy.
+
+//Defining spoke 1 with default values - This means for the attribute in the hub module call the attribute "vnet_spoke_address_spaces" The vnet for the spoke created will be default as in ["10.0.1.0/24"]
+//Spoke 1 and spoke 2 can be deployed at the same time - ONLY the hub MUST be deployed ahead of time
+module "spoke_1_simple" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+
+  topology_object = {
+    
+    hub_object = {
+      network = {
+        vnet_resource_id = values(module.hub_by_itself.vnet_return_objects)[0].id //To link the spoke to the hub
+      }
+    }
+
+    spoke_objects = [
+      {
+        network = {
+          
+          subnet_objects = [
+            {
+              name = "subnet_1"
+              use_last_subnet = true
+            },
+            {
+              name = "subnet_2"
+              use_first_subnet = true //Just to showcase that we can easily make the first subnet use the last possible CIDR block and the last subnet use the first
+            }
+          ]
+        }
+      }
+    ]
+  }
+
+  providers = {
+    azurerm.spoke = azurerm.spoke1
+    azurerm.hub = azurerm.hub
+  }
+}
+
+//Defining spoke2 - Here we can no longer use the default address spacing created by the module, as the default address spaces are already used by spoke 1
+module "spoke_2_advanced" {
+  source = "./.."
+
+  topology_object = {
+    name_suffix = "fabrikam"
+    //Not using env_name and project_name BUT WE CAN ÌF WE WANT TO
+
+    subnets_cidr_notation = "/27" //ALL SUBNETS NOT HAVING AN CUSTOM ADDRESS PREFIX WILL USE THIS CIDR
+    //When using a custom CIDR for subnets make sure to know whether the overall address space for the vnets can contain such subnet size
+    //Also as it is with subnetting, the smaller CIDR the less amount of subnets can be created
+    //If we end up defining more subnets than the CIDR can hold, terraform will fail
+    
+    hub_object = {
+      network = {
+        vnet_resource_id = values(module.hub_by_itself.vnet_return_objects)[0].id //To link the spoke to the hub
+
+        fw_resource_id = values(module.hub_by_itself.fw_return_object)[0].id  //Because the connected hub has the Firewall created AND by default an internet opening for spoke vnets are created we MUST parse either the id of the firewall or its private ip
+        //If we do not parse this information, the spoke cannot take part of the Firewall rule and will have NO internet
+      }
+    }
+
+    spoke_objects = [
+      {
+        network = {
+
+          address_spaces = ["192.168.0.0/16"] //To avoid a CIDR subnetting collision with the spoke 1 defined above with default values
+          
+          subnet_objects = [
+            {
+              name = "subnet_1"
+              use_last_subnet = true
+              address_prefix = ["192.168.99.0/24"] //Ignores ALL automatic subneting EVEN the forced attribute "subnets_cidr_notation" Of /27 defined in the top level object
+            },
+            {
+              name = "subnet_2"
+              use_first_subnet = true //Just to showcase that we can easily make the first subnet use the last possible CIDR block and the last subnet use the first
+            }
+          ]
+        }
+      }
+    ]
+  }
+
+  providers = {
+    azurerm.spoke = azurerm.spoke2 //Using the 2nd spoke´s provider config
+    azurerm.hub = azurerm.hub
+  }
+}
+
+//TF Plan output of both SPOKE 1 and SPOKE 2 TOGETHER
+
+```
 
 ## Known errors
 This chapter is all about understanding the different errors that you can encounter while using the module. Use this chapter as a reference to different "error" Codes and their solution
