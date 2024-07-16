@@ -3,6 +3,7 @@ terraform {
     azurerm = {
       source = "hashicorp/azurerm"
       version = ">=3.99.0"
+      configuration_aliases = [ azurerm.hub, azurerm.spoke ]
     }
   }
 }
@@ -10,15 +11,26 @@ terraform {
 ################################################################################################
 ######################################### NOTES ################################################
 ##                                                                                            ##
+##  Date: 17-07-2024                                                                          ## 
+##  State: Version 2.0.0                                                                      ##
+##  Missing: General clean up of local variable definitions                                   ##
+##  Improvements (1): Making it possible to create hub / spokes in different Azure contexts   ##                                                                                
+##  =||= (2): Making comments / MARK:´s in the file for clean up                              ## 
+##  =||= (3): N/A                                                                             ##
+##  Future improvements: N/A                                                                  ##
+##                                                                                            ##
+## -------------------------------------------------------------------------------------------##
+##                                                                                            ##
 ##  Date: 04-06-2024                                                                          ## 
-##  State: Version 1.0                                                                        ##
+##  State: Version 1.0.0                                                                      ##
 ##  Missing: As part of version 1.1, more support for the use of custom names will be added   ##
 ##  Improvements (1): N/A                                                                     ##                                                                                
 ##  =||= (2): N/A                                                                             ## 
 ##  =||= (3): N/A                                                                             ##
-##  Future improvements: See missing or the readme for details                                ##
+##  Future improvements: N/A                                                                  ##
 ##                                                                                            ##
-## -------------------------------------------------------------------------------------------##
+################################################################################################
+
 
 locals {
 
@@ -26,8 +38,9 @@ locals {
   ###### SIMPLE VARIABLES TRANSFORMATION #####
   ############################################ 
 
+  //MARK: DEFINE DEFAULT VALUES
   tp_object = var.topology_object
-  tenant_id = data.azurerm_client_config.context_object.tenant_id
+  tenant_id = can(data.azurerm_client_config.context_object[0].tenant_id) ? data.azurerm_client_config.context_object[0].tenant_id : null
   vnet_cidr_notation = can(local.tp_object.hub_object.network.address_spaces[0]) ? "/${split("/", local.tp_object.hub_object.network.address_spaces[0])[1]}" : "/24"
   vnet_cidr_notation_number_difference = tonumber(replace(local.vnet_cidr_notation, "/", "")) < 24 ? 32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - 8 : tonumber(replace(local.vnet_cidr_notation, "/", "")) > 24 ? (32 - tonumber(replace(local.vnet_cidr_notation, "/", "")) - 8) * -1 : 0
   vnet_cidr_total = ["10.0.0.0/16"]
@@ -35,7 +48,7 @@ locals {
   vpn_gateway_sku = "VpnGw2"
   create_firewall = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.firewall != null ? true : false
   create_vpn = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vpn != null ? true : false
-  rg_count = 1 + length(local.tp_object.spoke_objects)
+  rg_count = local.tp_object.hub_object.network.vnet_spoke_address_spaces != null || !can(length(local.tp_object.spoke_objects)) ? 1 : can(length(local.tp_object.spoke_objects)) ? length(local.tp_object.spoke_objects) + 1 : 1
   env_name = local.tp_object.env_name != null ? local.tp_object.env_name : ""
   project_name = local.tp_object.project_name != null ? local.tp_object.project_name : "" 
   name_fix_pre = local.tp_object.name_prefix != null ? true : false
@@ -51,6 +64,7 @@ locals {
   ###### VARIABLE OBJECTS TRANSFORMATION #####
   ############################################
 
+//MARK: OBJECT TRANSFORMATION
   rg_objects = {for each in [for a, b in range(local.rg_count) : {
     name = replace(replace(replace((a == local.rg_count - 1 && local.tp_object.hub_object.rg_name != null ? local.tp_object.hub_object.rg_name : local.rg_name != null && a == (local.rg_count - 1) ? local.rg_name : local.tp_object.spoke_objects[a].rg_name != null ? local.tp_object.spoke_objects[a].rg_name : replace(local.rg_name, "hub", "spoke${a + 1}")), "^-.+|.+-$", "/"), "/(^-|-$)/", ""), "--", "-")
     location = local.tp_object.location != null ? local.tp_object.location : a == local.rg_count - 1 && local.tp_object.hub_object.location != null ? local.tp_object.hub_object.location : !can(local.tp_object.spoke_objects[a].location) ? "westeurope" : local.tp_object.spoke_objects[a].location != null ? local.tp_object.spoke_objects[a].location : "westeurope"
@@ -88,29 +102,29 @@ locals {
     }] : null
   }]
 
-  peering_objects_from_hub_to_spokes = [for a, b in range(length(local.vnet_objects_pre) -1) : {
-    name = local.tp_object.hub_object.network == null ? "peering-from-hub-to-spoke${a + 1}" : local.tp_object.hub_object.network.vnet_peering_name != null ? "${local.tp_object.hub_object.network.vnet_peering_name}${a + 1}" : "peering-from-hub-to-spoke${a + 1}"
-    vnet_name = [for c, d in local.vnet_objects_pre : d.name if d.is_hub][0]
+  peering_objects_from_hub_to_spokes = local.tp_object.hub_object.network.vnet_spoke_address_spaces != null || can(length(local.tp_object.spoke_objects)) ? [for a, b in range(length(local.vnet_objects_pre) -1) : {
+    name = local.tp_object.hub_object.network.vnet_peering_name != null ? "${local.tp_object.hub_object.network.vnet_peering_name}${a + 1}" : "peering-from-hub-to-spoke-${split("-", data.azurerm_client_config.context_spoke_object[0].subscription_id)[0]}-${a + 1}"
+    vnet_name = local.tp_object.hub_object.network.vnet_resource_id == null ? [for c, d in local.vnet_objects_pre : d.name if d.is_hub][0] : null
     tags = a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)
     remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == local.vnet_objects_pre[a].address_spaces[0]][0]
     allow_virtual_network_access = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.hub_object.network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.hub_object.network == null ? true : local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.hub_object.network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = true
     use_remote_gateways = false
-  }]
+  }] : []
 
   peering_objects_from_spokes_to_hub = [for a, b in range(length(local.vnet_objects_pre) -1) : {
-    name = local.tp_object.spoke_objects[a].network == null ? "peering-from-spoke${a + 1}-to-hub" : local.tp_object.spoke_objects[a].network.vnet_peering_name != null ? "${local.tp_object.spoke_objects[a].network.vnet_peering_name}${a}" : "peering-from-spoke${a + 1}-to-hub"
+    name = local.tp_object.spoke_objects[a].network.vnet_peering_name != null ? "${local.tp_object.spoke_objects[a].network.vnet_peering_name}${a}" : "peering-from-spoke${a + 1}-to-hub"
     vnet_name = local.vnet_objects_pre[a].name
     tags = a == local.rg_count -1 ? merge(local.tp_object.tags, local.tp_object.hub_object.network.tags) : merge(local.tp_object.tags, local.tp_object.spoke_objects[a].network.tags)
-    remote_virtual_network_id = [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == ([for e, f in local.vnet_objects_pre : f.address_spaces[0] if f.is_hub])[0]][0]
+    remote_virtual_network_id = local.tp_object.hub_object.network.vnet_resource_id != null ? local.tp_object.hub_object.network.vnet_resource_id : [for c, d in local.vnet_return_helper_objects : d.id if d.address_space[0] == ([for e, f in local.vnet_objects_pre : f.address_spaces[0] if f.is_hub])[0]][0]
     allow_virtual_network_access = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_virtual_network_access : true
     allow_forwarded_traffic = local.tp_object.spoke_objects[a].network == null ? true : local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic != null ? local.tp_object.spoke_objects[a].network.vnet_peering_allow_forwarded_traffic : true
     allow_gateway_transit = false
     use_remote_gateways = local.gw_object != {} ? true : false
   }]
   
-  route_table_objects_pre = (local.wan_object == {} && !can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
+  route_table_objects_pre = (local.wan_object == {} && !can(local.tp_object.hub_object.network.firewall)) ? [] : local.tp_object.hub_object.network.firewall != null || local.tp_object.hub_object.network.fw_resource_id != null || local.tp_object.hub_object.network.fw_private_ip != null ? [for a, b in flatten([for c, d in values(local.subnet_objects) : d if d.vnet_name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : {
     name = "rt-from-${b.name}-to-hub"
     vnet_name = b.vnet_name
     subnet_name = b.name
@@ -119,7 +133,7 @@ locals {
       name = a == 0 ? "all-internet-traffic-from-subnet-to-hub-first" : "all-internal-traffic-from-subnet-to-hub-first"
       address_prefix = a == 0 ? "0.0.0.0/0" : b.address_prefix[0]
       next_hop_type = "VirtualAppliance"
-      next_hop_in_ip_address = local.fw_return_helper_object[0].ip_configuration[0].private_ip_address
+      next_hop_in_ip_address = local.tp_object.hub_object.network.fw_resource_id != null ? data.azurerm_firewall.firewall_hub_object[0].ip_configuration[0].private_ip_address : local.tp_object.hub_object.network.fw_private_ip != null ? local.tp_object.hub_object.network.fw_private_ip : local.fw_return_helper_object[0].ip_configuration[0].private_ip_address
     }]
   }] : []
 
@@ -199,7 +213,7 @@ locals {
   }] : each.name => each} : {}
 
   fw_diag_object = !can(local.tp_object.hub_object.network.firewall.no_logs) ? {} : local.tp_object.hub_object.network.firewall.no_logs == null ? {for each in [for c, d in range(1) : {
-    name = "fw-logs-to-log-analytics" #Static
+    name = local.tp_object.hub_object.network.firewall.log_diag_name != null ? local.tp_object.hub_object.network.firewall.log_diag_name : "fw-logs-to-log-analytics"
     log_analytics_destination_type = "Dedicated" #Static
     category_group = "AllLogs" #Static
   }] : each.name => each} : {}
@@ -208,31 +222,41 @@ locals {
       name = a == 0 ? "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET" : "Allow-RDP-SSH-FROM-MGMT-TO-SPOKES"
       priority = a == 0 ? 100 : 200
       action = "Allow"
-      source_addresses = a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : can([for c, d in values(local.subnet_objects) : d.address_prefix if length(regexall("mgmt|management", lower(d.name))) > 0][0]) ? [for c, d in values(local.subnet_objects) : d.address_prefix if length(regexall("mgmt|management", lower(d.name))) > 0][0] : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name == [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
+      source_addresses = a == 0 && local.tp_object.hub_object.network.vnet_spoke_address_spaces != null ? local.tp_object.hub_object.network.vnet_spoke_address_spaces : a == 0 ? flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]]) : can([for c, d in values(local.subnet_objects) : d.address_prefix if length(regexall("mgmt|management", lower(d.name))) > 0][0]) ? [for c, d in values(local.subnet_objects) : d.address_prefix if length(regexall("mgmt|management", lower(d.name))) > 0][0] : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name == [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
       destination_ports = a == 0 ? ["53", "80", "443"] : ["22", "3389"]
-      destination_addresses = a == 0 ? ["0.0.0.0/0"] : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
+      destination_addresses = a == 0 ? ["0.0.0.0/0"] : local.tp_object.hub_object.network.vnet_spoke_address_spaces != null ? local.tp_object.hub_object.network.vnet_spoke_address_spaces : flatten([for c, d in local.vnet_objects_pre : d.address_spaces if d.name != [for e, f in local.vnet_objects_pre : f.name if e == local.rg_count -1][0]])
       protocols = a == 0 ? ["TCP", "UDP"] : ["TCP"]
       vnet_name = [for c, d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]
   }] : each.name => each} : {}
+
+  //MARK: SEPERATING HUB - SPOKES
   
-  fw_rule_objects = !can(local.tp_object.hub_object.network.firewall.no_internet) ? {} : local.tp_object.hub_object.network.firewall.no_internet != null ? {for each in [values(local.fw_rule_objects_pre)[1]] : each.name => each} : local.fw_rule_objects_pre
-  vnet_objects = {for each in local.vnet_objects_pre : each.name => each}
+  rg_hub_object = local.tp_object.hub_object.network.vnet_resource_id == null ? {for each in [values(local.rg_objects)[0]] : each.name => each} : {}
+  rg_spoke_objects = can(length(local.tp_object.spoke_objects)) ? {for each in flatten([for a, b in values(local.rg_objects) : b if b.name != values(local.rg_objects)[0].name]) : each.name => each} : {}
+  vnet_hub_object = local.tp_object.hub_object.network.vnet_resource_id == null ? {for each in flatten([for a, b in local.vnet_objects_pre : b if a == local.rg_count -1]) : each.name => each} : {}
+  vnet_spoke_objects = can(length(local.tp_object.spoke_objects)) ? {for each in flatten([for a, b in local.vnet_objects_pre : b if a != local.rg_count -1]) : each.name => each} : {}
   subnet_objects = {for each in (flatten(local.subnet_objects_pre.*.subnets)) : each.name_unique => each}
-  peering_objects = {for each in flatten([local.peering_objects_from_hub_to_spokes, local.peering_objects_from_spokes_to_hub]) : each.name => each }
+  subnet_hub_objects = {for each in [for a, b in (flatten(local.subnet_objects_pre.*.subnets)) : b if b.vnet_name == [for c, d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]] : each.name_unique => each}
+  subnet_spoke_objects = {for each in [for a, b in (flatten(local.subnet_objects_pre.*.subnets)) : b if b.vnet_name != [for c, d in local.vnet_objects_pre : d.name if c == local.rg_count -1][0]] : each.name_unique => each}
+  peering_hub_objects = {for each in local.peering_objects_from_hub_to_spokes : each.name => each }
+  peering_spoke_objects = {for each in local.peering_objects_from_spokes_to_hub : each.name => each }
   route_table_objects = {for each in local.route_table_objects_pre : each.name => each}
   pip_objects = {for each in [for a, b in flatten([local.pip_objects_pre, local.pip_objects_pre_2]) : b if b != []] : each.name => each}
+  fw_rule_objects = !can(local.tp_object.spoke_objects[0].network.subnet_objects[0]) && local.tp_object.hub_object.network.vnet_spoke_address_spaces == null ? {} : !can(local.tp_object.hub_object.network.firewall.no_internet) ? {} : local.tp_object.hub_object.network.firewall.no_internet != null && local.tp_object.hub_object.network.vnet_spoke_address_spaces != null || local.tp_object.hub_object.network.firewall.no_internet != null && can(local.tp_object.spoke_objects[0].network.subnet_objects[0]) ? {for each in [values(local.fw_rule_objects_pre)[1]] : each.name => each} : !can(local.tp_object.hub_object.network.firewall.no_internet) ? {} : local.fw_rule_objects_pre
 
   ############################################
   ########## VARIABLE RETURN OBJECTS #########
   ############################################
 
+  //MARK: RETURN VARIABLES
+
   rg_return_helper_objects = local.rg_return_objects != {} ? values(local.rg_return_objects) : []
-  rg_return_objects = azurerm_resource_group.rg_object
-  vnet_return_objects = azurerm_virtual_network.vnet_object
+  rg_return_objects = merge(azurerm_resource_group.rg_hub_object, azurerm_resource_group.rg_spoke_object)
+  vnet_return_objects = merge(azurerm_virtual_network.vnet_hub_object, azurerm_virtual_network.vnet_spoke_object)
   vnet_return_helper_objects = local.vnet_return_objects != {} ? values(local.vnet_return_objects) : []
-  subnet_return_objects = azurerm_subnet.subnet_object
-  subnet_return_helper_objects = azurerm_subnet.subnet_object != {} ? values(local.subnet_return_objects) : []
-  peering_return_objects = azurerm_virtual_network_peering.peering_object
+  subnet_return_objects = merge(azurerm_subnet.subnet_hub_object, azurerm_subnet.subnet_spoke_object)
+  subnet_return_helper_objects = local.subnet_return_objects != {} ? values(local.subnet_return_objects) : []
+  peering_return_objects = merge(azurerm_virtual_network_peering.peering_hub_object, azurerm_virtual_network_peering.peering_spoke_object)
   pip_return_object = azurerm_public_ip.pip_object
   pip_return_helper_objects = azurerm_public_ip.pip_object != {} ? values(azurerm_public_ip.pip_object) : []
   gw_return_object = azurerm_virtual_network_gateway.gw_vpn_object
@@ -249,22 +273,57 @@ locals {
   ############ DATA DEFINITIONS ##############
   ############################################
 
+//MARK: USER CONTEXT HUB
+
 data "azurerm_client_config" "context_object"{
+  count = local.create_vpn ? 1 : 0
+  provider = azurerm.hub
+}
+
+//MARK: USER CONTEXT SPOKE
+data "azurerm_client_config" "context_spoke_object" {
+  count = can(length(local.tp_object.spoke_objects)) ? 1 : 0
+
+  provider = azurerm.spoke
+}
+
+//MARK: FW PRIVATE IP
+data "azurerm_firewall" "firewall_hub_object" {
+  count = local.tp_object.hub_object.network.fw_resource_id != null ? 1 : 0
+  resource_group_name = split("/", local.tp_object.hub_object.network.fw_resource_id)[4]
+  name = split("/", local.tp_object.hub_object.network.fw_resource_id)[8]
+
+  provider = azurerm.hub
 }
 
   ############################################
   ############ RESOURCE DEFINITIONS ##########
   ############################################
 
-resource "azurerm_resource_group" "rg_object" { 
-  for_each = local.rg_objects
+
+//MARK: RESOURCE GROUP - HUB
+resource "azurerm_resource_group" "rg_hub_object" { 
+  for_each = local.rg_hub_object
   name = each.key
   location = each.value.location
   tags = each.value.tags
+
+  provider = azurerm.hub
 }
 
-resource "azurerm_virtual_network" "vnet_object" {
-  for_each = local.vnet_objects
+//MARK: RESOURCE GROUP´S - SPOKES
+resource "azurerm_resource_group" "rg_spoke_object" {
+  for_each = local.rg_spoke_objects
+  name = each.key
+  location = each.value.location
+  tags = each.value.tags
+
+  provider = azurerm.spoke
+}
+
+//MARK: VNET - HUB
+resource "azurerm_virtual_network" "vnet_hub_object" {
+  for_each = local.vnet_hub_object
   name = each.key
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.key][0]
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.key][0]
@@ -280,8 +339,35 @@ resource "azurerm_virtual_network" "vnet_object" {
     }
   }
 
-  depends_on = [ azurerm_resource_group.rg_object ]
+  depends_on = [ azurerm_resource_group.rg_hub_object]
+
+  provider = azurerm.hub
 }
+
+//MARK: VNET´S - SPOKES
+resource "azurerm_virtual_network" "vnet_spoke_object" {
+  for_each = local.vnet_spoke_objects
+  name = each.key
+  location = [for a in local.rg_objects : a.location if a.vnet_name == each.key][0]
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.key][0]
+  address_space = each.value.address_spaces
+  dns_servers = each.value.dns_servers
+  tags = each.value.tags
+  
+  dynamic "ddos_protection_plan" {
+    for_each = each.value.ddos_protection_plan != null ? {for a in [each.value.ddos_protection_plan] : a.id => a} : {}
+    content {
+      id = ddos_protection_plan.key
+      enable = ddos_protection_plan.value.enable
+    }
+  }
+
+  depends_on = [ azurerm_resource_group.rg_spoke_object ]
+
+  provider = azurerm.spoke
+}
+
+//MARK: vWAN (NOT DONE)
 
 resource "azurerm_virtual_wan" "wan_object" {
   for_each = local.wan_object
@@ -290,8 +376,9 @@ resource "azurerm_virtual_wan" "wan_object" {
   resource_group_name = each.value.resource_group_name
 }
 
-resource "azurerm_subnet" "subnet_object" {
-  for_each = local.subnet_objects
+//MARK: SUBNETS - HUB
+resource "azurerm_subnet" "subnet_hub_object" {
+  for_each = local.subnet_hub_objects
   name = each.value.name
   resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
   virtual_network_name = each.value.vnet_name
@@ -311,11 +398,58 @@ resource "azurerm_subnet" "subnet_object" {
     }
   }
   
-  depends_on = [ azurerm_virtual_network.vnet_object ]
+  depends_on = [ azurerm_virtual_network.vnet_hub_object ]
+
+  provider = azurerm.hub
 }
 
-resource "azurerm_virtual_network_peering" "peering_object" {
-  for_each = local.peering_objects
+//MARK: SUBNETS - SPOKES
+resource "azurerm_subnet" "subnet_spoke_object" {
+  for_each = local.subnet_spoke_objects
+  name = each.value.name
+  resource_group_name = [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]
+  virtual_network_name = each.value.vnet_name
+  address_prefixes = each.value.address_prefix
+  service_endpoints = can(each.value.service_endpoints) ? each.value.service_endpoints : null
+  service_endpoint_policy_ids = can(each.value.service_endpoint_policy_ids) ? each.value.service_endpoint_policy_ids : null
+
+  dynamic "delegation" {
+    for_each = each.value.delegation
+    content {
+      name = delegation.value.name
+
+      service_delegation {
+        name = delegation.value.service_name
+        actions = delegation.value.actions
+      }
+    }
+  }
+  
+  depends_on = [ azurerm_virtual_network.vnet_spoke_object ]
+
+  provider = azurerm.spoke
+}
+
+//MARK: PEERINGS - HUB
+resource "azurerm_virtual_network_peering" "peering_hub_object" {
+  for_each = local.peering_hub_objects
+  name = each.key
+  virtual_network_name = each.value.vnet_name != null ? each.value.vnet_name : split("/", local.tp_object.hub_object.network.vnet_resource_id)[8]
+  remote_virtual_network_id = each.value.remote_virtual_network_id
+  resource_group_name = can([for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0]) ? [for a in local.rg_objects : a.name if a.vnet_name == each.value.vnet_name][0] : split("/", local.tp_object.hub_object.network.vnet_resource_id)[4]
+  allow_virtual_network_access = each.value.allow_virtual_network_access
+  allow_forwarded_traffic = each.value.allow_forwarded_traffic
+  allow_gateway_transit = each.value.allow_gateway_transit
+  use_remote_gateways = each.value.use_remote_gateways
+
+  depends_on = [ azurerm_virtual_network.vnet_hub_object,  azurerm_virtual_network.vnet_spoke_object]
+
+  provider = azurerm.hub
+}
+
+//MARK: PEERINGS - SPOKES
+resource "azurerm_virtual_network_peering" "peering_spoke_object" {
+  for_each = local.peering_spoke_objects
   name = each.key
   virtual_network_name = each.value.vnet_name
   remote_virtual_network_id = each.value.remote_virtual_network_id
@@ -325,9 +459,12 @@ resource "azurerm_virtual_network_peering" "peering_object" {
   allow_gateway_transit = each.value.allow_gateway_transit
   use_remote_gateways = each.value.use_remote_gateways
 
-  depends_on = [ azurerm_monitor_diagnostic_setting.fw_diag_object ]
+  depends_on = [ azurerm_virtual_network.vnet_hub_object,  azurerm_virtual_network.vnet_spoke_object]
+
+  provider = azurerm.spoke
 }
 
+//MARK: ROUTE TABLES - SPOKES
 resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
   for_each = local.route_table_objects
   name = each.value.name
@@ -335,15 +472,21 @@ resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
   location = [for a in local.rg_objects : a.location if a.vnet_name == each.value.vnet_name][0]
   route = each.value.route
   
-  depends_on = [ azurerm_resource_group.rg_object ]
+  depends_on = [ azurerm_resource_group.rg_spoke_object ]
+
+  provider = azurerm.spoke
 }
 
+//MARK: ROUTE ASSO - SPOKES
 resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
   for_each = local.route_table_objects
   route_table_id = [for a, b in local.rt_return_helper_objects : b.id if b.name == each.key][0]
   subnet_id = [for a, b in local.subnet_return_helper_objects : b.id if b.name == each.value.subnet_name][0]
+
+  provider = azurerm.spoke
 }
 
+//MARK: PUBLIC IP´S - HUB
 resource "azurerm_public_ip" "pip_object" {
   for_each = local.pip_objects
   name = each.key
@@ -354,9 +497,12 @@ resource "azurerm_public_ip" "pip_object" {
   allocation_method = each.value.allocation_method
   tags = each.value.tags
 
-  depends_on = [ azurerm_resource_group.rg_object ]
+  depends_on = [ azurerm_resource_group.rg_hub_object]
+
+  provider = azurerm.hub
 }
 
+//MARK: VPN - HUB
 resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
   for_each = local.gw_object
   name = each.key
@@ -382,8 +528,13 @@ resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
     vpn_client_protocols = each.value.vpn_client_configuration.vpn_client_protocols
     vpn_auth_types = each.value.vpn_client_configuration.vpn_auth_types
   }
+
+  depends_on = [ azurerm_resource_group.rg_hub_object]
+
+  provider = azurerm.hub
 }
 
+//MARK: FIREWALL - HUB
 resource "azurerm_firewall" "fw_object" {
   for_each = local.fw_object
   name = each.key
@@ -406,8 +557,13 @@ resource "azurerm_firewall" "fw_object" {
       virtual_hub_id = virtual_hub.key
     }
   }
+
+  depends_on = [ azurerm_resource_group.rg_hub_object]
+
+  provider = azurerm.hub
 }
 
+//MARK: FIREWALL RULE´S - HUB
 resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
   for_each = local.fw_rule_objects
   name = each.key
@@ -423,8 +579,13 @@ resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
     destination_ports = each.value.destination_ports
     protocols = each.value.protocols
   }
+
+  depends_on = [ azurerm_firewall.fw_object ]
+
+  provider = azurerm.hub
 }
 
+//MARK: LOGSPACE - HUB
 resource "azurerm_log_analytics_workspace" "fw_log_object" {
   for_each = local.fw_log_object
   name = each.key
@@ -434,8 +595,11 @@ resource "azurerm_log_analytics_workspace" "fw_log_object" {
   tags = each.value.tags
 
   depends_on = [ azurerm_firewall.fw_object ]
+
+  provider = azurerm.hub
 }
 
+//MARK: DIAG SETTINGS - HUB
 resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   for_each = local.fw_diag_object
   name = each.key
@@ -448,4 +612,6 @@ resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
   }
 
   depends_on = [ azurerm_firewall.fw_object ]
+
+  provider = azurerm.hub
 }

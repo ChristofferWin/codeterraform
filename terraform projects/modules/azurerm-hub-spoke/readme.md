@@ -20,6 +20,7 @@ Welcome to the Azure Hub-Spoke Terraform module. This module is designed to make
 1. Deploy both hub & spokes to the same Azure Subscription
 2. Deploy the hub in 1 subscription and 1 to MANY spokes in 1 Azure subscription
    1. To deploy spokes in different Subscriptions, simply define more module calls. See below for details!
+   2. ATTENTION: When running an isolated x amount of spoke module calls - Make sure to make use of naming attributes to make the spoke names unique between each other!
 
 The module behaves a little different & has different requirements depending on the mode that is used - The mode is determined by the VERSION of the module that is called. See the [Getting Started](#getting-started) for details on that.
 
@@ -367,9 +368,9 @@ Its possible to define VERY little attributes on the top level "topology object"
         
         1. name = (optional) A string defining the custom name of the Azure Subnet (Overwrites any naming injection defined in the top level object). If you include the segnemt: "mgmt" OR "management" the subnet will be used as the ONLY subnet to be allowed access to rdp / ssh for spoke vms via the firewall rule, if no subnet name is custom and includes the segnment, the entire vnet hub address space will be used as the source address for the firewall rule (This ONLY has impact if the firewall is also created) See the [Use a specific subnet as the ONLY allowed subnet to use RDP and SSH to spoke vms](#3-use-a-specific-subnet-as-the-only-allowed-subnet-to-use-rdp-and-ssh-to-spoke-vms)
         
-        2. use_first_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the START of the CIDR block used in the deployment. See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) for more details
+        2. use_first_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the START of the CIDR block used in the deployment. See the [Examples](#examples-different-subs-only) for more details
 
-        3. use_last_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the END of the CIDR block used in the deployment. See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) for more details
+        3. use_last_subnet = (optional) A bool to use in case the attribute "address_prefix" is NOT used - Tells the module to create a subnet CIDR from the END of the CIDR block used in the deployment. See the [Examples](#examples-different-subs-only) for more details
 
         4. address_prefix = (optional) An address space specifically defined for the subnet. Its NOT recommended to define this manually in case the overall vnets "address_spaces" Attribute is NOT populated.
 
