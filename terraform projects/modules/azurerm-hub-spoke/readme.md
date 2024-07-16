@@ -29,7 +29,7 @@ I plan to release multiple blog posts about the use of this module in different 
 
 I really appriciate you - I would really appriciate any criticism / feedback, possible feature improvements and overall good karma :)
 
-Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module, see the [Examples](#examples) for the actual code.
+Just below here, two different visual examples of types of hub-spokes can be seen. Both can be directly deployed with the module.
 
 <b>Example 1: Deployment of a simple hub-spoke</b>
 </br>
