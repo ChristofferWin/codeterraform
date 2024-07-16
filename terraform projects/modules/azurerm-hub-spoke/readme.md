@@ -8,8 +8,8 @@
 4. [Versions](#versions)
 5. [Parameters](#parameters)
 6. [Return Values](#return-values)
-7. [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only)
-8. [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-1.0.0-different-subs-only)
+7. [Examples version 1.0.0 SAME SUB ONLY](#examples-same-sub-only)
+8. [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-different-subs-only)
 9. [Known errors](#known-errors)
 
 ## Description
@@ -357,15 +357,17 @@ Its possible to define VERY little attributes on the top level "topology object"
 
         5. log_name = (optional) A string defining the custom name of the Azure Log Analytics workspace resource (Overwrites any naming injection defined in the top level object)
 
-        6. log_daily_quota_gb = (optional) A number defining the daily quota in GB that can be injested into the Azure Log Analytics workspace. Defaults to -1 which means NO limit
+        6. log_diag_name = (optional) A string defining the custom name of the Azure Diagnostic settings name, defaults to "fw-logs-to-log-analytics"
 
-        7. no_logs = (optional) A bool to determine whether the module shall NOT create an Azure Log Analytics workspace and Azure Diagnostic settings for the Azure Firewall. Pr. default both resources will be created IF the Firewall is also created
+        7. log_daily_quota_gb = (optional) A number defining the daily quota in GB that can be injested into the Azure Log Analytics workspace. Defaults to -1 which means NO limit
 
-        8. no_internet = (optional) A bool to determine whether the specific Firewall Rule "ALLOW INTERNET FROM SPOKES" shall NOT be deployed. OBS. Using this bool is overwritten by the Bool "no_rules"
+        8. no_logs = (optional) A bool to determine whether the module shall NOT create an Azure Log Analytics workspace and Azure Diagnostic settings for the Azure Firewall. Pr. default both resources will be created IF the Firewall is also created
 
-        8. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
+        9. no_internet = (optional) A bool to determine whether the specific Firewall Rule "ALLOW INTERNET FROM SPOKES" shall NOT be deployed. OBS. Using this bool is overwritten by the Bool "no_rules"
 
-        9. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object) example for more details on tags
+        10. no_rules = (optional) A bool to determine whether the module shall NOT create Azure Firewall rules. Pr. default Azure Firewall network rules will be created IF the Firewall is also created. (The specific rules applied can be seen via [Advanced spoke](#description))
+
+        11. tags = (optional) A map of strings defining any tags to set for the Firewall - Since tags can be set on many different levels see the [Using tags at different levels of the topology object](#4-using-tags-at-different-levels-of-the-topology-object) example for more details on tags
     
     13. subnet_objects = (optional) A list og objects structured as:
         
@@ -386,7 +388,10 @@ Its possible to define VERY little attributes on the top level "topology object"
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
 Its possible to define VERY little attributes on the hub / spoke level of the "topology object" 
-See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-1.0.0-same-sub-only) For details
+See the [Examples SAME SUB ONLY](#examples-same-sub-only) For details
+
+[Examples version 1.0.0 SAME SUB ONLY](#examples-same-sub-only)
+8. [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-different-subs-only)
 
 ### Attributes on the "spoke_objects" level of the "topology object" (This is a list of objects described as topology object.spoke_objects[index] = [{}])
 1. network = (<b>required</b>) An object describing the network structure of the spoke (NOT REQUIRED IN VERSION 2.0.0 to allow ONLY creating a hub and then spokes seperately)
@@ -420,13 +425,12 @@ See below list of possible return values:
 8. log_return_object = object containing all the same return attributes as the provider => <a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/log_analytics_workspace.html#attributes-reference">Azurerm Log Analytics workspace</a>
 
 [Back to the top](#table-of-contents)
-## Examples version 1.0.0 SAME SUB ONLY
+## Examples SAME SUB ONLY
 <b>This section is split into 2 different sub sections:</b>
 
 - <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#simple-examples---separated-on-topics">Simple examples</a> = Meant to showcase how to deploy simple hub-spoke topologies
 - <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md#advanced-examples---seperated-on-topics">Advanced examples</a> = Meant to showcase how to deploy advanced hub-spoke topologies
 
-[Back to the top](#table-of-contents)
 
 ### Simple examples - Separated on topics
 1. [Deploy a simple hub and 2 spokes with minimum config](#1-Deploy-a-simple-hub-and-2-spokes-with-minimum-config)
@@ -665,7 +669,7 @@ Terraform will perform the following actions:
     }
 ```
 
-[Back to the Examples](#examples)
+[Back to the Examples](#examples-same-sub-only)
 ### (2) Simple hub-spoke and ready for Bastion
 Please pay close attention to the comments within the code-snippet below
 
@@ -812,7 +816,7 @@ Terraform will perform the following actions:
     }
 ```
 
-[Back to the Examples](#examples)
+[Back to the Examples](#examples-same-sub-only)
 ### (3) Using the subnet delegation filter attribute called service_name_pattern
 ```hcl
 module "using_subnet_delegation" {
@@ -961,7 +965,7 @@ Terraform will perform the following actions:
 
 <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/azurerm-hub-spoke.tf" target="_blank">source code of the module</a>
 
-[Back to the Examples](#examples)
+[Back to the Examples](#examples-same-sub-only)
 
 ### (4) Using tags at different levels of the topology object
 This example simply showcases all the possible levels of which to set tags in the "topology object"
@@ -1015,110 +1019,8 @@ All objects added is ONLY done so to make the code deployable - The important po
 //TF Plan output: (Notice how all the resources have BOTH the top level tags AND EITHER the vnet or rg tags depending on the resource type ofc)
 //In other words - If tags are defined under the root of "topology object" These will be inherited by almost all resource types
 Plan: 7 to add, 0 to change, 0 to destroy.
-Terraform will perform the following actions:
-
-  # module.tags_at_all_possible_levels.azurerm_resource_group.rg_object["rg-hub"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "westeurope"
-      + name     = "rg-hub"
-      + tags     = {
-          + "hub-rg-level-tags" = "tag2"
-          + "top-level-tags"    = "tag1"
-        }
-    }
-
-  # module.tags_at_all_possible_levels.azurerm_resource_group.rg_object["rg-spoke1"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "westeurope"
-      + name     = "rg-spoke1"
-      + tags     = {
-          + "spoke1-level-tags" = "tag4"
-          + "top-level-tags"    = "tag1"
-        }
-    }
-
-  # module.tags_at_all_possible_levels.azurerm_subnet.subnet_object["subnet1-0-unique-spoke1"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.1.0/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet1-spoke1"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "rg-spoke1"
-      + virtual_network_name                           = "vnet-spoke1"
-    }
-
-  # module.tags_at_all_possible_levels.azurerm_virtual_network.vnet_object["vnet-hub"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "10.0.0.0/24",
-        ]
-      + dns_servers         = (known after apply)
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "westeurope"
-      + name                = "vnet-hub"
-      + resource_group_name = "rg-hub"
-      + subnet              = (known after apply)
-      + tags                = {
-          + "hub-vnet-level-tags" = "tag3"
-          + "top-level-tags"      = "tag1"
-        }
-    }
-
-  # module.tags_at_all_possible_levels.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "10.0.1.0/24",
-        ]
-      + dns_servers         = (known after apply)
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "westeurope"
-      + name                = "vnet-spoke1"
-      + resource_group_name = "rg-spoke1"
-      + subnet              = (known after apply)
-      + tags                = {
-          + "spoke1-vnet-level-tags" = "tag5"
-          + "top-level-tags"         = "tag1"
-        }
-    }
-
-  # module.tags_at_all_possible_levels.azurerm_virtual_network_peering.peering_object["peering-from-hub-to-spoke1"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = true
-      + allow_gateway_transit        = true
-      + allow_virtual_network_access = true
-      + id                           = (known after apply)
-      + name                         = "peering-from-hub-to-spoke1"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "rg-hub"
-      + use_remote_gateways          = false
-      + virtual_network_name         = "vnet-hub"
-    }
-
-  # module.tags_at_all_possible_levels.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = true
-      + allow_gateway_transit        = false
-      + allow_virtual_network_access = true
-      + id                           = (known after apply)
-      + name                         = "peering-from-spoke1-to-hub"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "rg-spoke1"
-      + use_remote_gateways          = false
-      + virtual_network_name         = "vnet-spoke1"
-    }
 ```
-[Back to the Examples](#examples)
+[Back to the Examples](#examples-same-sub-only)
 
 ### Advanced examples - Seperated on topics
 1. [Hub-spoke with both firewall and vpn](#1-Hub-spoke-with-both-firewall-and-vpn)
@@ -1223,155 +1125,6 @@ module "advanced_spoke_with_all_components" {
 }
 
 //TF Plan output (Only most interesting objects are shown):
-//Notice the "=> (Set by us)" Marks on specific object attributes
-//By default the module will both deploy log analytics, diagnostic settings, and 2 different network rules for the Azure Firewall, see more below
-Plan: 33 to add, 0 to change, 0 to destroy.
-# module.advanced_spoke_with_all_components.azurerm_log_analytics_workspace.fw_log_object["prod-contoso-hub-lab-log-fw"] will be created
-  + resource "azurerm_log_analytics_workspace" "fw_log_object" {
-      + allow_resource_only_permissions = true
-      + daily_quota_gb                  = 5 => (Set by us)
-      + id                              = (known after apply)
-      + internet_ingestion_enabled      = true
-      + internet_query_enabled          = true
-      + local_authentication_disabled   = false
-      + location                        = "westus"
-      + name                            = "prod-contoso-hub-lab-log-fw"
-      + primary_shared_key              = (sensitive value)
-      + resource_group_name             = "prod-contoso-hub-lab-rg"
-      + retention_in_days               = (known after apply)
-      + secondary_shared_key            = (sensitive value)
-      + sku                             = (known after apply)
-      + workspace_id                    = (known after apply)
-    }
-  
-    # module.advanced_spoke_with_all_components.azurerm_monitor_diagnostic_setting.fw_diag_object["fw-logs-to-log-analytics"] will be created
-  + resource "azurerm_monitor_diagnostic_setting" "fw_diag_object" {
-      + id                             = (known after apply)
-      + log_analytics_destination_type = "Dedicated"
-      + log_analytics_workspace_id     = (known after apply)
-      + name                           = (known after apply)
-      + target_resource_id             = (known after apply)
-
-      + enabled_log {
-          + category_group = "AllLogs"
-        }
-    }
-
- # module.advanced_spoke_with_all_components.azurerm_firewall.fw_object["prod-contoso-hub-lab-fw"] will be created
-  + resource "azurerm_firewall" "fw_object" {
-      + dns_proxy_enabled   = (known after apply)
-      + id                  = (known after apply)
-      + location            = "westus"
-      + name                = "prod-contoso-hub-lab-fw"
-      + resource_group_name = "prod-contoso-hub-lab-rg"
-      + sku_name            = "AZFW_VNet"
-      + sku_tier            = "Standard"
-      + threat_intel_mode   = "Deny" => (Set by us)
-
-      + ip_configuration {
-          + name                 = "fw-config"
-          + private_ip_address   = (known after apply)
-          + public_ip_address_id = (known after apply)
-          + subnet_id            = (known after apply)
-        }
-    }
-
-# module.advanced_spoke_with_all_components.azurerm_firewall_network_rule_collection.fw_rule_object["Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"] will be created
-  + resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
-      + action              = "Allow"
-      + azure_firewall_name = "prod-contoso-hub-lab-fw"
-      + id                  = (known after apply)
-      + name                = "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
-      + priority            = 200
-      + resource_group_name = "prod-contoso-hub-lab-rg"
-
-      + rule {
-          + destination_addresses = [
-              + "0.0.0.0/0",
-            ]
-          + destination_ports     = [
-              + "53",
-              + "80",
-              + "443",
-            ]
-          + name                  = "Allow-HTTP-HTTPS-DNS-FROM-SPOKES-TO-INTERNET"
-          + protocols             = [
-              + "TCP",
-              + "UDP",
-            ]
-          + source_addresses      = [
-              + "10.0.1.0/24",
-              + "10.0.2.0/24",
-            ]
-        }
-    }
-
-  # module.advanced_spoke_with_all_components.azurerm_firewall_network_rule_collection.fw_rule_object["Allow-RDP-SSH-FROM-VPN-TO-SPOKES"] will be created
-  + resource "azurerm_firewall_network_rule_collection" "fw_rule_object" {
-      + action              = "Allow"
-      + azure_firewall_name = "prod-contoso-hub-lab-fw"
-      + id                  = (known after apply)
-      + name                = "Allow-RDP-SSH-FROM-VPN-TO-SPOKES"
-      + priority            = 100
-      + resource_group_name = "prod-contoso-hub-lab-rg"
-
-      + rule {
-          + destination_addresses = [
-              + "10.0.1.0/24",
-              + "10.0.2.0/24",
-            ]
-          + destination_ports     = [
-              + "22",
-              + "3389",
-            ]
-          + name                  = "Allow-RDP-SSH-FROM-VPN-TO-SPOKES"
-          + protocols             = [
-              + "TCP",
-            ]
-          + source_addresses      = [
-              + "192.168.0.0/24",
-            ]
-        }
-    }
-  + resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
-      + active_active                         = (known after apply)
-      + bgp_route_translation_for_nat_enabled = false
-      + enable_bgp                            = (known after apply)
-      + generation                            = "Generation2"
-      + id                                    = (known after apply)
-      + ip_sec_replay_protection_enabled      = true
-      + location                              = "westus"
-      + name                                  = "prod-contoso-hub-lab-gw"
-      + private_ip_address_enabled            = true
-      + remote_vnet_traffic_enabled           = true
-      + resource_group_name                   = "prod-contoso-hub-lab-rg"
-      + sku                                   = "VpnGw2"
-      + type                                  = "Vpn"
-      + virtual_wan_traffic_enabled           = false
-      + vpn_type                              = "RouteBased"
-
-      + ip_configuration {
-          + name                          = "vnetGatewayConfig"
-          + private_ip_address_allocation = "Dynamic"
-          + public_ip_address_id          = (known after apply)
-          + subnet_id                     = (known after apply)
-        }
-
-      + vpn_client_configuration {
-          + aad_audience         = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-          + aad_issuer           = "https://sts.windows.net/00000000-0000-0000-0000-000000000000/"
-          + aad_tenant           = "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/"
-          + address_space        = [
-              + "192.168.0.0/24", => (Set by us)
-            ]
-          + vpn_auth_types       = [
-              + "AAD",
-            ]
-          + vpn_client_protocols = [
-              + "OpenVPN",
-            ]
-        }
-    }  
 ```
 
 [Back to the Examples](#advanced-examples---seperated-on-topics)
@@ -1490,539 +1243,6 @@ module "advanced_spoke_with_all_components2" {
 
 //TF Plan output (ALL resources are shown, to showcase that NO log space, diag settings and fw rules will be deployed):
 Plan: 34 to add, 0 to change, 0 to destroy.
-Terraform will perform the following actions:
-
-  # module.advanced_spoke_with_all_components2.azurerm_firewall.fw_object["custom-fw"] will be created
-  + resource "azurerm_firewall" "fw_object" {
-      + dns_proxy_enabled   = (known after apply)
-      + id                  = (known after apply)
-      + location            = "northeurope"
-      + name                = "custom-fw"
-      + resource_group_name = "custom-rg-hub"
-      + sku_name            = "AZFW_VNet"
-      + sku_tier            = "Standard"
-      + threat_intel_mode   = "Deny"
-
-      + ip_configuration {
-          + name                 = "fw-config"
-          + private_ip_address   = (known after apply)
-          + public_ip_address_id = (known after apply)
-          + subnet_id            = (known after apply)
-        }
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_public_ip.pip_object["advanced-pip"] will be created
-  + resource "azurerm_public_ip" "pip_object" {
-      + allocation_method       = "Static"
-      + ddos_protection_mode    = "VirtualNetworkInherited"
-      + fqdn                    = (known after apply)
-      + id                      = (known after apply)
-      + idle_timeout_in_minutes = 4
-      + ip_address              = (known after apply)
-      + ip_version              = "IPv4"
-      + location                = "northeurope"
-      + name                    = "advanced-pip"
-      + resource_group_name     = "custom-rg-hub"
-      + sku                     = "Standard"
-      + sku_tier                = "Regional"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_public_ip.pip_object["fw-custom-pip"] will be created
-  + resource "azurerm_public_ip" "pip_object" {
-      + allocation_method       = "Static"
-      + ddos_protection_mode    = "VirtualNetworkInherited"
-      + fqdn                    = (known after apply)
-      + id                      = (known after apply)
-      + idle_timeout_in_minutes = 4
-      + ip_address              = (known after apply)
-      + ip_version              = "IPv4"
-      + location                = "northeurope"
-      + name                    = "fw-custom-pip"
-      + resource_group_name     = "custom-rg-hub"
-      + sku                     = "Standard"
-      + sku_tier                = "Regional"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_resource_group.rg_object["custom-rg-hub"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "northeurope"
-      + name     = "custom-rg-hub"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_resource_group.rg_object["spoke1-custom-rg"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "eastus"
-      + name     = "spoke1-custom-rg"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_resource_group.rg_object["spoke2-custom-rg"] will be created
-  + resource "azurerm_resource_group" "rg_object" {
-      + id       = (known after apply)
-      + location = "westus"
-      + name     = "spoke2-custom-rg"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-AzureFirewallSubnet-to-hub"] will be created
-  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
-      + disable_bgp_route_propagation = false
-      + id                            = (known after apply)
-      + location                      = "eastus"
-      + name                          = "rt-to-hub-from-AzureFirewallSubnet-to-hub"
-      + resource_group_name           = "spoke1-custom-rg"
-      + route                         = [
-          + {
-              + address_prefix         = "0.0.0.0/0"
-              + name                   = "all-internet-traffic-from-AzureFirewallSubnet-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-          + {
-              + address_prefix         = "10.0.1.128/26"
-              + name                   = "all-traffic-from-AzureFirewallSubnet-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-        ]
-      + subnets                       = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-GatewaySubnet-to-hub"] will be created
-  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
-      + disable_bgp_route_propagation = false
-      + id                            = (known after apply)
-      + location                      = "eastus"
-      + name                          = "rt-to-hub-from-GatewaySubnet-to-hub"
-      + resource_group_name           = "spoke1-custom-rg"
-      + route                         = [
-          + {
-              + address_prefix         = "0.0.0.0/0"
-              + name                   = "all-internet-traffic-from-GatewaySubnet-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-          + {
-              + address_prefix         = "10.0.1.192/26"
-              + name                   = "all-traffic-from-GatewaySubnet-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-        ]
-      + subnets                       = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom1-spoke1-to-hub"] will be created
-  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
-      + disable_bgp_route_propagation = false
-      + id                            = (known after apply)
-      + location                      = "eastus"
-      + name                          = "rt-to-hub-from-subnet-custom1-spoke1-to-hub"
-      + resource_group_name           = "spoke1-custom-rg"
-      + route                         = [
-          + {
-              + address_prefix         = "0.0.0.0/0"
-              + name                   = "all-internet-traffic-from-subnet-custom1-spoke1-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-          + {
-              + address_prefix         = "10.0.1.192/26"
-              + name                   = "all-traffic-from-subnet-custom1-spoke1-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-        ]
-      + subnets                       = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom1-spoke2-to-hub"] will be created
-  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
-      + disable_bgp_route_propagation = false
-      + id                            = (known after apply)
-      + location                      = "westus"
-      + name                          = "rt-to-hub-from-subnet-custom1-spoke2-to-hub"
-      + resource_group_name           = "spoke2-custom-rg"
-      + route                         = [
-          + {
-              + address_prefix         = "0.0.0.0/0"
-              + name                   = "all-internet-traffic-from-subnet-custom1-spoke2-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-          + {
-              + address_prefix         = "10.0.2.0/26"
-              + name                   = "all-traffic-from-subnet-custom1-spoke2-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-        ]
-      + subnets                       = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom2-spoke1-to-hub"] will be created
-  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
-      + disable_bgp_route_propagation = false
-      + id                            = (known after apply)
-      + location                      = "eastus"
-      + name                          = "rt-to-hub-from-subnet-custom2-spoke1-to-hub"
-      + resource_group_name           = "spoke1-custom-rg"
-      + route                         = [
-          + {
-              + address_prefix         = "0.0.0.0/0"
-              + name                   = "all-internet-traffic-from-subnet-custom2-spoke1-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-          + {
-              + address_prefix         = "10.0.1.128/26"
-              + name                   = "all-traffic-from-subnet-custom2-spoke1-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-        ]
-      + subnets                       = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_route_table.route_table_from_spokes_to_hub_object["rt-to-hub-from-subnet-custom2-spoke2-to-hub"] will be created
-  + resource "azurerm_route_table" "route_table_from_spokes_to_hub_object" {
-      + disable_bgp_route_propagation = false
-      + id                            = (known after apply)
-      + location                      = "westus"
-      + name                          = "rt-to-hub-from-subnet-custom2-spoke2-to-hub"
-      + resource_group_name           = "spoke2-custom-rg"
-      + route                         = [
-          + {
-              + address_prefix         = "0.0.0.0/0"
-              + name                   = "all-internet-traffic-from-subnet-custom2-spoke2-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-          + {
-              + address_prefix         = "10.0.2.64/26"
-              + name                   = "all-traffic-from-subnet-custom2-spoke2-to-hub-first"
-              + next_hop_in_ip_address = (known after apply)
-              + next_hop_type          = "VirtualAppliance"
-            },
-        ]
-      + subnets                       = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["AzureFirewallSubnet"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.1.128/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "AzureFirewallSubnet"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "spoke1-custom-rg"
-      + virtual_network_name                           = "vnet-spoke1"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["GatewaySubnet"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.1.192/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "GatewaySubnet"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "spoke1-custom-rg"
-      + virtual_network_name                           = "vnet-spoke1"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom1-spoke1"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.1.192/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet-custom1-spoke1"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "spoke1-custom-rg"
-      + virtual_network_name                           = "vnet-spoke1"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom1-spoke2"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.2.0/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet-custom1-spoke2"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "spoke2-custom-rg"
-      + virtual_network_name                           = "vnet-spoke2"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom2-spoke1"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.1.128/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet-custom2-spoke1"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "spoke1-custom-rg"
-      + virtual_network_name                           = "vnet-spoke1"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet-custom2-spoke2"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "10.0.2.64/26",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet-custom2-spoke2"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "spoke2-custom-rg"
-      + virtual_network_name                           = "vnet-spoke2"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet1-customhub"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "172.16.0.0/27",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet1-customhub"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "custom-rg-hub"
-      + virtual_network_name                           = "hub-custom-vnet"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet.subnet_object["subnet2-customhub"] will be created
-  + resource "azurerm_subnet" "subnet_object" {
-      + address_prefixes                               = [
-          + "172.16.0.32/27",
-        ]
-      + default_outbound_access_enabled                = true
-      + enforce_private_link_endpoint_network_policies = (known after apply)
-      + enforce_private_link_service_network_policies  = (known after apply)
-      + id                                             = (known after apply)
-      + name                                           = "subnet2-customhub"
-      + private_endpoint_network_policies              = (known after apply)
-      + private_endpoint_network_policies_enabled      = (known after apply)
-      + private_link_service_network_policies_enabled  = (known after apply)
-      + resource_group_name                            = "custom-rg-hub"
-      + virtual_network_name                           = "hub-custom-vnet"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-AzureFirewallSubnet-to-hub"] will be created   
-  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
-      + id             = (known after apply)
-      + route_table_id = (known after apply)
-      + subnet_id      = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-GatewaySubnet-to-hub"] will be created
-  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
-      + id             = (known after apply)
-      + route_table_id = (known after apply)
-      + subnet_id      = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom1-spoke1-to-hub"] will be created 
-  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
-      + id             = (known after apply)
-      + route_table_id = (known after apply)
-      + subnet_id      = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom1-spoke2-to-hub"] will be created 
-  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
-      + id             = (known after apply)
-      + route_table_id = (known after apply)
-      + subnet_id      = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom2-spoke1-to-hub"] will be created 
-  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
-      + id             = (known after apply)
-      + route_table_id = (known after apply)
-      + subnet_id      = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_subnet_route_table_association.link_route_table_to_subnet_object["rt-to-hub-from-subnet-custom2-spoke2-to-hub"] will be created 
-  + resource "azurerm_subnet_route_table_association" "link_route_table_to_subnet_object" {
-      + id             = (known after apply)
-      + route_table_id = (known after apply)
-      + subnet_id      = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network.vnet_object["hub-custom-vnet"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "172.16.0.0/22",
-        ]
-      + dns_servers         = [
-          + "1.1.1.1",
-          + "8.8.4.4",
-        ]
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "northeurope"
-      + name                = "hub-custom-vnet"
-      + resource_group_name = "custom-rg-hub"
-      + subnet              = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network.vnet_object["vnet-spoke1"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "10.0.1.0/24",
-        ]
-      + dns_servers         = (known after apply)
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "eastus"
-      + name                = "vnet-spoke1"
-      + resource_group_name = "spoke1-custom-rg"
-      + subnet              = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network.vnet_object["vnet-spoke2"] will be created
-  + resource "azurerm_virtual_network" "vnet_object" {
-      + address_space       = [
-          + "10.0.2.0/24",
-        ]
-      + dns_servers         = (known after apply)
-      + guid                = (known after apply)
-      + id                  = (known after apply)
-      + location            = "westus"
-      + name                = "vnet-spoke2"
-      + resource_group_name = "spoke2-custom-rg"
-      + subnet              = (known after apply)
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_gateway.gw_vpn_object["advanced-gw"] will be created
-  + resource "azurerm_virtual_network_gateway" "gw_vpn_object" {
-      + active_active                         = (known after apply)
-      + bgp_route_translation_for_nat_enabled = false
-      + enable_bgp                            = (known after apply)
-      + generation                            = "Generation2"
-      + id                                    = (known after apply)
-      + ip_sec_replay_protection_enabled      = true
-      + location                              = "northeurope"
-      + name                                  = "advanced-gw"
-      + private_ip_address_enabled            = true
-      + remote_vnet_traffic_enabled           = true
-      + resource_group_name                   = "custom-rg-hub"
-      + sku                                   = "VpnGw2"
-      + type                                  = "Vpn"
-      + virtual_wan_traffic_enabled           = false
-      + vpn_type                              = "RouteBased"
-
-      + ip_configuration {
-          + name                          = "vnetGatewayConfig"
-          + private_ip_address_allocation = "Dynamic"
-          + public_ip_address_id          = (known after apply)
-          + subnet_id                     = (known after apply)
-        }
-
-      + vpn_client_configuration {
-          + aad_audience         = "41b23e61-6c1e-4545-b367-cd054e0ed4b4"
-          + aad_issuer           = "https://sts.windows.net/00000000-0000-0000-0000-000000000000/"
-          + aad_tenant           = "https://login.microsoftonline.com/00000000-0000-0000-0000-000000000000/"
-          + address_space        = [
-              + "192.168.0.0/24",
-            ]
-          + vpn_auth_types       = [
-              + "AAD",
-            ]
-          + vpn_client_protocols = [
-              + "OpenVPN",
-            ]
-        }
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["custom-peering1"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = false
-      + allow_gateway_transit        = true
-      + allow_virtual_network_access = false
-      + id                           = (known after apply)
-      + name                         = "custom-peering1"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "custom-rg-hub"
-      + use_remote_gateways          = false
-      + virtual_network_name         = "hub-custom-vnet"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["custom-peering2"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = false
-      + allow_gateway_transit        = true
-      + allow_virtual_network_access = false
-      + id                           = (known after apply)
-      + name                         = "custom-peering2"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "custom-rg-hub"
-      + use_remote_gateways          = false
-      + virtual_network_name         = "hub-custom-vnet"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["peering-from-spoke1-to-hub"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = true
-      + allow_gateway_transit        = false
-      + allow_virtual_network_access = true
-      + id                           = (known after apply)
-      + name                         = "peering-from-spoke1-to-hub"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "spoke1-custom-rg"
-      + use_remote_gateways          = true
-      + virtual_network_name         = "vnet-spoke1"
-    }
-
-  # module.advanced_spoke_with_all_components2.azurerm_virtual_network_peering.peering_object["peering-from-spoke2-to-hub"] will be created
-  + resource "azurerm_virtual_network_peering" "peering_object" {
-      + allow_forwarded_traffic      = true
-      + allow_gateway_transit        = false
-      + allow_virtual_network_access = true
-      + id                           = (known after apply)
-      + name                         = "peering-from-spoke2-to-hub"
-      + remote_virtual_network_id    = (known after apply)
-      + resource_group_name          = "spoke2-custom-rg"
-      + use_remote_gateways          = true
-      + virtual_network_name         = "vnet-spoke2"
-    }
 ```
 [Back to the Examples](#advanced-examples---seperated-on-topics)
 
@@ -2149,6 +1369,171 @@ Plan: 23 to add, 0 to change, 0 to destroy.
 
 [Back to the top](#table-of-contents)
 
+## Examples Different Subs only NEWEST VERSION ONLY
+This section contains only advanced examples as using the module on different subscriptions by seperating the hub / spoke typology the setup becomes "advanced" Regardless
+
+These examples shall be used on enterprise level Azure environments where landing zones are typically required to be seperated on subscriptions
+
+<b>ATTENTION:</b> In cases where the hub is to be deployed completly seperate from all the spokes it MUST be deployed ahead of time, of the spokes, otherwise the deployment WILL fail
+
+In case one or more spokes are deployed directly in the hub definition module call, these "direct" Spokes will successfully be deployed together with the hub itself, see example 1 for this exact and SPECIFIC behaviour
+
+1. [Deploy hub with Firewall VPN and 1 spoke](#1-deploy-hub-with-firewall-vpn-and-1-spoke)
+2. [Deploy hub and spokes in 2 module calls](#2-deploy-hub-and-spokes-in-2-module-calls)
+3. [Deploy hub and spokes with custom settings](#3-deploy-hub-and-spokes-with-custom-settings)
+
+### (1) Deploy hub with Firewall VPN and 1 spoke
+Below see the code snippet for simply adding the hub and 1 spoke in the same module call.
+This makes it possible to create the spoke TOGETHER with the hub.
+Please note that even if more than 1 spoke is defined, the same spoke provider will be used on them all.
+
+To create more than 1 spoke in different contexts, you must define them isolated in their own module call and create the appropiate provider configuration. See example 2 on details of that.
+```hcl
+//We must define a minimum of 2 providers as required by the module
+//This behaviour is described in detail in the 'Getting started' Section'
+
+provider "azurerm" {
+  features {} //Default provider, will be used for the spoke required provider
+}
+
+provider "azurerm" {
+  features {} //Will be used by the hub required provider
+  alias = "hub"
+  subscription_id = "<some sub id for the hub sub>"
+}
+
+//The Spoke objects will deploy in the SPOKE provider context parsed and NOT the hub provider context
+
+module "hub_and_spoke_same_module_call" {
+  source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=2.0.0-hub-spoke"
+  topology_object = {
+    env_name = "test" //Custom naming injection via using all 3 naming attributes - If any SPECIFIC names are set on attributes below, they will overrule this
+    name_suffix = "contoso" //Custom naming injection via using all 3 naming attributes - If any SPECIFIC names are set on attributes below, they will overrule this
+    project_name = "project1" //Custom naming injection via using all 3 naming attributes - If any SPECIFIC names are set on attributes below, they will overrule this
+    dns_servers = ["1.1.1.1"] 
+    subnets_cidr_notation = "/27" //Forces ALL subnets in the entire topology to be /27 UNLESS a vnet address space or specific subnet prefixes are defined
+    
+    tags = {
+      "something" = "something" //Tags in the root adds the tag to ALL hub & spokes resource groups in the module call
+    }
+
+    hub_object = {
+      location = "northeurope" //Custom location for the HUB resources ONLY, defaults to westeurope
+      rg_name = "ignore-names-hub"
+      tags = {
+        "hub-something" = "hub-something"
+      }
+
+      network = {
+        address_spaces = ["172.16.0.0/16"] //Default address space for a hub is ["10.0.0.0/24"]
+        firewall = {
+          name = "helloworld-fw"
+          no_internet = true
+          log_name = "tester-diag" 
+          log_daily_quota_gb = 10 //Per default there is no data limit / quota but we define 1 to be 10gb
+          pip_name = "fw-tester"
+        }
+
+        vpn = {
+          address_space = ["192.168.0.0/20"] //Default VPN address space is: 10.99.0.0/24 BECAUSE we set the hub to be in the 172.16 range.
+          //Had we used the default address space from the module, the VPN address space will THEN rotate to 172.16.99.0/24 to avoid possible collisions
+          gw_name = "gw-vpn"
+        }
+
+        subnet_objects = [
+          {
+            name = "GatewaySubnet" //Because Use_last_subnet OR use_first_subnet is not defined, the module defaults to "use_first_subnet"
+          },
+          {
+            name = "AzureFirewallSubnet"
+            address_prefix = ["172.16.1.0/24"]
+          }
+        ]
+      }
+    }
+
+    //We are defining a spoke with 3 subnets DIRECTLY in the hub definition
+    //The Spoke objects will deploy in the SPOKE provider context parsed and NOT the hub provider context
+    spoke_objects = [
+      {
+        location = "ukwest"
+        rg_name = "spoker"
+
+        tags = {
+          "spoker" = "spoker"
+        }
+
+        network = {
+          address_spaces = ["10.99.0.0/20"]
+
+          subnet_objects = [
+            {
+              use_last_subnet = true
+            },
+            {
+              use_first_subnet = true
+            },
+            {
+              use_last_subnet = true
+            }
+          ]
+        }
+      }
+    ]
+  }
+
+  //We parse the 2 required providers - The left side of the expression is the names that MUST be parsed
+  //The right side is our custom alias provider name defined in the top - to use default provider, we simply parse 'azurerm'
+  providers = {
+    azurerm.spoke = azurerm
+    azurerm.hub = azurerm.hub
+  }
+}
+
+//PLAN OUTPUT
+
+Plan: 24 to add, 0 to change, 0 to destroy.
+```
+
+[Back to Examples](#examples-different-subs-only-newest-version-only)
+
+### (2) Deploy hub and spokes in 2 module calls
+Different from example 1, we here want to create more than 1 spoke and each spoke must be in different subscriptions - For this, we need to define at least 1 of the 2 spokes in an isolated module call. We can still let the last spoke be created directly with the hub - Safes the amount of code required.
+
+Remember - Because we create an isolated spoke from the hub module call, the hub module block MUST be deployed ahead of time, otherwise it will fail.
+
+```hcl
+//Creating 3 providers, 2 custom for the spokes, and the hub will use default context
+
+//Will be hub
+provider "azurerm" {
+  features {} //Will not define alias nor subcription_id for the default provider - Instead we rely on command line az logn for that
+}
+
+//Will be spoke 1
+provider "azurerm" {
+  features {}
+  alias = "spoke1"
+  subscription_id = "<Subscription_id_1>"
+}
+
+//Will be spoke 2
+provider "azurerm" {
+  features {}
+  alias = "spoke1"
+  subscription_id = "<Subscription_id_2>"
+}
+
+module "hub_and_first_of_2_spokes" {
+  source = 
+}
+
+```
+
+[Back to Examples](#examples-different-subs-only-newest-version-only)
+
+### (3) Deploy hub and spokes with custom settings
+
 ## Known errors
 This chapter is all about understanding the different errors that you can encounter while using the module. Use this chapter as a reference to different "error" Codes and their solution
 
@@ -2257,6 +1642,8 @@ module "overlap_example" {
    }
 }
 ```
+
+
 [Known errors](#known-errors)
 
 [Back to the top](#table-of-contents)
