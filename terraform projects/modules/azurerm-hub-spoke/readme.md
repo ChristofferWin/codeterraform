@@ -388,10 +388,8 @@ Its possible to define VERY little attributes on the top level "topology object"
             2. service_name_pattern = optional(string) A string defining a pattern to match a specific Azure delegation for the subnet. For a showcasing of how to use the filter see the [How to easily deploy delegations](#3-Using-the-subnet-delegation-filter-attribute-called-service_name_pattern) for more details
 
 Its possible to define VERY little attributes on the hub / spoke level of the "topology object" 
-See the [Examples SAME SUB ONLY](#examples-same-sub-only) For details
+See the [Examples version 1.0.0 SAME SUB ONLY](#examples-version-100-same-sub-only) & [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-version-200-different-subs-only) For details
 
-[Examples version 1.0.0 SAME SUB ONLY](#examples-same-sub-only)
-8. [Examples version 2.0.0 DIFFERENT SUBS ONLY](#examples-different-subs-only)
 
 ### Attributes on the "spoke_objects" level of the "topology object" (This is a list of objects described as topology object.spoke_objects[index] = [{}])
 1. network = (<b>required</b>) An object describing the network structure of the spoke (NOT REQUIRED IN VERSION 2.0.0 to allow ONLY creating a hub and then spokes seperately)
@@ -1787,8 +1785,10 @@ module "spoke_2_advanced" {
 }
 
 //TF Plan output of both SPOKE 1 and SPOKE 2 TOGETHER
-
+Plan: 16 to add, 0 to change, 0 to destroy.
 ```
+
+[Back to Examples](#examples-different-subs-only-newest-version-only)
 
 ## Known errors
 This chapter is all about understanding the different errors that you can encounter while using the module. Use this chapter as a reference to different "error" Codes and their solution
