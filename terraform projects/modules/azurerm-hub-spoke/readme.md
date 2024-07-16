@@ -297,7 +297,7 @@ module "show_case_object" {
 
 8. subnets_cidr_notation = (optional) A string defining what specific subnet size that ALL subnets should have - Defaults to "/26"
 
-Its possible to define VERY little attributes on the top level "topology object" See the [Simply examples](#examples) For details
+Its possible to define VERY little attributes on the top level "topology object" See the [Examples](#examples-different-subs-only) For details
 
 ### Attributes on the "hub_object" level of the "topology object" (This is an object described as topology object.hub_object = {})
 1. rg_name = (optional) A string defining the specific name of the hub resource group resource (Overwrites any name injection defined in the top level attributes)
