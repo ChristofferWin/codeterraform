@@ -59,18 +59,12 @@ Before using this module, make sure you have the following:
 Remember to have read the chapter [Prerequisites](#prerequisites) before getting started.
 
 1. Create a new terraform script file in any folder
-2. Define terraform boilerplate code
-```hcl
-provider "azurerm" {
-  features{}
-  //Can define a specific context, but we will use an interrogated one.
-}
-```
-3. Login to Azure with an active subscription using az cli
+
+2. Login to Azure with an active subscription using az cli
 ```powershell
 az login //Web browser interactive prompt.
 ```
-4. Define the module definition (VERSION 2.0.0 used = MULTIPLE SUBS)
+3. Define the module definition (VERSION 2.0.0 used = MULTIPLE SUBS)
 ```hcl
 //We need to define a minimum of 2 providers as the module requires this
 //In this example we will simply use the default azurerm provider + 1 alias provider
@@ -142,7 +136,7 @@ module "only_simple_spoke" {
   }
 }
 ```
-5. Define the module definition (VERSION 1.0.0 used = ONLY SAME SUB FOR ALL COMPONENTS)
+4. Define the module definition (VERSION 1.0.0 used = ONLY SAME SUB FOR ALL COMPONENTS)
 ```hcl
 module "simple_hub_spoke" {
   source = "github.com/ChristofferWin/codeterraform//terraform projects/modules/azurerm-hub-spoke?ref=1.0.0-hub-spoke" //Always use a specific version of the module
