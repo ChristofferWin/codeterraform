@@ -48,7 +48,7 @@ locals {
   vpn_gateway_sku = "VpnGw2"
   create_firewall = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.firewall != null ? true : false
   create_vpn = local.tp_object.hub_object.network == null ? false : local.tp_object.hub_object.network.vpn != null ? true : false
-  rg_count = local.tp_object.hub_object.network.vnet_spoke_address_spaces != null || !can(length(local.tp_object.spoke_objects)) ? 1 : can(length(local.tp_object.spoke_objects)) ? length(local.tp_object.spoke_objects) + 1 : 1
+  rg_count = !can(length(local.tp_object.spoke_objects)) ? 1 : can(length(local.tp_object.spoke_objects)) ? length(local.tp_object.spoke_objects) + 1 : 1
   env_name = local.tp_object.env_name != null ? local.tp_object.env_name : ""
   project_name = local.tp_object.project_name != null ? local.tp_object.project_name : "" 
   name_fix_pre = local.tp_object.name_prefix != null ? true : false
