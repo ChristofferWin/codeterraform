@@ -26,18 +26,20 @@ type ArmBasicObject struct {
 type AzureRm struct {
 }
 
+type Attribute struct {
+	type_ string
+	name  string
+}
+
 // Define the HtmlObject struct with a named attributes field
 type HtmlObject struct {
-	name       string
-	attributes struct {
-		optional []string
-		required []string
-	}
+	resource_type string
+	attribute     []Attribute
 }
 
 var HtmlObjects = []HtmlObject{}
+var AttributeObjects = []Attribute{}
 var armBasicObjects = []ArmBasicObject{}
-var rawHtmlArray []string
 
 func main() {
 
@@ -71,6 +73,13 @@ func main() {
 		cleanHtml := SortRawHtml(rawHtml, baseArmResources[x].resource_type)
 		HtmlObjects = append(HtmlObjects, cleanHtml)
 	}
+
+	for _, object := range HtmlObjects {
+		fmt.Println("\n", "-------------------------", object.resource_type, "-------------------------")
+		for x, attribute := range object.attribute {
+			fmt.Println(x+1, "Attribute name:", attribute.name, "||", "Type:", attribute.type_)
+		}
+	}
 	/*
 		for x := 0; x < len(HtmlObjects); x++ {
 			fmt.Println("\n", "THIS IS FOR RESOURCE TYPE:", HtmlObjects[x].name, "-------------------")
@@ -79,20 +88,27 @@ func main() {
 		}
 	*/
 
-	fmt.Println(HtmlObjects[2].attributes.required)
+	//fmt.Println(HtmlObjects[2].attributes.required)
 
-	pattern := regexp.MustCompile(regexp.QuoteMeta("<code>") + "(.*?)" + regexp.QuoteMeta("</code>"))
-	for x := 0; x < len(HtmlObjects); x++ {
-		for y := 0; y < len(HtmlObjects[x].attributes.required); y++ {
-			matches := pattern.FindStringSubmatch(HtmlObjects[x].attributes.required[y])
-			for a := 0; a < len(matches); a++ {
-				HtmlObjects[x].attributes.required[y] = matches[1]
+	//fmt.Println(HtmlObjects[0].attributes.required)
+	/*
+		for x := 0; x < len(HtmlObjects[0].attributes.optional); x++ {
+			fmt.Println("\nLINE", HtmlObjects[0].attributes.optional[x])
+		}
+	*/
+	//fmt.Println("-------------------------------------------------------", HtmlObjects[0].attributes.required)
+	/*
+		pattern := regexp.MustCompile(regexp.QuoteMeta("<code>") + "(.Block*)" + regexp.QuoteMeta("</code>"))
+		for x := 0; x < len(HtmlObjects); x++ {
+			for y := 0; y < len(HtmlObjects[x].attributes.required); y++ {
+				matches := pattern.FindAllStringSubmatch(HtmlObjects[x].attributes.optional[y], 3)
+				for a := 0; a < len(matches); a++ {
+					fmt.Println("THIS IS THE ATTRIBUTE FOUND:", matches[a])
+					//HtmlObjects[x].attributes.required[y] = matches[1]
+				}
 			}
 		}
-	}
-
-	fmt.Println(HtmlObjects[2].attributes.required)
-
+	*/
 	/*
 		for x := 0; x < len(baseArmResources); x++ {
 			for y := 0; y < len(baseArmResources[x].properties); y++ {
@@ -125,13 +141,13 @@ func RetrieveArmBaseInformation(filecontent []byte) ([]ArmBasicObject, error) {
 	if rawJsonBytes.Type() == fastjson.TypeArray {
 		// If it's an array, get the array elements
 		arrayJsonObjects = rawJsonBytes.GetArray()
-		for x := 0; x < len(arrayJsonObjects); x++ {
+		for _, x := range arrayJsonObjects {
 			object := ArmBasicObject{
-				name:          string(arrayJsonObjects[x].GetStringBytes("name")),
-				resource_type: string(arrayJsonObjects[x].GetStringBytes("type")),
-				resource_id:   string(arrayJsonObjects[x].GetStringBytes("id")),
-				location:      string(arrayJsonObjects[x].GetStringBytes("location")),
-				properties:    ConvertFromStringToSlice((arrayJsonObjects[x].GetObject("properties").String()), ","),
+				name:          string(x.GetStringBytes("name")),
+				resource_type: string(x.GetStringBytes("type")),
+				resource_id:   string(x.GetStringBytes("id")),
+				location:      string(x.GetStringBytes("location")),
+				properties:    ConvertFromStringToSlice((x.GetObject("properties").String()), ","),
 			}
 
 			armBasicObjects = append(armBasicObjects, object)
@@ -190,8 +206,6 @@ func RetrieveRawHtml(resourceType string) (string, error) {
 
 	url := fmt.Sprintf("https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/%s", convertResourceTypeName)
 
-	fmt.Println("This is the url:", url)
-
 	for x := 1; x < 25; x++ {
 		err := chromedp.Run(taskCtx,
 			chromedp.Navigate(string(url)),
@@ -209,39 +223,62 @@ func RetrieveRawHtml(resourceType string) (string, error) {
 		}
 
 		HtmlBodyCompare = HtmlBody
+
+		os.WriteFile("ByQuery2", []byte(HtmlBodyCompare), 0644)
 	}
 	return HtmlBodyCompare, nil
 }
 
 func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the struct type definitions towards the top of the file
-	var requiredArguments []string
-	var optionalArguments []string
+	var allAttributes []string
+	var flatAttributes []string //Either bool, string, int or string array, must be determined by the ARM values
+	var blockAttribute []string //Object
 
 	// Define the regular expressions for (Required) and (Optional)  //It seems that this regex destroys all blocks which is not ideal
 	//Need to change the regex
-	requiredRegex := regexp.MustCompile(`\(Required\)`)
-	optionalRegex := regexp.MustCompile(`\(Optional\)`)
+
+	allAttributesRegex := regexp.MustCompile(`\(Required|Optional\)`)
+	oneBlockRegex := regexp.MustCompile(`(?:An|A|One or more) <code>([^<]+)</code> block|block supports fields documented below`)
+	isolateAttributesRegex := regexp.MustCompile(`href="#([^"]+)"`)
 
 	// Filter lines containing (Required) or (Optional)
 	linesHtml := strings.Split(rawHtml, "\n")
 	for _, line := range linesHtml {
-		if requiredRegex.MatchString(line) {
-			requiredArguments = append(requiredArguments, line)
-		} else if optionalRegex.MatchString(line) {
-			optionalArguments = append(optionalArguments, line)
+		if allAttributesRegex.MatchString(line) {
+			allAttributes = append(allAttributes, line)
 		}
 	}
 
-	object := HtmlObject{
-		name: resourceType,
-
-		attributes: struct {
-			optional []string
-			required []string
-		}{optionalArguments, requiredArguments},
+	for _, line := range allAttributes {
+		if oneBlockRegex.MatchString(line) {
+			blockAttribute = append(blockAttribute, line)
+		} else {
+			flatAttributes = append(flatAttributes, line)
+		}
 	}
 
-	return object
+	for _, line := range blockAttribute {
+		attribute := Attribute{
+			type_: "object",
+			name:  isolateAttributesRegex.FindStringSubmatch(line)[1],
+		}
+		AttributeObjects = append(AttributeObjects, attribute)
+	}
+
+	for _, line := range flatAttributes {
+		attribute := Attribute{
+			type_: "string",
+			name:  isolateAttributesRegex.FindStringSubmatch(line)[1],
+		}
+		AttributeObjects = append(AttributeObjects, attribute)
+	}
+
+	HtmlObject := HtmlObject{
+		resource_type: resourceType,
+		attribute:     AttributeObjects,
+	}
+
+	return HtmlObject
 }
 
 func ConvertFromStringToSlice(stringToSlice string, seperatorChar string) []string {
