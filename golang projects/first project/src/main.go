@@ -323,20 +323,20 @@ func ConvertFromStringToSlice(stringToSlice string, seperatorChar string) []stri
 func UniquifyResourceTypes(resourceTypes []string) []string {
 	sortingString := strings.Join(resourceTypes, ",")
 	var sortingSlice []string
-	fmt.Println(resourceTypes)
-	fmt.Println(sortingString)
 
 	for _, resourceType := range resourceTypes {
 		if strings.Count(sortingString, resourceType) == 1 {
+			fmt.Println(strings.Count(sortingString, resourceType))
 			sortingSlice = append(sortingSlice, resourceType)
-			fmt.Println("In", strings.Join(sortingSlice, ","), resourceType)
 		} else {
-			if !(strings.Contains(strings.Join(sortingSlice, ","), resourceType)) {
+			lenOfResourceType := len(strings.Split(resourceType, "/"))
+			if !(strings.Contains(strings.Join(sortingSlice, ","), resourceType)) && lenOfResourceType == 1 {
 				sortingSlice = append(sortingSlice, resourceType)
-				fmt.Println("In else", strings.Join(sortingSlice, ","), resourceType)
+			} else if !(strings.Contains(strings.Join(sortingSlice, ","), strings.Split(resourceType, "/")[0]+"/"+strings.Split(resourceType, "/")[lenOfResourceType-1])) {
+				sortingSlice = append(sortingSlice, resourceType)
+				fmt.Println("Hello")
 			}
 		}
 	}
-
 	return sortingSlice
 }
