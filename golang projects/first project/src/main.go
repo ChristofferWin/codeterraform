@@ -63,7 +63,19 @@ func main() {
 
 	baseArmResources, err := RetrieveArmBaseInformation(fileContent)
 
-	for x := 0; x < len(baseArmResources); x++ {
+	if err != nil {
+		fmt.Println("Error while trying to retrieve the json ARM content", err)
+	}
+
+	var resourceTypes []string
+
+	for _, resourceType := range baseArmResources {
+		resourceTypes = append(resourceTypes, resourceType.resource_type)
+	}
+
+	resourceTypesUnique := UniquifyResourceTypes(resourceTypes)
+
+	for x := 0; x < len(resourceTypesUnique); x++ {
 		rawHtml, err := RetrieveRawHtml(baseArmResources[x].resource_type)
 
 		if err != nil {
@@ -80,21 +92,23 @@ func main() {
 			fmt.Println(x+1, "Attribute name:", attribute.name, "||", "Type:", attribute.type_)
 		}
 	}
-	/*
-		for x := 0; x < len(HtmlObjects); x++ {
-			fmt.Println("\n", "THIS IS FOR RESOURCE TYPE:", HtmlObjects[x].name, "-------------------")
-			fmt.Println("\n", HtmlObjects[x].attributes.required)
-			fmt.Println("\n", HtmlObjects[x].attributes.optional)
-		}
-	*/
 
-	//fmt.Println(HtmlObjects[2].attributes.required)
-
-	//fmt.Println(HtmlObjects[0].attributes.required)
+	//fmt.Println(HtmlObjects)
 	/*
-		for x := 0; x < len(HtmlObjects[0].attributes.optional); x++ {
-			fmt.Println("\nLINE", HtmlObjects[0].attributes.optional[x])
-		}
+				for x := 0; x < len(HtmlObjects); x++ {
+					fmt.Println("\n", "THIS IS FOR RESOURCE TYPE:", HtmlObjects[x].name, "-------------------")
+					fmt.Println("\n", HtmlObjects[x].attributes.required)
+					fmt.Println("\n", HtmlObjects[x].attributes.optional)
+				}
+
+
+		//fmt.Println(HtmlObjects[2].attributes.required)
+
+		//fmt.Println(HtmlObjects[0].attributes.required)
+		/*
+			for x := 0; x < len(HtmlObjects[0].attributes.optional); x++ {
+				fmt.Println("\nLINE", HtmlObjects[0].attributes.optional[x])
+			}
 	*/
 	//fmt.Println("-------------------------------------------------------", HtmlObjects[0].attributes.required)
 	/*
@@ -174,16 +188,26 @@ func RetrieveArmBaseInformation(filecontent []byte) ([]ArmBasicObject, error) {
 func RetrieveRawHtml(resourceType string) (string, error) {
 	var HtmlBody string
 	var HtmlBodyCompare string
-
+	var resourceTypeRegex *regexp.Regexp
+	var convertResourceTypeName string
 	// Use a regex to find places where we need to insert underscores
-	regex := regexp.MustCompile("([a-z0-9])([A-Z])")
-	convertResourceTypeName := regex.ReplaceAllString(resourceType, "${1}_${2}")
+
+	//Define regex so that we can differentiate between resource types 'Something/Something' And Something/Something/Somthing
+	if len(strings.Split(resourceType, "/")) == 2 {
+		convertResourceTypeName = func() string {
+			resourceTypeRegex = regexp.MustCompile("([a-z0-9])([A-Z])")
+			convertResourceTypeName = resourceTypeRegex.ReplaceAllString(resourceType, "${1}_${2}")
+			return strings.Split(convertResourceTypeName, "/")[1]
+		}()
+	} else {
+		convertResourceTypeName = func() string {
+			sliceArray := strings.Split(resourceType, "/")
+			return sliceArray[len(sliceArray)-1]
+		}()
+	}
 
 	// Remove the trailing 's' if it exists
 	convertResourceTypeName = strings.TrimSuffix(convertResourceTypeName, "s")
-
-	//Only use right side part
-	convertResourceTypeName = strings.Split(convertResourceTypeName, "/")[1]
 
 	// Convert the entire string to lower case
 	convertResourceTypeName = strings.ToLower(convertResourceTypeName)
@@ -234,21 +258,29 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	var flatAttributes []string //Either bool, string, int or string array, must be determined by the ARM values
 	var blockAttribute []string //Object
 
-	// Define the regular expressions for (Required) and (Optional)  //It seems that this regex destroys all blocks which is not ideal
-	//Need to change the regex
-
+	//Defining the regex matching ALL attributes, which we will sort through first, then seperate on type - object vs string
 	allAttributesRegex := regexp.MustCompile(`\(Required|Optional\)`)
-	oneBlockRegex := regexp.MustCompile(`(?:An|A|One or more) <code>([^<]+)</code> block|block supports fields documented below`)
+	//Defining the regex pattern to only match block definitions - The right side finds edgecases, e.g there might be more ways for Hashicorp to define blocks
+	oneBlockRegex := regexp.MustCompile(`(?:An|A|One or more|) <code>([^<]+)</code> block|(Can be specified multiple times.)*?<code>([^<]+)</code> block`)
+	//Defining the regex pattern which will be used to retrieve all the 'flat' level arguments
 	isolateAttributesRegex := regexp.MustCompile(`href="#([^"]+)"`)
 
-	// Filter lines containing (Required) or (Optional)
-	linesHtml := strings.Split(rawHtml, "\n")
+	//Defining the boundaries of the data we are interested in
+	startIndex := regexp.MustCompile(`name="argument-reference"`).FindStringIndex(rawHtml)
+	endIndex := regexp.MustCompile(`name="attributes-reference"`).FindStringIndex(rawHtml)
+
+	//Isolating only the 'argument references from the HTML dump'
+	extractedText := rawHtml[startIndex[1]:endIndex[0]]
+
+	linesHtml := strings.Split(extractedText, "\n")
+
+	//Filter lines containing (Required) or (Optional), retrieving ALL arguments regardless of type
 	for _, line := range linesHtml {
 		if allAttributesRegex.MatchString(line) {
 			allAttributes = append(allAttributes, line)
 		}
 	}
-
+	//We now seperate each of the 2 types into seperate slices
 	for _, line := range allAttributes {
 		if oneBlockRegex.MatchString(line) {
 			blockAttribute = append(blockAttribute, line)
@@ -256,15 +288,17 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 			flatAttributes = append(flatAttributes, line)
 		}
 	}
-
+	//For all the type 'block' Add them to the overall attribute slices
 	for _, line := range blockAttribute {
-		attribute := Attribute{
-			type_: "object",
-			name:  isolateAttributesRegex.FindStringSubmatch(line)[1],
+		{
+			attribute := Attribute{
+				type_: "object",
+				name:  oneBlockRegex.FindStringSubmatch(line)[1],
+			}
+			AttributeObjects = append(AttributeObjects, attribute)
 		}
-		AttributeObjects = append(AttributeObjects, attribute)
 	}
-
+	//For all the type 'string' Add them to the overall attribute slices
 	for _, line := range flatAttributes {
 		attribute := Attribute{
 			type_: "string",
@@ -272,7 +306,7 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 		}
 		AttributeObjects = append(AttributeObjects, attribute)
 	}
-
+	//Adding all the sorted attributes to the final return object
 	HtmlObject := HtmlObject{
 		resource_type: resourceType,
 		attribute:     AttributeObjects,
@@ -284,4 +318,25 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 func ConvertFromStringToSlice(stringToSlice string, seperatorChar string) []string {
 	arrayOfSlices := strings.Split(strings.TrimSuffix(strings.TrimPrefix(stringToSlice, "{"), "}"), seperatorChar)
 	return arrayOfSlices
+}
+
+func UniquifyResourceTypes(resourceTypes []string) []string {
+	sortingString := strings.Join(resourceTypes, ",")
+	var sortingSlice []string
+	fmt.Println(resourceTypes)
+	fmt.Println(sortingString)
+
+	for _, resourceType := range resourceTypes {
+		if strings.Count(sortingString, resourceType) == 1 {
+			sortingSlice = append(sortingSlice, resourceType)
+			fmt.Println("In", strings.Join(sortingSlice, ","), resourceType)
+		} else {
+			if !(strings.Contains(strings.Join(sortingSlice, ","), resourceType)) {
+				sortingSlice = append(sortingSlice, resourceType)
+				fmt.Println("In else", strings.Join(sortingSlice, ","), resourceType)
+			}
+		}
+	}
+
+	return sortingSlice
 }
