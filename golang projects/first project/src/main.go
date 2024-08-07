@@ -44,7 +44,7 @@ var armBasicObjects = []ArmBasicObject{}
 func main() {
 
 	// Define and parse the filepath flag
-	filepath := flag.String("filepath", "", "Path to the file")
+	filepath := flag.String("filepath", "./", "Path to the file")
 	flag.Parse()
 
 	// Call the ImportArmFile function with the filepath argument
@@ -61,11 +61,13 @@ func main() {
 		return
 	}
 
-	baseArmResources, err := RetrieveArmBaseInformation(fileContent)
+	baseArmResources := GetArmBaseInformation(fileContent)
 
 	if err != nil {
 		fmt.Println("Error while trying to retrieve the json ARM content", err)
 	}
+
+	SortArmBasicObject(armBasicObjects)
 
 	var resourceTypes []string
 
@@ -76,7 +78,7 @@ func main() {
 	resourceTypesUnique := UniquifyResourceTypes(resourceTypes)
 
 	for x := 0; x < len(resourceTypesUnique); x++ {
-		rawHtml, err := RetrieveRawHtml(baseArmResources[x].resource_type)
+		rawHtml, err := GetRawHtml(baseArmResources[x].resource_type)
 
 		if err != nil {
 			fmt.Println("Error while trying to retrieve required documentation", err, baseArmResources[x].resource_type)
@@ -92,100 +94,98 @@ func main() {
 			fmt.Println(x+1, "Attribute name:", attribute.name, "||", "Type:", attribute.type_)
 		}
 	}
-
-	//fmt.Println(HtmlObjects)
-	/*
-				for x := 0; x < len(HtmlObjects); x++ {
-					fmt.Println("\n", "THIS IS FOR RESOURCE TYPE:", HtmlObjects[x].name, "-------------------")
-					fmt.Println("\n", HtmlObjects[x].attributes.required)
-					fmt.Println("\n", HtmlObjects[x].attributes.optional)
-				}
-
-
-		//fmt.Println(HtmlObjects[2].attributes.required)
-
-		//fmt.Println(HtmlObjects[0].attributes.required)
-		/*
-			for x := 0; x < len(HtmlObjects[0].attributes.optional); x++ {
-				fmt.Println("\nLINE", HtmlObjects[0].attributes.optional[x])
-			}
-	*/
-	//fmt.Println("-------------------------------------------------------", HtmlObjects[0].attributes.required)
-	/*
-		pattern := regexp.MustCompile(regexp.QuoteMeta("<code>") + "(.Block*)" + regexp.QuoteMeta("</code>"))
-		for x := 0; x < len(HtmlObjects); x++ {
-			for y := 0; y < len(HtmlObjects[x].attributes.required); y++ {
-				matches := pattern.FindAllStringSubmatch(HtmlObjects[x].attributes.optional[y], 3)
-				for a := 0; a < len(matches); a++ {
-					fmt.Println("THIS IS THE ATTRIBUTE FOUND:", matches[a])
-					//HtmlObjects[x].attributes.required[y] = matches[1]
-				}
-			}
-		}
-	*/
-	/*
-		for x := 0; x < len(baseArmResources); x++ {
-			for y := 0; y < len(baseArmResources[x].properties); y++ {
-				fmt.Println(baseArmResources[x].properties[y])
-			}
-		}
-	*/
 }
 
-func ImportArmFile(filepath *string) ([]byte, error) {
-	file, err := os.ReadFile(*filepath)
+func ImportArmFile(filepath *string) ([][]byte, error) {
+
+	var fileNames []string
+	var files [][]byte
+	fileInfo, err := os.Stat(*filepath)
 	if err != nil {
-		return nil, err
+		fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filepath), "\nStracktrace:", err)
 	}
-	return file, nil
+
+	isDir := fileInfo.IsDir()
+	flag.Parse()
+
+	if isDir {
+		files, err := os.ReadDir(*filepath)
+
+		if err != nil {
+			fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filepath), "\nStracktrace:", err)
+		}
+
+		for _, file := range files {
+			if strings.Contains(file.Name(), ".json") {
+				fileNames = append(fileNames, file.Name())
+			}
+		}
+	} else {
+		fileNames = append(fileNames, *filepath)
+	}
+
+	for _, fileName := range fileNames {
+		file, err := os.ReadFile(fileName)
+		if err != nil {
+			fmt.Println("Error while trying to retrieve ARM json content on file:", string(fileName), "\nStracktrace:", err)
+		}
+
+		files = append(files, file)
+	}
+
+	return files, err
 }
 
-func VerifyArmFile(filecontent []byte) error {
-	err := fastjson.ValidateBytes(filecontent)
-	return err
+func VerifyArmFile(filecontent [][]byte) error {
+	//err := fastjson.ValidateBytes(filecontent)
+	return nil //err
 }
 
-func RetrieveArmBaseInformation(filecontent []byte) ([]ArmBasicObject, error) {
+func GetArmBaseInformation(filecontent [][]byte) []ArmBasicObject {
 	var parserObject fastjson.Parser
-	rawJsonBytes, err := parserObject.ParseBytes(filecontent) //Error overwritten by error 2
-
 	var arrayJsonObjects []*fastjson.Value
 
-	// Check if the parsed JSON is an array or an object
-	if rawJsonBytes.Type() == fastjson.TypeArray {
-		// If it's an array, get the array elements
-		arrayJsonObjects = rawJsonBytes.GetArray()
-		for _, x := range arrayJsonObjects {
+	for _, bytes := range filecontent {
+		parserObject, err := parserObject.ParseBytes(bytes)
+
+		if err != nil {
+			fmt.Println("Error while transforming file from bytes to json:", err)
+		}
+
+		// Check if the parsed JSON is an array or an object
+		if parserObject.Type() == fastjson.TypeArray {
+			// If it's an array, get the array elements
+			arrayJsonObjects = parserObject.GetArray()
+			for _, x := range arrayJsonObjects {
+				object := ArmBasicObject{
+					name:          string(x.GetStringBytes("name")),
+					resource_type: string(x.GetStringBytes("type")),
+					resource_id:   string(x.GetStringBytes("id")),
+					location:      string(x.GetStringBytes("location")),
+					properties:    ConvertFromStringToSlice((x.GetObject("properties").String()), ","),
+				}
+
+				armBasicObjects = append(armBasicObjects, object)
+			}
+		} else if parserObject.Type() == fastjson.TypeObject {
+			// If it's an object, convert the object to an array of values
+			object_pre := parserObject.GetObject()
 			object := ArmBasicObject{
-				name:          string(x.GetStringBytes("name")),
-				resource_type: string(x.GetStringBytes("type")),
-				resource_id:   string(x.GetStringBytes("id")),
-				location:      string(x.GetStringBytes("location")),
-				properties:    ConvertFromStringToSlice((x.GetObject("properties").String()), ","),
+				name:          string(object_pre.Get("name").GetStringBytes()),
+				resource_type: string(object_pre.Get("type").GetStringBytes()),
+				resource_id:   string(object_pre.Get("id").GetStringBytes()),
+				location:      string(object_pre.Get("location").GetStringBytes()),
+				properties:    ConvertFromStringToSlice(object_pre.Get("properties").String(), ","),
 			}
 
 			armBasicObjects = append(armBasicObjects, object)
 		}
-	} else if rawJsonBytes.Type() == fastjson.TypeObject {
-		// If it's an object, convert the object to an array of values
-		object_pre := rawJsonBytes.GetObject()
-		object := ArmBasicObject{
-			name:          string(object_pre.Get("name").GetStringBytes()),
-			resource_type: string(object_pre.Get("type").GetStringBytes()),
-			resource_id:   string(object_pre.Get("id").GetStringBytes()),
-			location:      string(object_pre.Get("location").GetStringBytes()),
-			properties:    ConvertFromStringToSlice(object_pre.Get("properties").String(), ","),
-		}
-
-		armBasicObjects = append(armBasicObjects, object)
-	} else {
-		return nil, fmt.Errorf("unexpected JSON type: %s", rawJsonBytes.Type())
 	}
 
-	return armBasicObjects, err
+	return armBasicObjects
 }
 
-func RetrieveRawHtml(resourceType string) (string, error) {
+func GetRawHtml(resourceType string) (string, error) {
 	var HtmlBody string
 	var HtmlBodyCompare string
 	var resourceTypeRegex *regexp.Regexp
@@ -321,22 +321,48 @@ func ConvertFromStringToSlice(stringToSlice string, seperatorChar string) []stri
 }
 
 func UniquifyResourceTypes(resourceTypes []string) []string {
-	sortingString := strings.Join(resourceTypes, ",")
-	var sortingSlice []string
+	mapOfResourceTypes := make(map[string]bool)
+	var sortedResourceTypes []string
 
 	for _, resourceType := range resourceTypes {
-		if strings.Count(sortingString, resourceType) == 1 {
-			fmt.Println(strings.Count(sortingString, resourceType))
-			sortingSlice = append(sortingSlice, resourceType)
-		} else {
-			lenOfResourceType := len(strings.Split(resourceType, "/"))
-			if !(strings.Contains(strings.Join(sortingSlice, ","), resourceType)) && lenOfResourceType == 1 {
-				sortingSlice = append(sortingSlice, resourceType)
-			} else if !(strings.Contains(strings.Join(sortingSlice, ","), strings.Split(resourceType, "/")[0]+"/"+strings.Split(resourceType, "/")[lenOfResourceType-1])) {
-				sortingSlice = append(sortingSlice, resourceType)
-				fmt.Println("Hello")
-			}
+		if !mapOfResourceTypes[resourceType] {
+			sortedResourceTypes = append(sortedResourceTypes, resourceType)
+			mapOfResourceTypes[resourceType] = true
 		}
 	}
-	return sortingSlice
+
+	return sortedResourceTypes
+}
+
+func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
+	var indexOfStartObject int
+	var isInsideTupple bool
+	var properties []string
+	regexStartOfObject := regexp.MustCompile(`\[\{`)
+	regexEndOfObject := regexp.MustCompile(`\}\]`)
+	//regexFlatAttribute := regexp.MustCompile(`\s*\"[^\"]+\":\"[^\"]+\",`)
+
+	for x, armObject := range armBasicObjects {
+		for y, property := range armObject.properties {
+			if strings.Contains(property, "[{") && !(regexStartOfObject.MatchString(property) && regexEndOfObject.MatchString(property)) {
+				indexOfStartObject = y
+				isInsideTupple = true
+			} else if isInsideTupple && strings.Contains(property, "}]") && !(regexStartOfObject.MatchString(property) && regexEndOfObject.MatchString(property)) {
+				property := strings.Join(armObject.properties[indexOfStartObject:len(armObject.properties)-indexOfStartObject+1], "%")
+				properties = append(properties, property)
+				isInsideTupple = false
+			}
+		}
+		armBasicObjects[x].properties = properties
+	}
+
+	for _, object := range armBasicObjects {
+		fmt.Println("THIS IS OBJECT:", object.name)
+		for x, line := range object.properties {
+			fmt.Println("NR:", x, "ATTRIBUTE:", line)
+		}
+	}
+
+	os.Exit(0)
+	return armBasicObjects
 }
