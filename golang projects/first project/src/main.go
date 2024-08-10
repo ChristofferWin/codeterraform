@@ -340,12 +340,11 @@ func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
 	var properties []string
 	regexStartOfListOfObject := regexp.MustCompile(`\[\{`)
 	regexEndOfListOfObject := regexp.MustCompile(`\}\]`)
-	test := regexp.MustCompile(`"networkProfile": {`)
-	//regexFlatAttribute := regexp.MustCompile(`\s*\"[^\"]+\":\"[^\"]+\",`)
+	regexFlatAttribute := regexp.MustCompile(`\s*\"[^\"]+\":\"[^\"]+\"`)
 
 	for x, armObject := range armBasicObjects {
 		for y, property := range armObject.properties {
-			fmt.Println("NEW LINE:", y, ":", property)
+			//fmt.Println("NEW LINE:", y, ":", property)
 			if regexStartOfListOfObject.MatchString(property) && !regexEndOfListOfObject.MatchString(property) {
 				indexOfStartObject = y
 				isInsideTupple = true
@@ -355,10 +354,10 @@ func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
 				isInsideTupple = false
 			} else if strings.Contains(property, ":{") && strings.Contains(property, "}") && !isInsideTupple {
 				properties = append(properties, property)
-			} else if test.MatchString(property) && !isInsideTupple {
-				fmt.Println("inside nested object:", property)
-				fmt.Println("line after:", armObject.properties[y+1])
+			} else if regexFlatAttribute.MatchString(property) && !isInsideTupple {
+				properties = append(properties, property)
 			}
+
 		}
 		armBasicObjects[x].properties = properties
 	}
@@ -375,4 +374,83 @@ func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
 
 	os.Exit(0)
 	return armBasicObjects
+}
+
+type JSONData struct {
+	Name       string      `json:"name"`
+	ID         string      `json:"id"`
+	Etag       string      `json:"etag"`
+	Type       string      `json:"type"`
+	Location   string      `json:"location"`
+	Properties interface{} `json:"properties"` // Use interface{} for dynamic properties
+}
+
+jsonData := `[
+	{
+		"name": "test-1-file-1-vnet",
+		"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet",
+		"etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
+		"type": "Microsoft.Network/virtualNetworks/subnets",
+		"location": "eastus",
+		"properties": {
+			"provisioningState": "Succeeded",
+			"resourceGuid": "64c57928-3194-4d8c-80ab-389177d79cd7",
+			"addressSpace": {
+				"addressPrefixes": [
+					"10.0.0.0/16"
+				]
+			},
+			"networkProfile": {
+				"networkInterfaces": [
+					{
+						"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/networkInterfaces/test686",
+						"properties": {
+							"deleteOption": "Detach"
+						},
+						"resourceGroup": "test"
+					}
+				]
+			},
+			"subnets": [
+				{
+					"name": "default",
+					"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default",
+					"etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
+					"properties": {
+						"provisioningState": "Succeeded",
+						"addressPrefix": "10.0.0.0/24",
+						"ipConfigurations": [
+							{
+								"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/TEST/providers/Microsoft.Network/networkInterfaces/TEST686/ipConfigurations/IPCONFIG1"
+							}
+						],
+						"delegations": [],
+						"privateEndpointNetworkPolicies": "Disabled",
+						"privateLinkServiceNetworkPolicies": "Enabled"
+					},
+					"type": "Microsoft.Network/networkWatchers"
+				}
+			],
+			"virtualNetworkPeerings": [],
+			"enableDdosProtection": false
+		}
+	}
+]`
+
+var data []JSONData
+
+// Unmarshal the JSON into the Go struct
+err := json.Unmarshal([]byte(jsonData), &data)
+if err != nil {
+	fmt.Println("Error:", err)
+	return
+}
+
+// Print the parsed data
+for _, item := range data {
+	fmt.Printf("Name: %s\n", item.Name)
+	fmt.Printf("ID: %s\n", item.ID)
+	fmt.Printf("Location: %s\n", item.Location)
+	fmt.Printf("Properties: %v\n", item.Properties)
+}
 }
