@@ -338,19 +338,26 @@ func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
 	var indexOfStartObject int
 	var isInsideTupple bool
 	var properties []string
-	regexStartOfObject := regexp.MustCompile(`\[\{`)
-	regexEndOfObject := regexp.MustCompile(`\}\]`)
+	regexStartOfListOfObject := regexp.MustCompile(`\[\{`)
+	regexEndOfListOfObject := regexp.MustCompile(`\}\]`)
+	test := regexp.MustCompile(`"networkProfile": {`)
 	//regexFlatAttribute := regexp.MustCompile(`\s*\"[^\"]+\":\"[^\"]+\",`)
 
 	for x, armObject := range armBasicObjects {
 		for y, property := range armObject.properties {
-			if strings.Contains(property, "[{") && !(regexStartOfObject.MatchString(property) && regexEndOfObject.MatchString(property)) {
+			fmt.Println("NEW LINE:", y, ":", property)
+			if regexStartOfListOfObject.MatchString(property) && !regexEndOfListOfObject.MatchString(property) {
 				indexOfStartObject = y
 				isInsideTupple = true
-			} else if isInsideTupple && strings.Contains(property, "}]") && !(regexStartOfObject.MatchString(property) && regexEndOfObject.MatchString(property)) {
+			} else if isInsideTupple && strings.Contains(armObject.properties[y+2], "}]") {
 				property := strings.Join(armObject.properties[indexOfStartObject:len(armObject.properties)-indexOfStartObject+1], "%")
 				properties = append(properties, property)
 				isInsideTupple = false
+			} else if strings.Contains(property, ":{") && strings.Contains(property, "}") && !isInsideTupple {
+				properties = append(properties, property)
+			} else if test.MatchString(property) && !isInsideTupple {
+				fmt.Println("inside nested object:", property)
+				fmt.Println("line after:", armObject.properties[y+1])
 			}
 		}
 		armBasicObjects[x].properties = properties
@@ -358,8 +365,11 @@ func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
 
 	for _, object := range armBasicObjects {
 		fmt.Println("THIS IS OBJECT:", object.name)
-		for x, line := range object.properties {
-			fmt.Println("NR:", x, "ATTRIBUTE:", line)
+		for _, line := range object.properties {
+			fmt.Println("\n------------ATTRIBUTE----------------")
+			for y, line := range strings.Split(line, "%") {
+				fmt.Println("Object line:", y, line)
+			}
 		}
 	}
 
