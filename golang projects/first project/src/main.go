@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -15,36 +16,65 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-type ArmBasicObject struct {
-	name          string
-	resource_type string
-	resource_id   string
-	location      string
-	properties    []string
-}
-
-type AzureRm struct {
-}
-
 type Attribute struct {
-	type_ string
-	name  string
+	Type string `json:"Type"`
+	Name string `json:"Name"`
+}
+
+type ArmObject struct {
+	Name                string `json:"name"`
+	Resource_id         string `json:"id"`
+	Resource_type       string `json:"type"`
+	Location            string `json:"location"`
+	Resource_group_name string
+	Properties          interface{} `json:"properties"` // Use interface{} for dynamic properties
 }
 
 // Define the HtmlObject struct with a named attributes field
 type HtmlObject struct {
-	resource_type string
-	attribute     []Attribute
+	Resource_type string      `json:"Resource_type"`
+	Version       string      `json:"Version"`
+	Attribute     []Attribute `json:"Attribute"`
 }
 
+type RootAttribute struct {
+	Name  string
+	Value string
+}
+
+type Variable struct {
+	Name         string
+	Description  string
+	DefaultValue string
+}
+
+type NestedAttribute struct {
+	BlockName       string
+	NestedAttribute interface{}
+}
+
+type CompileObject struct {
+	Resource_definition_name string
+	RootAttributes           []RootAttribute
+	Variables                []Variable
+	NestedAttributes         []NestedAttribute
+}
+
+type TerraformObject struct {
+	ProviderVersion string
+	CompileObjects  []CompileObject
+}
+
+var TerraformCompiledObject TerraformObject
 var HtmlObjects = []HtmlObject{}
 var AttributeObjects = []Attribute{}
-var armBasicObjects = []ArmBasicObject{}
+var SystemTerraformDocsFileName string = "./terraformdecompile/terraformdocsresourcedefinitions.json"
 
 func main() {
-
 	// Define and parse the filepath flag
-	filepath := flag.String("filepath", "./", "Path to the file")
+	filepath := flag.String("filepath", "./", "Path to the file ARM json file(s) Can be either a specific file path or directory path")
+	nocache := flag.Bool("no-cache", false, "Switch to determine whether to use the cache if any is present")
+	providerVersion := flag.String("provider-version", "latest", "Use a custom version for the terraform decompiler - Useful in cases where ARM templates are old and where an older provider version might give better results, '<major, minor, patch>', eg. '3.11.0' ")
 	flag.Parse()
 
 	// Call the ImportArmFile function with the filepath argument
@@ -55,45 +85,68 @@ func main() {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-
-	if err := VerifyArmFile(fileContent); err != nil {
-		fmt.Println("Error validating json file:", err)
-		return
-	}
-
+	/*
+		if err := VerifyArmFile(fileContent); err != nil {
+			fmt.Println("Error validating json file:", err)
+			return
+		}
+	*/
 	baseArmResources := GetArmBaseInformation(fileContent)
 
 	if err != nil {
 		fmt.Println("Error while trying to retrieve the json ARM content", err)
 	}
 
-	SortArmBasicObject(armBasicObjects)
-
-	var resourceTypes []string
+	var resourceTypesFromArm []string
+	var resourceTypesFromDif []string
+	var resourceTypesToRetrieve []string
 
 	for _, resourceType := range baseArmResources {
-		resourceTypes = append(resourceTypes, resourceType.resource_type)
+		resourceTypesFromArm = append(resourceTypesFromArm, resourceType.Resource_type)
 	}
 
-	resourceTypesUnique := UniquifyResourceTypes(resourceTypes)
+	var htmlObjectsFromCache []HtmlObject
 
-	for x := 0; x < len(resourceTypesUnique); x++ {
-		rawHtml, err := GetRawHtml(baseArmResources[x].resource_type)
+	if !*nocache {
+		htmlObjectsFromCache, err = GetCachedSystemFiles()
+		if err != nil {
+			fmt.Println("No cache detected, retrieving all required information...")
+		}
+		for _, htmlObjectFromCache := range htmlObjectsFromCache {
+			resourceTypesFromDif = append(resourceTypesFromDif, htmlObjectFromCache.Resource_type)
+		}
+
+		for _, resourceTypeFromArm := range resourceTypesFromArm {
+			if !strings.Contains(strings.Join(resourceTypesFromDif, ","), resourceTypeFromArm) {
+				resourceTypesToRetrieve = append(resourceTypesToRetrieve, resourceTypeFromArm)
+			}
+		}
+
+		resourceTypesToRetrieve = UniquifyResourceTypes(resourceTypesToRetrieve)
+	} else {
+		resourceTypesToRetrieve = UniquifyResourceTypes(resourceTypesFromArm)
+	}
+
+	for _, resourceType := range resourceTypesToRetrieve {
+		rawHtml, err := GetRawHtml(resourceType, *providerVersion)
 
 		if err != nil {
-			fmt.Println("Error while trying to retrieve required documentation", err, baseArmResources[x].resource_type)
+			fmt.Println("Error while trying to retrieve required documentation", err, resourceType)
 			break
 		}
-		cleanHtml := SortRawHtml(rawHtml, baseArmResources[x].resource_type)
+		cleanHtml := SortRawHtml(rawHtml, resourceType)
 		HtmlObjects = append(HtmlObjects, cleanHtml)
 	}
-
-	for _, object := range HtmlObjects {
-		fmt.Println("\n", "-------------------------", object.resource_type, "-------------------------")
-		for x, attribute := range object.attribute {
-			fmt.Println(x+1, "Attribute name:", attribute.name, "||", "Type:", attribute.type_)
+	HtmlObjects = append(HtmlObjects, htmlObjectsFromCache...)
+	if !*nocache {
+		err = NewCachedSystemFiles(HtmlObjects)
+		if err != nil {
+			fmt.Println("An error occured while running function 'NewCachedSystemFiles'", err)
 		}
 	}
+
+	SortArmObject(baseArmResources, HtmlObjects)
+
 }
 
 func ImportArmFile(filepath *string) ([][]byte, error) {
@@ -136,81 +189,84 @@ func ImportArmFile(filepath *string) ([][]byte, error) {
 	return files, err
 }
 
-func VerifyArmFile(filecontent [][]byte) error {
-	//err := fastjson.ValidateBytes(filecontent)
-	return nil //err
+func VerifyArmFile(filecontent [][]byte, fileName string) error {
+	for _, content := range filecontent {
+		err := fastjson.ValidateBytes(content)
+		return err
+	}
+	return nil
 }
 
-func GetArmBaseInformation(filecontent [][]byte) []ArmBasicObject {
-	var parserObject fastjson.Parser
-	var arrayJsonObjects []*fastjson.Value
+func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
+	var jsonInterface interface{}
+	var armBasicObjects []ArmObject
+	var jsonMap map[string]interface{}
 
 	for _, bytes := range filecontent {
-		parserObject, err := parserObject.ParseBytes(bytes)
+		err := json.Unmarshal(bytes, &jsonInterface)
 
 		if err != nil {
 			fmt.Println("Error while transforming file from bytes to json:", err)
 		}
 
-		// Check if the parsed JSON is an array or an object
-		if parserObject.Type() == fastjson.TypeArray {
-			// If it's an array, get the array elements
-			arrayJsonObjects = parserObject.GetArray()
-			for _, x := range arrayJsonObjects {
-				object := ArmBasicObject{
-					name:          string(x.GetStringBytes("name")),
-					resource_type: string(x.GetStringBytes("type")),
-					resource_id:   string(x.GetStringBytes("id")),
-					location:      string(x.GetStringBytes("location")),
-					properties:    ConvertFromStringToSlice((x.GetObject("properties").String()), ","),
+		switch v := jsonInterface.(type) {
+		case map[string]interface{}:
+			{
+				jsonMap = jsonInterface.(map[string]interface{})
+				armObject := ArmObject{
+					Name:                jsonMap["name"].(string),
+					Resource_id:         jsonMap["id"].(string),
+					Resource_type:       jsonMap["type"].(string),
+					Location:            jsonMap["location"].(string),
+					Resource_group_name: strings.Split(jsonMap["id"].(string), "/")[4],
+					Properties:          jsonMap["properties"],
 				}
+				armBasicObjects = append(armBasicObjects, armObject)
 
-				armBasicObjects = append(armBasicObjects, object)
 			}
-		} else if parserObject.Type() == fastjson.TypeObject {
-			// If it's an object, convert the object to an array of values
-			object_pre := parserObject.GetObject()
-			object := ArmBasicObject{
-				name:          string(object_pre.Get("name").GetStringBytes()),
-				resource_type: string(object_pre.Get("type").GetStringBytes()),
-				resource_id:   string(object_pre.Get("id").GetStringBytes()),
-				location:      string(object_pre.Get("location").GetStringBytes()),
-				properties:    ConvertFromStringToSlice(object_pre.Get("properties").String(), ","),
+		case []interface{}:
+			{
+				for _, item := range v {
+					jsonMap = item.(map[string]interface{})
+					armObject := ArmObject{
+						Name:                jsonMap["name"].(string),
+						Resource_id:         jsonMap["id"].(string),
+						Resource_type:       jsonMap["type"].(string),
+						Location:            jsonMap["location"].(string),
+						Resource_group_name: strings.Split(jsonMap["id"].(string), "/")[4],
+						Properties:          jsonMap["properties"],
+					}
+					armBasicObjects = append(armBasicObjects, armObject)
+				}
 			}
-
-			armBasicObjects = append(armBasicObjects, object)
 		}
 	}
 
 	return armBasicObjects
 }
 
-func GetRawHtml(resourceType string) (string, error) {
-	var HtmlBody string
-	var HtmlBodyCompare string
+func ConvertArmAttributeName(resourceType string) string {
 	var resourceTypeRegex *regexp.Regexp
 	var convertResourceTypeName string
 	// Use a regex to find places where we need to insert underscores
 
 	//Define regex so that we can differentiate between resource types 'Something/Something' And Something/Something/Somthing
 	if len(strings.Split(resourceType, "/")) == 2 {
-		convertResourceTypeName = func() string {
-			resourceTypeRegex = regexp.MustCompile("([a-z0-9])([A-Z])")
-			convertResourceTypeName = resourceTypeRegex.ReplaceAllString(resourceType, "${1}_${2}")
-			return strings.Split(convertResourceTypeName, "/")[1]
-		}()
+		resourceTypeRegex = regexp.MustCompile("([a-z0-9])([A-Z])")
+		convertResourceTypeName = resourceTypeRegex.ReplaceAllString(resourceType, "${1}_${2}")
+		convertResourceTypeName = strings.ToLower(strings.Split(convertResourceTypeName, "/")[1])
 	} else {
-		convertResourceTypeName = func() string {
-			sliceArray := strings.Split(resourceType, "/")
-			return sliceArray[len(sliceArray)-1]
-		}()
+		sliceArray := strings.Split(resourceType, "/")
+		convertResourceTypeName = strings.ToLower(sliceArray[len(sliceArray)-1])
 	}
-
-	// Remove the trailing 's' if it exists
 	convertResourceTypeName = strings.TrimSuffix(convertResourceTypeName, "s")
+	return convertResourceTypeName
+}
 
-	// Convert the entire string to lower case
-	convertResourceTypeName = strings.ToLower(convertResourceTypeName)
+func GetRawHtml(resourceType string, providerVersion string) (string, error) {
+	var HtmlBody string
+	var HtmlBodyCompare string
+	convertResourceTypeName := ConvertArmAttributeName(resourceType)
 
 	// Create context
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
@@ -228,7 +284,7 @@ func GetRawHtml(resourceType string) (string, error) {
 	taskCtx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
 	defer cancel()
 
-	url := fmt.Sprintf("https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/%s", convertResourceTypeName)
+	url := fmt.Sprintf("https://registry.terraform.io/providers/hashicorp/azurerm/%s/docs/resources/%s", providerVersion, convertResourceTypeName)
 
 	for x := 1; x < 25; x++ {
 		err := chromedp.Run(taskCtx,
@@ -258,7 +314,7 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	var flatAttributes []string //Either bool, string, int or string array, must be determined by the ARM values
 	var blockAttribute []string //Object
 
-	//Defining the regex matching ALL attributes, which we will sort through first, then seperate on type - object vs string
+	//Defining the regex matching ALL attributes, which we will sort through first, then seperate on type - armObject vs string
 	allAttributesRegex := regexp.MustCompile(`\(Required|Optional\)`)
 	//Defining the regex pattern to only match block definitions - The right side finds edgecases, e.g there might be more ways for Hashicorp to define blocks
 	oneBlockRegex := regexp.MustCompile(`(?:An|A|One or more|) <code>([^<]+)</code> block|(Can be specified multiple times.)*?<code>([^<]+)</code> block`)
@@ -292,8 +348,8 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	for _, line := range blockAttribute {
 		{
 			attribute := Attribute{
-				type_: "object",
-				name:  oneBlockRegex.FindStringSubmatch(line)[1],
+				Type: "armObject",
+				Name: oneBlockRegex.FindStringSubmatch(line)[1],
 			}
 			AttributeObjects = append(AttributeObjects, attribute)
 		}
@@ -301,15 +357,15 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	//For all the type 'string' Add them to the overall attribute slices
 	for _, line := range flatAttributes {
 		attribute := Attribute{
-			type_: "string",
-			name:  isolateAttributesRegex.FindStringSubmatch(line)[1],
+			Type: "string",
+			Name: isolateAttributesRegex.FindStringSubmatch(line)[1],
 		}
 		AttributeObjects = append(AttributeObjects, attribute)
 	}
-	//Adding all the sorted attributes to the final return object
+	//Adding all the sorted attributes to the final return armObject
 	HtmlObject := HtmlObject{
-		resource_type: resourceType,
-		attribute:     AttributeObjects,
+		Resource_type: resourceType,
+		Attribute:     AttributeObjects,
 	}
 
 	return HtmlObject
@@ -334,123 +390,90 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 	return sortedResourceTypes
 }
 
-func SortArmBasicObject(armBasicObjects []ArmBasicObject) []ArmBasicObject {
-	var indexOfStartObject int
-	var isInsideTupple bool
-	var properties []string
-	regexStartOfListOfObject := regexp.MustCompile(`\[\{`)
-	regexEndOfListOfObject := regexp.MustCompile(`\}\]`)
-	regexFlatAttribute := regexp.MustCompile(`\s*\"[^\"]+\":\"[^\"]+\"`)
+func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
+	var CompiledReturn []CompileObject
+	for _, armBasicObject := range armBasicObjects {
 
-	for x, armObject := range armBasicObjects {
-		for y, property := range armObject.properties {
-			//fmt.Println("NEW LINE:", y, ":", property)
-			if regexStartOfListOfObject.MatchString(property) && !regexEndOfListOfObject.MatchString(property) {
-				indexOfStartObject = y
-				isInsideTupple = true
-			} else if isInsideTupple && strings.Contains(armObject.properties[y+2], "}]") {
-				property := strings.Join(armObject.properties[indexOfStartObject:len(armObject.properties)-indexOfStartObject+1], "%")
-				properties = append(properties, property)
-				isInsideTupple = false
-			} else if strings.Contains(property, ":{") && strings.Contains(property, "}") && !isInsideTupple {
-				properties = append(properties, property)
-			} else if regexFlatAttribute.MatchString(property) && !isInsideTupple {
-				properties = append(properties, property)
-			}
-
+		object := CompileObject{
+			Resource_definition_name: fmt.Sprintf(`"azurerm_%s" "%s_object" `, ConvertArmAttributeName(armBasicObject.Resource_type), strings.Split(ConvertArmAttributeName(armBasicObject.Resource_type), "_")[0]),
 		}
-		armBasicObjects[x].properties = properties
+		CompiledReturn = append(CompiledReturn, object)
 	}
-
-	for _, object := range armBasicObjects {
-		fmt.Println("THIS IS OBJECT:", object.name)
-		for _, line := range object.properties {
-			fmt.Println("\n------------ATTRIBUTE----------------")
-			for y, line := range strings.Split(line, "%") {
-				fmt.Println("Object line:", y, line)
-			}
-		}
-	}
-
+	fmt.Println(CompiledReturn)
 	os.Exit(0)
-	return armBasicObjects
-}
+	//var test HtmlObject
 
-type JSONData struct {
-	Name       string      `json:"name"`
-	ID         string      `json:"id"`
-	Etag       string      `json:"etag"`
-	Type       string      `json:"type"`
-	Location   string      `json:"location"`
-	Properties interface{} `json:"properties"` // Use interface{} for dynamic properties
-}
+	/*
+		for _, armObject := range armBasicObjects {
+			for _, htmlObject := range HtmlObjects {
+				if htmlObject.Resource_type == armObject.Resource_type {
+					properties := armObject.Properties.(map[string]interface{})
+					for attributeName, attributeValue := range properties {
 
-jsonData := `[
-	{
-		"name": "test-1-file-1-vnet",
-		"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet",
-		"etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
-		"type": "Microsoft.Network/virtualNetworks/subnets",
-		"location": "eastus",
-		"properties": {
-			"provisioningState": "Succeeded",
-			"resourceGuid": "64c57928-3194-4d8c-80ab-389177d79cd7",
-			"addressSpace": {
-				"addressPrefixes": [
-					"10.0.0.0/16"
-				]
-			},
-			"networkProfile": {
-				"networkInterfaces": [
-					{
-						"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/networkInterfaces/test686",
-						"properties": {
-							"deleteOption": "Detach"
-						},
-						"resourceGroup": "test"
 					}
-				]
-			},
-			"subnets": [
-				{
-					"name": "default",
-					"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default",
-					"etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
-					"properties": {
-						"provisioningState": "Succeeded",
-						"addressPrefix": "10.0.0.0/24",
-						"ipConfigurations": [
-							{
-								"id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/TEST/providers/Microsoft.Network/networkInterfaces/TEST686/ipConfigurations/IPCONFIG1"
-							}
-						],
-						"delegations": [],
-						"privateEndpointNetworkPolicies": "Disabled",
-						"privateLinkServiceNetworkPolicies": "Enabled"
-					},
-					"type": "Microsoft.Network/networkWatchers"
 				}
-			],
-			"virtualNetworkPeerings": [],
-			"enableDdosProtection": false
+			}
+
+		}
+	*/
+	/*
+		//Attribute names in Arm use CammelCase - We need to conver it to lowercase + _ seperator and we need to remove any trailing 's'
+		//In addtion we want to do the above BUT also allow attributes between HTML and armobjects to be matched in case 's' Is simply there anyways
+		for _, object := range armBasicObjects {
+			fmt.Println("\n", "-------------------------", object.Resource_type, "-------------------------")
+			properties := object.Properties.(map[string]interface{})
+			for v, value := range properties {
+				fmt.Println("\nARM ATTRIBUTE NAME:", v, "ARM VALUE", value)
+			}
+		}
+
+		for _, armObject := range HtmlObjects {
+			fmt.Println("\n", "-------------------------", armObject.Resource_type, "-------------------------")
+			for x, attribute := range armObject.Attribute {
+				fmt.Println(x+1, "Attribute name:", attribute.Name, "||", "Type:", attribute.Type)
+			}
+		}
+
+		//fmt.Println(armBasicObjects[0].Properties)
+	*/
+	return nil
+}
+
+func NewCachedSystemFiles(HtmlObjects []HtmlObject) error {
+	jsonData, err := json.Marshal(HtmlObjects)
+	if err != nil {
+		fmt.Println("The following error occured when trying to convert htmlobjects to json:", err)
+	}
+	if _, err := os.Stat(strings.Split(SystemTerraformDocsFileName, "/")[1]); os.IsNotExist(err) {
+		err = os.Mkdir(strings.Split(SystemTerraformDocsFileName, "/")[1], 0755)
+		if err != nil {
+			return err
 		}
 	}
-]`
+	if err != nil {
+		return err
+	}
 
-var data []JSONData
-
-// Unmarshal the JSON into the Go struct
-err := json.Unmarshal([]byte(jsonData), &data)
-if err != nil {
-	fmt.Println("Error:", err)
-	return
+	err = os.WriteFile(SystemTerraformDocsFileName, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-// Print the parsed data
-for _, item := range data {
-	fmt.Printf("Name: %s\n", item.Name)
-	fmt.Printf("ID: %s\n", item.ID)
-	fmt.Printf("Location: %s\n", item.Location)
-	fmt.Printf("Properties: %v\n", item.Properties)
+func GetCachedSystemFiles() ([]HtmlObject, error) {
+	var HtmlObjects []HtmlObject
+
+	file, err := os.ReadFile(SystemTerraformDocsFileName)
+	if err != nil {
+		return nil, err
+	}
+	extractJson := json.Unmarshal(file, &HtmlObjects)
+	if extractJson != nil {
+		return nil, err
+	}
+
+	return HtmlObjects, nil
 }
-}
+
+//func SortResourceTypes()
