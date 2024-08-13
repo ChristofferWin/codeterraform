@@ -71,14 +71,23 @@ var AttributeObjects = []Attribute{}
 var SystemTerraformDocsFileName string = "./terraformdecompile/terraformdocsresourcedefinitions.json"
 
 func main() {
-	// Define and parse the filepath flag
-	filepath := flag.String("filepath", "./", "Path to the file ARM json file(s) Can be either a specific file path or directory path")
-	nocache := flag.Bool("no-cache", false, "Switch to determine whether to use the cache if any is present")
+	// Define and parse the filePath flag
+	filePath := flag.String("file-path", "./", "Path to the file ARM json file(s) Can be either a specific file path or directory path")
+	noCache := flag.Bool("no-cache", false, "Switch to determine whether to use the cache if any is present")
+	clearCache := flag.Bool("clear-cache", false, "Switch to determine whether the application shall remove all cache")
 	providerVersion := flag.String("provider-version", "latest", "Use a custom version for the terraform decompiler - Useful in cases where ARM templates are old and where an older provider version might give better results, '<major, minor, patch>', eg. '3.11.0' ")
 	flag.Parse()
 
-	// Call the ImportArmFile function with the filepath argument
-	fileContent, err := ImportArmFile(filepath)
+	if *clearCache {
+		err := os.RemoveAll(strings.Split(SystemTerraformDocsFileName, "/")[1])
+		if err != nil {
+			fmt.Println("The following error occured while trying to delete the cache:", err)
+		}
+		return
+	}
+
+	// Call the ImportArmFile function with the filePath argument
+	fileContent, err := ImportArmFile(filePath)
 
 	if err != nil {
 		// Handle the error if it occurs
@@ -107,7 +116,7 @@ func main() {
 
 	var htmlObjectsFromCache []HtmlObject
 
-	if !*nocache {
+	if !*noCache {
 		htmlObjectsFromCache, err = GetCachedSystemFiles()
 		if err != nil {
 			fmt.Println("No cache detected, retrieving all required information...")
@@ -138,7 +147,7 @@ func main() {
 		HtmlObjects = append(HtmlObjects, cleanHtml)
 	}
 	HtmlObjects = append(HtmlObjects, htmlObjectsFromCache...)
-	if !*nocache {
+	if !*noCache {
 		err = NewCachedSystemFiles(HtmlObjects)
 		if err != nil {
 			fmt.Println("An error occured while running function 'NewCachedSystemFiles'", err)
@@ -149,23 +158,23 @@ func main() {
 
 }
 
-func ImportArmFile(filepath *string) ([][]byte, error) {
+func ImportArmFile(filePath *string) ([][]byte, error) {
 
 	var fileNames []string
 	var files [][]byte
-	fileInfo, err := os.Stat(*filepath)
+	fileInfo, err := os.Stat(*filePath)
 	if err != nil {
-		fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filepath), "\nStracktrace:", err)
+		fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filePath), "\nStracktrace:", err)
 	}
 
 	isDir := fileInfo.IsDir()
 	flag.Parse()
 
 	if isDir {
-		files, err := os.ReadDir(*filepath)
+		files, err := os.ReadDir(*filePath)
 
 		if err != nil {
-			fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filepath), "\nStracktrace:", err)
+			fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filePath), "\nStracktrace:", err)
 		}
 
 		for _, file := range files {
@@ -174,7 +183,7 @@ func ImportArmFile(filepath *string) ([][]byte, error) {
 			}
 		}
 	} else {
-		fileNames = append(fileNames, *filepath)
+		fileNames = append(fileNames, *filePath)
 	}
 
 	for _, fileName := range fileNames {
