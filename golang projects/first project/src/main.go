@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -39,7 +40,7 @@ type HtmlObject struct {
 
 type RootAttribute struct {
 	Name  string
-	Value string
+	Value interface{}
 }
 
 type Variable struct {
@@ -51,13 +52,14 @@ type Variable struct {
 type NestedAttribute struct {
 	BlockName       string
 	NestedAttribute interface{}
+	BlockNumber     int //Determine the amount of blocks, e.g if an arm definition has a list of subnets with 2 subnets = 2 for the 'BlockNumber'
 }
 
 type CompileObject struct {
-	Resource_definition_name string
-	RootAttributes           []RootAttribute
-	Variables                []Variable
-	NestedAttributes         []NestedAttribute
+	ResourceDefinitionName string
+	RootAttributes         []RootAttribute
+	Variables              []Variable
+	NestedAttributes       []NestedAttribute
 }
 
 type TerraformObject struct {
@@ -258,17 +260,20 @@ func ConvertArmAttributeName(resourceType string) string {
 	var resourceTypeRegex *regexp.Regexp
 	var convertResourceTypeName string
 	// Use a regex to find places where we need to insert underscores
+	regexToMatchAttributeNames := regexp.MustCompile("([A-Z])")
 
 	//Define regex so that we can differentiate between resource types 'Something/Something' And Something/Something/Somthing
 	if len(strings.Split(resourceType, "/")) == 2 {
 		resourceTypeRegex = regexp.MustCompile("([a-z0-9])([A-Z])")
 		convertResourceTypeName = resourceTypeRegex.ReplaceAllString(resourceType, "${1}_${2}")
 		convertResourceTypeName = strings.ToLower(strings.Split(convertResourceTypeName, "/")[1])
+	} else if regexToMatchAttributeNames.MatchString(resourceType) && len(strings.Split(resourceType, "/")) < 2 {
+		convertResourceTypeName = regexToMatchAttributeNames.ReplaceAllString(resourceType, "_$1")
 	} else {
 		sliceArray := strings.Split(resourceType, "/")
 		convertResourceTypeName = strings.ToLower(sliceArray[len(sliceArray)-1])
 	}
-	convertResourceTypeName = strings.TrimSuffix(convertResourceTypeName, "s")
+	convertResourceTypeName = strings.ToLower(strings.TrimSuffix(convertResourceTypeName, "s"))
 	return convertResourceTypeName
 }
 
@@ -294,6 +299,7 @@ func GetRawHtml(resourceType string, providerVersion string) (string, error) {
 	defer cancel()
 
 	url := fmt.Sprintf("https://registry.terraform.io/providers/hashicorp/azurerm/%s/docs/resources/%s", providerVersion, convertResourceTypeName)
+	fmt.Println(url)
 
 	for x := 1; x < 25; x++ {
 		err := chromedp.Run(taskCtx,
@@ -400,34 +406,76 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 }
 
 func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
+	//var rootAttributes []RootAttribute
+	var match bool
 	var CompiledReturn []CompileObject
+	var htmlObject HtmlObject
+	//var attributeName string
+	var mapValue interface{}
+	var isMap bool
+	//var recursiveValue interface{}
+	var recursiveValues []interface{}
+	//var keepGoing interface{}
 	for _, armBasicObject := range armBasicObjects {
+		//terraformObjectName := strings.Split(strings.Split(ConvertArmAttributeName(armBasicObject.Resource_type), "")[0], "/")
+		resourceType := ConvertArmAttributeName(armBasicObject.Resource_type)
+		resourceType = fmt.Sprintf(`"azurerm_%s" "%s_object" `, resourceType, resourceType)
+		fmt.Println("TF CODE:", resourceType)
+
+		for _, object := range HtmlObjects {
+			if object.Resource_type == armBasicObject.Resource_type {
+				htmlObject = object
+				break
+			}
+		}
+
+		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
+			armPropertyNameConvert := ConvertArmAttributeName(armPropertyName)
+			recursiveValue := armPropertyValue
+			for _, object := range htmlObject.Attribute {
+				if strings.Contains(object.Name, armPropertyNameConvert) {
+					match = true
+					//attributeName = object.Name
+				}
+
+				if match && object.Type == "string" {
+					reflectValue := reflect.ValueOf(recursiveValue)
+					if reflectValue.Kind() == reflect.Map {
+						for {
+							isMap, mapValue = RecursiveMapLookUp(recursiveValue)
+							if !isMap {
+								recursiveValues = append(recursiveValues, mapValue)
+								fmt.Println("WE ARE HERE:", mapValue)
+								break
+							}
+							recursiveValue = mapValue
+						}
+
+					}
+
+				}
+			}
+		}
+
+		for x, y := range recursiveValues {
+			fmt.Println("\nATTRIBUTENAME:", x, "ATTRIBUTE VALUE:", y)
+		}
 
 		object := CompileObject{
-			Resource_definition_name: fmt.Sprintf(`"azurerm_%s" "%s_object" `, ConvertArmAttributeName(armBasicObject.Resource_type), strings.Split(ConvertArmAttributeName(armBasicObject.Resource_type), "_")[0]),
+			ResourceDefinitionName: resourceType,
 		}
 		CompiledReturn = append(CompiledReturn, object)
 	}
-	fmt.Println(CompiledReturn)
-	os.Exit(0)
-	//var test HtmlObject
-
 	/*
-		for _, armObject := range armBasicObjects {
-			for _, htmlObject := range HtmlObjects {
-				if htmlObject.Resource_type == armObject.Resource_type {
-					properties := armObject.Properties.(map[string]interface{})
-					for attributeName, attributeValue := range properties {
-
-					}
-				}
-			}
-
+		for v, x := range armBasicObjects[0].Properties.(map[string]interface{}) {
+			fmt.Println("\nKEY", v, "VALUE", x)
 		}
 	*/
+	//var test HtmlObject
+
+	//Attribute names in Arm use CammelCase - We need to conver it to lowercase + _ seperator and we need to remove any trailing 's'
+	//In addtion we want to do the above BUT also allow attributes between HTML and armobjects to be matched in case 's' Is simply there anyways
 	/*
-		//Attribute names in Arm use CammelCase - We need to conver it to lowercase + _ seperator and we need to remove any trailing 's'
-		//In addtion we want to do the above BUT also allow attributes between HTML and armobjects to be matched in case 's' Is simply there anyways
 		for _, object := range armBasicObjects {
 			fmt.Println("\n", "-------------------------", object.Resource_type, "-------------------------")
 			properties := object.Properties.(map[string]interface{})
@@ -435,17 +483,34 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 				fmt.Println("\nARM ATTRIBUTE NAME:", v, "ARM VALUE", value)
 			}
 		}
-
-		for _, armObject := range HtmlObjects {
-			fmt.Println("\n", "-------------------------", armObject.Resource_type, "-------------------------")
-			for x, attribute := range armObject.Attribute {
-				fmt.Println(x+1, "Attribute name:", attribute.Name, "||", "Type:", attribute.Type)
-			}
-		}
-
-		//fmt.Println(armBasicObjects[0].Properties)
 	*/
+
+	for _, armObject := range HtmlObjects {
+		fmt.Println("\n", "-------------------------", armObject.Resource_type, "-------------------------")
+		for x, attribute := range armObject.Attribute {
+			fmt.Println(x+1, "Attribute name:", attribute.Name, "||", "Type:", attribute.Type)
+		}
+	}
+	os.Exit(0)
+	//fmt.Println(armBasicObjects[0].Properties)
+
 	return nil
+}
+
+func RecursiveMapLookUp(mapToCheck interface{}) (bool, interface{}) {
+	mapConvert := reflect.ValueOf(mapToCheck)
+	var isMap bool
+	var mapReturn interface{}
+	defer func() {
+		if err := recover(); err != nil {
+		}
+	}()
+	for _, mapName := range mapConvert.MapKeys() {
+		mapReturn = mapConvert.MapIndex(mapName)
+		isMap = true
+
+	}
+	return isMap, mapReturn
 }
 
 func NewCachedSystemFiles(HtmlObjects []HtmlObject) error {
