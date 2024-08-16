@@ -49,17 +49,17 @@ type Variable struct {
 	DefaultValue string
 }
 
-type NestedAttribute struct {
-	BlockName       string
-	NestedAttribute interface{}
-	BlockNumber     int //Determine the amount of blocks, e.g if an arm definition has a list of subnets with 2 subnets = 2 for the 'BlockNumber'
+type BlockAttribute struct {
+	BlockName      string
+	BlockAttribute interface{}
+	BlockNumber    int //Determine the amount of blocks, e.g if an arm definition has a list of subnets with 2 subnets = 2 for the 'BlockNumber'
 }
 
 type CompileObject struct {
 	ResourceDefinitionName string
 	RootAttributes         []RootAttribute
 	Variables              []Variable
-	NestedAttributes       []NestedAttribute
+	BlockAttributes        []BlockAttribute
 }
 
 type TerraformObject struct {
@@ -406,16 +406,14 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 }
 
 func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
-	//var rootAttributes []RootAttribute
 	var match bool
 	var CompiledReturn []CompileObject
 	var htmlObject HtmlObject
-	//var attributeName string
 	var mapValue interface{}
 	var isMap bool
-	//var recursiveValue interface{}
 	var recursiveValues []interface{}
-	//var keepGoing interface{}
+	var htmlAttributeName string
+	var htmlAttributeType string
 	for _, armBasicObject := range armBasicObjects {
 		//terraformObjectName := strings.Split(strings.Split(ConvertArmAttributeName(armBasicObject.Resource_type), "")[0], "/")
 		resourceType := ConvertArmAttributeName(armBasicObject.Resource_type)
@@ -430,12 +428,21 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 		}
 
 		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
+			match = false
+
 			armPropertyNameConvert := ConvertArmAttributeName(armPropertyName)
 			recursiveValue := armPropertyValue
 			for _, object := range htmlObject.Attribute {
 				if strings.Contains(object.Name, armPropertyNameConvert) {
 					match = true
-					//attributeName = object.Name
+					htmlAttributeName = object.Name
+					htmlAttributeType = object.Type
+				}
+
+				if match {
+					reflectValue := reflect.ValueOf(armPropertyValue)
+					fmt.Println("\nHTML ATTRIBUTE NAME:", htmlAttributeName, "HTML TYPE:", htmlAttributeType, "ARM TYPE", reflectValue.Type(), "ARM PROPERTY NAME:", armPropertyNameConvert, "ARM VALUE:", armPropertyValue)
+					break
 				}
 
 				if match && object.Type == "string" {
@@ -445,7 +452,6 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 							isMap, mapValue = RecursiveMapLookUp(recursiveValue)
 							if !isMap {
 								recursiveValues = append(recursiveValues, mapValue)
-								fmt.Println("WE ARE HERE:", mapValue)
 								break
 							}
 							recursiveValue = mapValue
@@ -455,10 +461,6 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 
 				}
 			}
-		}
-
-		for x, y := range recursiveValues {
-			fmt.Println("\nATTRIBUTENAME:", x, "ATTRIBUTE VALUE:", y)
 		}
 
 		object := CompileObject{
