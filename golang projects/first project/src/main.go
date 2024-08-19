@@ -18,8 +18,9 @@ import (
 )
 
 type Attribute struct {
-	Type string `json:"Type"`
-	Name string `json:"Name"`
+	Type   string `json:"Type"`
+	Name   string `json:"Name"`
+	Parent string
 }
 
 type ArmObject struct {
@@ -39,8 +40,9 @@ type HtmlObject struct {
 }
 
 type RootAttribute struct {
-	Name  string
-	Value interface{}
+	Name      string
+	Value     interface{}
+	BlockName string
 }
 
 type Variable struct {
@@ -407,18 +409,27 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 
 func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
 	var match bool
-	var CompiledReturn []CompileObject
+	var matchInner bool
+	var htmlInnerType string
+	var valueFinal interface{}
+	var compiledReturn []CompileObject
+	var convertAttributeName string
 	var htmlObject HtmlObject
-	var mapValue interface{}
-	var isMap bool
-	var recursiveValues []interface{}
+	var rootAttributes []RootAttribute
+	var rootAttributes2 []RootAttribute
 	var htmlAttributeName string
-	var htmlAttributeType string
+	var htmlAttributeName2 string
+	var htmlRootBlockName string
+	//var htmlAttributeName string
+	//var htmlAttributeName string
+	//var htmlAttributeType string
 	for _, armBasicObject := range armBasicObjects {
+		var listObject []interface{}
+		var blockAttributes []BlockAttribute
+
 		//terraformObjectName := strings.Split(strings.Split(ConvertArmAttributeName(armBasicObject.Resource_type), "")[0], "/")
 		resourceType := ConvertArmAttributeName(armBasicObject.Resource_type)
 		resourceType = fmt.Sprintf(`"azurerm_%s" "%s_object" `, resourceType, resourceType)
-		fmt.Println("TF CODE:", resourceType)
 
 		for _, object := range HtmlObjects {
 			if object.Resource_type == armBasicObject.Resource_type {
@@ -429,45 +440,105 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 
 		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
 			match = false
-
 			armPropertyNameConvert := ConvertArmAttributeName(armPropertyName)
-			recursiveValue := armPropertyValue
 			for _, object := range htmlObject.Attribute {
 				if strings.Contains(object.Name, armPropertyNameConvert) {
 					match = true
-					htmlAttributeName = object.Name
-					htmlAttributeType = object.Type
+					//htmlAttributeName = object.Name
 				}
 
-				if match {
-					reflectValue := reflect.ValueOf(armPropertyValue)
-					fmt.Println("\nHTML ATTRIBUTE NAME:", htmlAttributeName, "HTML TYPE:", htmlAttributeType, "ARM TYPE", reflectValue.Type(), "ARM PROPERTY NAME:", armPropertyNameConvert, "ARM VALUE:", armPropertyValue)
-					break
-				}
+				if match && object.Type == "armObject" {
+					checkForListOfMap := reflect.ValueOf(armPropertyValue)
 
-				if match && object.Type == "string" {
-					reflectValue := reflect.ValueOf(recursiveValue)
-					if reflectValue.Kind() == reflect.Map {
-						for {
-							isMap, mapValue = RecursiveMapLookUp(recursiveValue)
-							if !isMap {
-								recursiveValues = append(recursiveValues, mapValue)
-								break
+					if checkForListOfMap.Kind() == reflect.Map {
+						listObject = append(listObject, armPropertyValue)
+					} else {
+						listObject = armPropertyValue.([]interface{})
+					}
+
+					for _, object := range listObject {
+						//rootAttributes = nil
+						values := object.(map[string]interface{})
+						for attributeName, attributeValue := range values {
+							convertAttributeName = ConvertArmAttributeName(attributeName)
+							for _, htmlAttributeValue := range htmlObject.Attribute {
+								if strings.Contains(htmlAttributeValue.Name, convertAttributeName) {
+									matchInner = true
+									htmlInnerType = htmlAttributeValue.Type
+									htmlAttributeName = htmlAttributeValue.Name
+								}
 							}
-							recursiveValue = mapValue
-						}
 
+							if matchInner && htmlInnerType == "string" {
+								rootAttribute := RootAttribute{
+									Name:      htmlAttributeName,
+									Value:     attributeValue,
+									BlockName: armPropertyNameConvert,
+								}
+								matchInner = false
+								rootAttributes = append(rootAttributes, rootAttribute)
+							} else if matchInner && htmlInnerType == "armObject" {
+								for attribute, value := range armPropertyValue.(map[string]interface{}) {
+									attributeConvertName := ConvertArmAttributeName(attribute)
+									for _, htmlObject := range htmlObject.Attribute {
+										if strings.Contains(htmlObject.Name, attributeConvertName) {
+											fmt.Println("\nChecking the name:", attributeConvertName, "HTML ATTRIBUTE NAME", htmlObject.Name, "HTML TYPE:", htmlObject.Type)
+											break
+											matchInner = true
+											htmlInnerType = htmlObject.Type
+											htmlAttributeName2 = htmlObject.Name
+											htmlRootBlockName = htmlAttributeName
+											break
+										}
+									}
+
+									if matchInner {
+										reflectValue := reflect.ValueOf(value)
+										if reflectValue.Kind() == reflect.Slice {
+											valueFinal = GetInnerMapFlatValue(value)
+										} else {
+											valueFinal = value
+										}
+										if valueFinal != nil {
+											rootAttribute := RootAttribute{
+												Name:      htmlAttributeName2,
+												Value:     valueFinal,
+												BlockName: fmt.Sprintf("%s/%s", htmlRootBlockName, htmlAttributeName2),
+											}
+											matchInner = false
+											rootAttributes2 = append(rootAttributes2, rootAttribute)
+										}
+									}
+								}
+							}
+						}
 					}
 
 				}
+
 			}
+
+		}
+		/*
+			for _, test := range rootAttributes2 {
+				fmt.Println("ROOT ATTRIBUTENAME:", test.Name, "ROOT VALUE:", test.Value, "BLOCK NAME", test.BlockName)
+			}
+		*/
+		compiledReturnObject := CompileObject{
+			ResourceDefinitionName: resourceType,
+			RootAttributes:         nil,
+			Variables:              nil,
+			BlockAttributes:        blockAttributes,
 		}
 
-		object := CompileObject{
-			ResourceDefinitionName: resourceType,
-		}
-		CompiledReturn = append(CompiledReturn, object)
+		compiledReturn = append(compiledReturn, compiledReturnObject)
 	}
+
+	test, err := json.Marshal(compiledReturn)
+	if err != nil {
+		fmt.Println("Error while trying to retrieve value", err)
+	}
+	os.WriteFile("tester.2json", test, 0644)
 	/*
 		for v, x := range armBasicObjects[0].Properties.(map[string]interface{}) {
 			fmt.Println("\nKEY", v, "VALUE", x)
@@ -493,26 +564,55 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 			fmt.Println(x+1, "Attribute name:", attribute.Name, "||", "Type:", attribute.Type)
 		}
 	}
+
 	os.Exit(0)
 	//fmt.Println(armBasicObjects[0].Properties)
 
 	return nil
 }
 
-func RecursiveMapLookUp(mapToCheck interface{}) (bool, interface{}) {
+func GetInnerMapFlatValue(mapToCheck interface{}) interface{} {
 	mapConvert := reflect.ValueOf(mapToCheck)
-	var isMap bool
-	var mapReturn interface{}
+	var flatValueReturnType interface{}
+	var isFlatValue bool
+
 	defer func() {
 		if err := recover(); err != nil {
+			return
 		}
 	}()
-	for _, mapName := range mapConvert.MapKeys() {
-		mapReturn = mapConvert.MapIndex(mapName)
-		isMap = true
 
+	for _, mapOfAttribute := range mapConvert.MapKeys() {
+		isFlatValue = mapConvert.MapIndex(mapOfAttribute).Kind() == reflect.Interface
+		if isFlatValue {
+			flatValueReturnType = mapConvert.MapIndex(mapOfAttribute)
+			return flatValueReturnType
+		}
+		GetInnerMapFlatValue(mapConvert.MapIndex(mapOfAttribute))
 	}
-	return isMap, mapReturn
+
+	return nil
+}
+
+func GetHtmlObject(armAttributeName string, armAttributeValue interface{}, htmlObject HtmlObject) []HtmlObject {
+	//var attributeName string
+	var test []string
+
+	reflectionType := reflect.ValueOf(armAttributeValue)
+	fmt.Println("ATTRIBUTE VALUE:", armAttributeValue, "TYPE:", reflectionType.Kind())
+	for attributeName, _ := range armAttributeValue.(map[string]interface{}) {
+		attributeName = ConvertArmAttributeName(armAttributeName)
+		for _, htmlAttributeValue := range htmlObject.Attribute {
+			if strings.Contains(htmlAttributeValue.Name, attributeName) {
+				test = append(test, attributeName)
+				break
+			}
+		}
+	}
+	for _, name := range test {
+		fmt.Println("MATCH_", name)
+	}
+	return nil
 }
 
 func NewCachedSystemFiles(HtmlObjects []HtmlObject) error {
