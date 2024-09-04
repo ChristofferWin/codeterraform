@@ -43,6 +43,7 @@ type RootAttribute struct {
 	Name      string
 	Value     interface{}
 	BlockName string
+	IsBlock   bool
 }
 
 type Variable struct {
@@ -54,6 +55,7 @@ type Variable struct {
 type BlockAttribute struct {
 	BlockName      string
 	BlockAttribute interface{}
+	RootAttribute  []RootAttribute
 	BlockNumber    int //Determine the amount of blocks, e.g if an arm definition has a list of subnets with 2 subnets = 2 for the 'BlockNumber'
 }
 
@@ -385,6 +387,8 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 		Attribute:     AttributeObjects,
 	}
 
+	fmt.Println(HtmlObject)
+
 	return HtmlObject
 }
 
@@ -408,167 +412,214 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 }
 
 func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
-	var match bool
-	var matchInner bool
-	var htmlInnerType string
-	var valueFinal interface{}
-	var compiledReturn []CompileObject
-	var convertAttributeName string
-	var htmlObject HtmlObject
 	var rootAttributes []RootAttribute
-	var rootAttributes2 []RootAttribute
-	var htmlAttributeName string
-	var htmlAttributeName2 string
-	var htmlRootBlockName string
-	//var htmlAttributeName string
-	//var htmlAttributeName string
-	//var htmlAttributeType string
+	var rootAttributesFromReturn []RootAttribute
+	//var armPropertyNameConvert string
+	var htmlObjectCapture HtmlObject
+	//var checkForMap map[string]interface{}
 	for _, armBasicObject := range armBasicObjects {
-		var listObject []interface{}
-		var blockAttributes []BlockAttribute
-
-		//terraformObjectName := strings.Split(strings.Split(ConvertArmAttributeName(armBasicObject.Resource_type), "")[0], "/")
-		resourceType := ConvertArmAttributeName(armBasicObject.Resource_type)
-		resourceType = fmt.Sprintf(`"azurerm_%s" "%s_object" `, resourceType, resourceType)
-
-		for _, object := range HtmlObjects {
-			if object.Resource_type == armBasicObject.Resource_type {
-				htmlObject = object
+		for _, htmlObject := range HtmlObjects {
+			if htmlObject.Resource_type == armBasicObject.Resource_type {
+				htmlObjectCapture = htmlObject
 				break
 			}
 		}
-
 		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
-			match = false
-			armPropertyNameConvert := ConvertArmAttributeName(armPropertyName)
-			for _, object := range htmlObject.Attribute {
-				if strings.Contains(object.Name, armPropertyNameConvert) {
-					match = true
-					//htmlAttributeName = object.Name
-				}
+			//armPropertyNameConvert = ConvertArmAttributeName(armPropertyName)
+			_, ok := armPropertyValue.(map[string]interface{})
 
-				if match && object.Type == "armObject" {
-					checkForListOfMap := reflect.ValueOf(armPropertyValue)
-
-					if checkForListOfMap.Kind() == reflect.Map {
-						listObject = append(listObject, armPropertyValue)
-					} else {
-						listObject = armPropertyValue.([]interface{})
-					}
-
-					for _, object := range listObject {
-						//rootAttributes = nil
-						values := object.(map[string]interface{})
-						for attributeName, attributeValue := range values {
-							convertAttributeName = ConvertArmAttributeName(attributeName)
-							for _, htmlAttributeValue := range htmlObject.Attribute {
-								if strings.Contains(htmlAttributeValue.Name, convertAttributeName) {
-									matchInner = true
-									htmlInnerType = htmlAttributeValue.Type
-									htmlAttributeName = htmlAttributeValue.Name
-								}
+			if !ok {
+				switch armPropertyValue.(type) {
+				case []interface{}:
+					{
+						for _, innerPropertyValue := range armPropertyValue.([]interface{}) {
+							_, ok := innerPropertyValue.(map[string]interface{})
+							if ok {
+								//fmt.Println(innerPropertyValue)
+								rootAttributesFromReturn = GetRootAttribute(armPropertyName, innerPropertyValue, htmlObjectCapture.Attribute)
+								rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
+							} else {
+								fmt.Println("HELLO= WORLD")
 							}
+						}
 
-							if matchInner && htmlInnerType == "string" {
-								rootAttribute := RootAttribute{
-									Name:      htmlAttributeName,
-									Value:     attributeValue,
-									BlockName: armPropertyNameConvert,
-								}
-								matchInner = false
-								rootAttributes = append(rootAttributes, rootAttribute)
-							} else if matchInner && htmlInnerType == "armObject" {
-								for attribute, value := range armPropertyValue.(map[string]interface{}) {
-									attributeConvertName := ConvertArmAttributeName(attribute)
-									for _, htmlObject := range htmlObject.Attribute {
-										if strings.Contains(htmlObject.Name, attributeConvertName) {
-											fmt.Println("\nChecking the name:", attributeConvertName, "HTML ATTRIBUTE NAME", htmlObject.Name, "HTML TYPE:", htmlObject.Type)
-											break
-											matchInner = true
-											htmlInnerType = htmlObject.Type
-											htmlAttributeName2 = htmlObject.Name
-											htmlRootBlockName = htmlAttributeName
-											break
-										}
-									}
+					}
+				default:
+					{
+						//fmt.Println("ARM PROPERTY NAME:", armPropertyName)
+					}
+				}
+			}
+		}
+	}
 
-									if matchInner {
-										reflectValue := reflect.ValueOf(value)
-										if reflectValue.Kind() == reflect.Slice {
-											valueFinal = GetInnerMapFlatValue(value)
-										} else {
-											valueFinal = value
-										}
-										if valueFinal != nil {
-											rootAttribute := RootAttribute{
-												Name:      htmlAttributeName2,
-												Value:     valueFinal,
-												BlockName: fmt.Sprintf("%s/%s", htmlRootBlockName, htmlAttributeName2),
+	for _, y := range rootAttributes {
+		fmt.Println("\n", y)
+	}
+
+	return nil
+}
+
+func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute) []RootAttribute {
+	var rootAttributes []RootAttribute
+
+	blockName := GeHtmlAttributeMatch(armPropertyName, attributes)
+
+	for _, attributeValue := range armPropertyValue.(map[string]interface{}) {
+
+		// Initialize persistValue with the current attributeValue
+		persistValue := attributeValue
+
+		for {
+			// Try to cast persistValue to a map
+			checkForMap, ok := persistValue.(map[string]interface{})
+			//fmt.Println("\nATTRIBUTE NAME:", attributeName, "----------------------------------------")
+			//fmt.Println("ATTRIBUTE VALUE:", checkForMap)
+			if ok {
+				//fmt.Println("\nATTRIBUTE NAME:", attributeName, "VALUE:", persistValue)
+				// Handle the case where the type is "armObject"
+				for _, innerAttributeValue := range checkForMap {
+					//fmt.Println("\nATT NAME:", innerAttributeName, "VALUES:", innerAttributeValue)
+					switch innerAttributeValue.(type) {
+					case []interface{}:
+						{
+							for _, slice := range innerAttributeValue.([]interface{}) {
+								for innerSliceAttributeName, innerSliceAttributeValue := range slice.(map[string]interface{}) {
+									fmt.Println("INNER ATTRIBUTE NAME", innerSliceAttributeName, "INNER ATTRIBUTE VALUE", innerSliceAttributeValue)
+									if CheckForMap(innerSliceAttributeValue) {
+										//fmt.Println(innerSliceAttributeName)
+										rootAttributesPart := ConvertMapToRootAttribute(innerSliceAttributeName, innerSliceAttributeValue, attributes, blockName.Name)
+										rootAttributes = append(rootAttributes, rootAttributesPart)
+									} else if CheckForSlice(innerSliceAttributeName) {
+										for _, innerSlice := range innerSliceAttributeValue.([]interface{}) {
+											for innerInnerSliceAttributeName, innerInnerSliceAttributeValue := range innerSlice.(map[string]interface{}) {
+												if CheckForMap(innerInnerSliceAttributeValue) {
+													fmt.Println(innerInnerSliceAttributeName)
+													rootAttributesPart := ConvertMapToRootAttribute(innerInnerSliceAttributeName, innerSliceAttributeValue, attributes, blockName.Name)
+													rootAttributes = append(rootAttributes, rootAttributesPart)
+												}
 											}
-											matchInner = false
-											rootAttributes2 = append(rootAttributes2, rootAttribute)
 										}
 									}
 								}
 							}
 						}
+					case interface{}:
+						{
+							fmt.Println("HELLO WORLD", innerAttributeValue)
+						}
 					}
-
+					//rootAttributesPart := ConvertMapToRootAttribute(innerAttributeName, innerAttributeValue, attributes, blockName.Name)
+					//rootAttributes = append(rootAttributes, rootAttributesPart)
+					persistValue = checkForMap
+					break
 				}
 
+				// Update persistValue to go deeper into the map
 			}
-
+			//fmt.Println("ATTRIBUTE NAME IS NOT A MAP:", attributeName, attributeValue)
 		}
-		/*
-			for _, test := range rootAttributes2 {
-				fmt.Println("ROOT ATTRIBUTENAME:", test.Name, "ROOT VALUE:", test.Value, "BLOCK NAME", test.BlockName)
-			}
-		*/
-		compiledReturnObject := CompileObject{
-			ResourceDefinitionName: resourceType,
-			RootAttributes:         nil,
-			Variables:              nil,
-			BlockAttributes:        blockAttributes,
-		}
-
-		compiledReturn = append(compiledReturn, compiledReturnObject)
 	}
 
-	test, err := json.Marshal(compiledReturn)
-	if err != nil {
-		fmt.Println("Error while trying to retrieve value", err)
-	}
-	os.WriteFile("tester.2json", test, 0644)
 	/*
-		for v, x := range armBasicObjects[0].Properties.(map[string]interface{}) {
-			fmt.Println("\nKEY", v, "VALUE", x)
-		}
-	*/
-	//var test HtmlObject
-
-	//Attribute names in Arm use CammelCase - We need to conver it to lowercase + _ seperator and we need to remove any trailing 's'
-	//In addtion we want to do the above BUT also allow attributes between HTML and armobjects to be matched in case 's' Is simply there anyways
-	/*
-		for _, object := range armBasicObjects {
-			fmt.Println("\n", "-------------------------", object.Resource_type, "-------------------------")
-			properties := object.Properties.(map[string]interface{})
-			for v, value := range properties {
-				fmt.Println("\nARM ATTRIBUTE NAME:", v, "ARM VALUE", value)
-			}
-		}
+		if htmlAttribute := GeHtmlAttributeMatch(attributeName, attributes); htmlAttribute != (Attribute{}) {
+								rootAttributesPart := ConvertFlatValueToRootAttribute(persistValue, htmlAttribute, blockName.Name)
+								rootAttributes = append(rootAttributes, rootAttributesPart)
+								break
+							}
 	*/
 
-	for _, armObject := range HtmlObjects {
-		fmt.Println("\n", "-------------------------", armObject.Resource_type, "-------------------------")
-		for x, attribute := range armObject.Attribute {
-			fmt.Println(x+1, "Attribute name:", attribute.Name, "||", "Type:", attribute.Type)
+	return rootAttributes
+}
+
+func ConvertMapToRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute, blockName string) RootAttribute {
+	for attributeName, attributeValue := range armPropertyValue.(map[string]interface{}) {
+		//fmt.Println("ATTRIBUTE NAME:", attributeName)
+		htmlAttribute := GeHtmlAttributeMatch(attributeName, attributes)
+
+		//if htmlAttribute != (Attribute{}) {
+		//fmt.Println("\nATTRIBUTE NAME", htmlAttribute.Name, "TYPE", htmlAttribute.Type)
+		if htmlAttribute.Type == "armObject" {
+			rootAttribute := RootAttribute{
+				Name:      htmlAttribute.Name,
+				Value:     attributeValue,
+				BlockName: blockName,
+				IsBlock:   true,
+			}
+			return rootAttribute
+		}
+
+		rootAttribute := RootAttribute{
+			Name:      htmlAttribute.Name,
+			Value:     attributeValue,
+			BlockName: blockName,
+			IsBlock:   false,
+		}
+		return rootAttribute
+		//} else {
+		//fmt.Println("att name:", attributeName)
+		//	}
+
+	}
+	return (RootAttribute{})
+}
+
+func ConvertFlatValueToRootAttribute(armPropertyValue interface{}, attribute Attribute, blockName string) RootAttribute {
+	rootAttribute := RootAttribute{
+		Name:      attribute.Name,
+		Value:     armPropertyValue,
+		BlockName: blockName,
+		IsBlock:   false,
+	}
+	return rootAttribute
+}
+
+func GeHtmlAttributeMatch(armPropertyName string, htmlAttributes []Attribute) Attribute {
+	armPropertyNameConvert := ConvertArmAttributeName(armPropertyName)
+	for _, htmlAttribute := range htmlAttributes {
+		if strings.HasPrefix(htmlAttribute.Name, armPropertyNameConvert) {
+			return htmlAttribute
+		}
+	}
+	return (Attribute{})
+}
+
+func CheckForMap(mapToCheck interface{}) bool {
+	if _, ok := mapToCheck.(map[string]interface{}); ok {
+		return ok //ok can only be true
+	}
+	return false
+}
+
+func CheckForSlice(sliceToCheck interface{}) bool {
+	switch sliceToCheck.(type) {
+	case []interface{}:
+		{
+			fmt.Println("YEP THIS IS A LIST:", sliceToCheck)
+			return true
+		}
+	case map[string]interface{}:
+		{
+			fmt.Errorf("The value provided is a map, please only provide slices or flat values\n", sliceToCheck)
+		}
+	}
+	return false
+}
+
+func CountNestingLevel(m map[string]interface{}) int {
+	maxLevel := 1 // Start with level 1 as the base level
+
+	for _, value := range m {
+		if nestedMap, ok := value.(map[string]interface{}); ok {
+			// If the value is another map, recurse and add 1 to the nesting level
+			nestedLevel := CountNestingLevel(nestedMap) + 1
+			if nestedLevel > maxLevel {
+				maxLevel = nestedLevel
+			}
 		}
 	}
 
-	os.Exit(0)
-	//fmt.Println(armBasicObjects[0].Properties)
-
-	return nil
+	return maxLevel
 }
 
 func GetInnerMapFlatValue(mapToCheck interface{}) interface{} {
@@ -591,27 +642,6 @@ func GetInnerMapFlatValue(mapToCheck interface{}) interface{} {
 		GetInnerMapFlatValue(mapConvert.MapIndex(mapOfAttribute))
 	}
 
-	return nil
-}
-
-func GetHtmlObject(armAttributeName string, armAttributeValue interface{}, htmlObject HtmlObject) []HtmlObject {
-	//var attributeName string
-	var test []string
-
-	reflectionType := reflect.ValueOf(armAttributeValue)
-	fmt.Println("ATTRIBUTE VALUE:", armAttributeValue, "TYPE:", reflectionType.Kind())
-	for attributeName, _ := range armAttributeValue.(map[string]interface{}) {
-		attributeName = ConvertArmAttributeName(armAttributeName)
-		for _, htmlAttributeValue := range htmlObject.Attribute {
-			if strings.Contains(htmlAttributeValue.Name, attributeName) {
-				test = append(test, attributeName)
-				break
-			}
-		}
-	}
-	for _, name := range test {
-		fmt.Println("MATCH_", name)
-	}
 	return nil
 }
 
