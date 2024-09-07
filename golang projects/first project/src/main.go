@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	"github.com/valyala/fastjson"
 )
 
 type Attribute struct {
@@ -42,7 +41,7 @@ type HtmlObject struct {
 type RootAttribute struct {
 	Name      string
 	Value     interface{}
-	BlockName string
+	BlockName string //Must be used with format <root name>/<level 1 object>/<level 2 object>
 	IsBlock   bool
 }
 
@@ -204,6 +203,7 @@ func ImportArmFile(filePath *string) ([][]byte, error) {
 	return files, err
 }
 
+/*
 func VerifyArmFile(filecontent [][]byte, fileName string) error {
 	for _, content := range filecontent {
 		err := fastjson.ValidateBytes(content)
@@ -211,6 +211,7 @@ func VerifyArmFile(filecontent [][]byte, fileName string) error {
 	}
 	return nil
 }
+*/
 
 func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 	var jsonInterface interface{}
@@ -439,7 +440,7 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 								rootAttributesFromReturn = GetRootAttribute(armPropertyName, innerPropertyValue, htmlObjectCapture.Attribute)
 								rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
 							} else {
-								fmt.Println("HELLO= WORLD")
+								//fmt.Println("HELLO= WORLD")
 							}
 						}
 
@@ -462,30 +463,42 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 
 func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute) []RootAttribute {
 	var rootAttributes []RootAttribute
+	var lenOfMaps int
 
+	//fmt.Println("THIS IS THE LENGTH:", len(armPropertyValue.(map[string]interface{})))
+	//fmt.Println("VALUE OF THE LEN:", armPropertyValue)
+
+	//We need to define nested objects - As something like actions resides under delegation
 	blockName := GeHtmlAttributeMatch(armPropertyName, attributes)
 
 	for _, attributeValue := range armPropertyValue.(map[string]interface{}) {
 
 		// Initialize persistValue with the current attributeValue
 		persistValue := attributeValue
-
+		counter := 0
 		for {
 			// Try to cast persistValue to a map
 			checkForMap, ok := persistValue.(map[string]interface{})
 			//fmt.Println("\nATTRIBUTE NAME:", attributeName, "----------------------------------------")
 			//fmt.Println("ATTRIBUTE VALUE:", checkForMap)
+			counter++
 			if ok {
+				lenOfMaps = len(checkForMap)
+				//fmt.Println("MAP LENGTH", len(checkForMap))
+				//fmt.Println("VALUE:", checkForMap)
+				//lenOfMaps = len(checkForMap)
 				//fmt.Println("\nATTRIBUTE NAME:", attributeName, "VALUE:", persistValue)
 				// Handle the case where the type is "armObject"
 				for _, innerAttributeValue := range checkForMap {
+					//fmt.Println("MAP LEN:", len(innerAttributeValue.(map[string]interface{})))
+
 					//fmt.Println("\nATT NAME:", innerAttributeName, "VALUES:", innerAttributeValue)
 					switch innerAttributeValue.(type) {
 					case []interface{}:
 						{
 							for _, slice := range innerAttributeValue.([]interface{}) {
 								for innerSliceAttributeName, innerSliceAttributeValue := range slice.(map[string]interface{}) {
-									fmt.Println("INNER ATTRIBUTE NAME", innerSliceAttributeName, "INNER ATTRIBUTE VALUE", innerSliceAttributeValue)
+									//fmt.Println("INNER ATTRIBUTE NAME", innerSliceAttributeName, "INNER ATTRIBUTE VALUE", innerSliceAttributeValue)
 									if CheckForMap(innerSliceAttributeValue) {
 										//fmt.Println(innerSliceAttributeName)
 										rootAttributesPart := ConvertMapToRootAttribute(innerSliceAttributeName, innerSliceAttributeValue, attributes, blockName.Name)
@@ -494,7 +507,7 @@ func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attr
 										for _, innerSlice := range innerSliceAttributeValue.([]interface{}) {
 											for innerInnerSliceAttributeName, innerInnerSliceAttributeValue := range innerSlice.(map[string]interface{}) {
 												if CheckForMap(innerInnerSliceAttributeValue) {
-													fmt.Println(innerInnerSliceAttributeName)
+													//fmt.Println(innerInnerSliceAttributeName)
 													rootAttributesPart := ConvertMapToRootAttribute(innerInnerSliceAttributeName, innerSliceAttributeValue, attributes, blockName.Name)
 													rootAttributes = append(rootAttributes, rootAttributesPart)
 												}
@@ -506,19 +519,39 @@ func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attr
 						}
 					case interface{}:
 						{
-							fmt.Println("HELLO WORLD", innerAttributeValue)
+							fmt.Println("INNER ATTRIBUTE VALUE:", innerAttributeValue)
 						}
 					}
 					//rootAttributesPart := ConvertMapToRootAttribute(innerAttributeName, innerAttributeValue, attributes, blockName.Name)
 					//rootAttributes = append(rootAttributes, rootAttributesPart)
 					persistValue = checkForMap
+				}
+				if lenOfMaps == counter {
+					fmt.Println("WE ARE AT THE END OF THE ROUTE")
 					break
 				}
 
 				// Update persistValue to go deeper into the map
+			} else {
+				switch attributeValue.(type) {
+				case []interface{}:
+					{
+						fmt.Println("THIS IS AN ARRAY")
+					}
+				case interface{}:
+					{
+						fmt.Println("INTERFACENAME:", armPropertyName, "VALUE", attributeValue)
+					}
+				}
+				break
 			}
+
+			//fmt.Println("THIS IS THE BLOCK NAME:", blockName)
+			//break
 			//fmt.Println("ATTRIBUTE NAME IS NOT A MAP:", attributeName, attributeValue)
-		}
+
+		} //We can get out of the for loop by making sure all usecases has been solved
+		//We might want to think about a final break regardless (Data might escape?)
 	}
 
 	/*
@@ -537,28 +570,28 @@ func ConvertMapToRootAttribute(armPropertyName string, armPropertyValue interfac
 		//fmt.Println("ATTRIBUTE NAME:", attributeName)
 		htmlAttribute := GeHtmlAttributeMatch(attributeName, attributes)
 
-		//if htmlAttribute != (Attribute{}) {
-		//fmt.Println("\nATTRIBUTE NAME", htmlAttribute.Name, "TYPE", htmlAttribute.Type)
-		if htmlAttribute.Type == "armObject" {
+		if htmlAttribute != (Attribute{}) {
+			//fmt.Println("\nATTRIBUTE NAME", htmlAttribute.Name, "TYPE", htmlAttribute.Type)
+			if htmlAttribute.Type == "armObject" {
+				rootAttribute := RootAttribute{
+					Name:      htmlAttribute.Name,
+					Value:     attributeValue,
+					BlockName: blockName,
+					IsBlock:   true,
+				}
+				return rootAttribute
+			}
+
 			rootAttribute := RootAttribute{
 				Name:      htmlAttribute.Name,
 				Value:     attributeValue,
 				BlockName: blockName,
-				IsBlock:   true,
+				IsBlock:   false,
 			}
 			return rootAttribute
+		} else {
+			//fmt.Println("att name:", attributeName)
 		}
-
-		rootAttribute := RootAttribute{
-			Name:      htmlAttribute.Name,
-			Value:     attributeValue,
-			BlockName: blockName,
-			IsBlock:   false,
-		}
-		return rootAttribute
-		//} else {
-		//fmt.Println("att name:", attributeName)
-		//	}
 
 	}
 	return (RootAttribute{})
