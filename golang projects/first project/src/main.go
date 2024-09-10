@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -324,7 +323,7 @@ func GetRawHtml(resourceType string, providerVersion string) (string, error) {
 
 		HtmlBodyCompare = HtmlBody
 
-		os.WriteFile("ByQuery2", []byte(HtmlBodyCompare), 0644)
+		//os.WriteFile("ByQuery2", []byte(HtmlBodyCompare), 0644)
 	}
 	return HtmlBodyCompare, nil
 }
@@ -333,6 +332,8 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	var allAttributes []string
 	var flatAttributes []string //Either bool, string, int or string array, must be determined by the ARM values
 	var blockAttribute []string //Object
+	var uniqueAttributeNames []string
+	var uniqueAttributes []Attribute
 
 	//Defining the regex matching ALL attributes, which we will sort through first, then seperate on type - armObject vs string
 	allAttributesRegex := regexp.MustCompile(`\(Required|Optional\)`)
@@ -382,15 +383,20 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 		}
 		AttributeObjects = append(AttributeObjects, attribute)
 	}
+
+	for _, uniqueAttribute := range AttributeObjects {
+		if !strings.Contains(strings.Join(uniqueAttributeNames, ","), uniqueAttribute.Name) {
+			uniqueAttributeNames = append(uniqueAttributeNames, uniqueAttribute.Name)
+			uniqueAttributes = append(uniqueAttributes, uniqueAttribute)
+		}
+	}
 	//Adding all the sorted attributes to the final return armObject
-	HtmlObject := HtmlObject{
+	htmlObject := HtmlObject{
 		Resource_type: resourceType,
-		Attribute:     AttributeObjects,
+		Attribute:     uniqueAttributes,
 	}
 
-	fmt.Println(HtmlObject)
-
-	return HtmlObject
+	return htmlObject
 }
 
 func ConvertFromStringToSlice(stringToSlice string, seperatorChar string) []string {
@@ -414,6 +420,7 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 
 func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
 	var rootAttributes []RootAttribute
+	//var rootAttributes2 []RootAttribute
 	var rootAttributesFromReturn []RootAttribute
 	//var armPropertyNameConvert string
 	var htmlObjectCapture HtmlObject
@@ -422,12 +429,14 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 		for _, htmlObject := range HtmlObjects {
 			if htmlObject.Resource_type == armBasicObject.Resource_type {
 				htmlObjectCapture = htmlObject
+				//fmt.Println("MATCHED", armBasicObject.Resource_type)
 				break
 			}
 		}
+
 		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
 			//armPropertyNameConvert = ConvertArmAttributeName(armPropertyName)
-			_, ok := armPropertyValue.(map[string]interface{})
+			checkForMap, ok := armPropertyValue.(map[string]interface{})
 
 			if !ok {
 				switch armPropertyValue.(type) {
@@ -439,15 +448,49 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 								//fmt.Println(innerPropertyValue)
 								rootAttributesFromReturn = GetRootAttribute(armPropertyName, innerPropertyValue, htmlObjectCapture.Attribute)
 								rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
-							} else {
-								//fmt.Println("HELLO= WORLD")
 							}
 						}
 
 					}
-				default:
-					{
-						//fmt.Println("ARM PROPERTY NAME:", armPropertyName)
+				}
+			} else {
+				for innerAttributeName, innerAttributeValue := range checkForMap {
+					if CheckForMap(innerAttributeValue) {
+						//rootAttributesFromReturn = GetRootAttribute(innerAttributeName, innerAttributeValue, htmlObjectCapture.Attribute)
+						//rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
+						rootAttributesFromReturn = GetRootAttribute(innerAttributeName, innerAttributeValue, htmlObjectCapture.Attribute)
+						rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
+					} else {
+						htmlAttributeMatch := GeHtmlAttributeMatch(innerAttributeName, htmlObjectCapture.Attribute)
+						for _, attribute := range htmlAttributeMatch {
+							CheckForMap(attribute)
+							//fmt.Println(htmlAttributeMatch, "WE ARE HERE")
+							switch innerAttributeValue.(type) {
+							case []interface{}:
+								{
+									for _, slice := range innerAttributeValue.([]interface{}) {
+										checkForMap, ok := slice.(map[string]interface{})
+										if ok {
+											for _, innerSliceAttributeValue := range checkForMap {
+												if CheckForMap(innerSliceAttributeValue) {
+													for innerMapAttributeName, innerMapAttributeValue := range innerSliceAttributeValue.(map[string]interface{}) {
+														htmlAttributeMatch := GeHtmlAttributeMatch(innerMapAttributeName, htmlObjectCapture.Attribute)
+														for _, match := range htmlAttributeMatch {
+															fmt.Println("WE ARE HERE!!")
+															rootAttributes = append(rootAttributes, ConvertMapToRootAttribute(innerMapAttributeName, innerMapAttributeValue, htmlAttributeMatch, match.Name))
+														}
+
+													}
+												}
+
+											}
+										}
+									}
+								}
+							}
+							//fmt.Println("\nARM PROPERTY NAME:", armPropertyName, "ARM PROPERTY VALUE:", armPropertyValue, "INNER ATTRIBUTE NAME:", innerAttributeName, "INNER ATTRIBUTE VALUE:", innerAttributeValue)
+							//rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, attribute, armPropertyName))
+						}
 					}
 				}
 			}
@@ -463,54 +506,87 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 
 func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute) []RootAttribute {
 	var rootAttributes []RootAttribute
-	var lenOfMaps int
-
-	//fmt.Println("THIS IS THE LENGTH:", len(armPropertyValue.(map[string]interface{})))
-	//fmt.Println("VALUE OF THE LEN:", armPropertyValue)
-
-	//We need to define nested objects - As something like actions resides under delegation
-	blockName := GeHtmlAttributeMatch(armPropertyName, attributes)
+	var blockName string
+	blockNames := GeHtmlAttributeMatch(armPropertyName, attributes)
+	if blockNames != nil {
+		if blockNames[0].Name != "properties" {
+			blockName = blockNames[0].Name
+		}
+	}
+	if test := GeHtmlAttributeMatch(armPropertyName, attributes); len(test) > 1 {
+		//fmt.Println(test) //GATEKEEPER !
+	}
 
 	for _, attributeValue := range armPropertyValue.(map[string]interface{}) {
 
 		// Initialize persistValue with the current attributeValue
 		persistValue := attributeValue
-		counter := 0
 		for {
 			// Try to cast persistValue to a map
 			checkForMap, ok := persistValue.(map[string]interface{})
-			//fmt.Println("\nATTRIBUTE NAME:", attributeName, "----------------------------------------")
-			//fmt.Println("ATTRIBUTE VALUE:", checkForMap)
-			counter++
 			if ok {
-				lenOfMaps = len(checkForMap)
-				//fmt.Println("MAP LENGTH", len(checkForMap))
-				//fmt.Println("VALUE:", checkForMap)
-				//lenOfMaps = len(checkForMap)
-				//fmt.Println("\nATTRIBUTE NAME:", attributeName, "VALUE:", persistValue)
-				// Handle the case where the type is "armObject"
-				for _, innerAttributeValue := range checkForMap {
-					//fmt.Println("MAP LEN:", len(innerAttributeValue.(map[string]interface{})))
-
-					//fmt.Println("\nATT NAME:", innerAttributeName, "VALUES:", innerAttributeValue)
+				for innerAttributeName, innerAttributeValue := range checkForMap {
 					switch innerAttributeValue.(type) {
 					case []interface{}:
 						{
 							for _, slice := range innerAttributeValue.([]interface{}) {
 								for innerSliceAttributeName, innerSliceAttributeValue := range slice.(map[string]interface{}) {
-									//fmt.Println("INNER ATTRIBUTE NAME", innerSliceAttributeName, "INNER ATTRIBUTE VALUE", innerSliceAttributeValue)
 									if CheckForMap(innerSliceAttributeValue) {
-										//fmt.Println(innerSliceAttributeName)
-										rootAttributesPart := ConvertMapToRootAttribute(innerSliceAttributeName, innerSliceAttributeValue, attributes, blockName.Name)
+										innerBlockAttribute := GeHtmlAttributeMatch(innerAttributeName, attributes)
+										var innerBlockNames []string
+										for _, block := range innerBlockAttribute {
+											innerBlockNames = append(innerBlockNames, block.Name)
+										}
+										//fmt.Println(innerBlockNames)
+										rootAttributesPart := ConvertMapToRootAttribute(innerSliceAttributeName, innerSliceAttributeValue, attributes, fmt.Sprintf("%s/%s", blockName, strings.Join(innerBlockNames, "/")))
 										rootAttributes = append(rootAttributes, rootAttributesPart)
-									} else if CheckForSlice(innerSliceAttributeName) {
+
+									} else if CheckForSlice(innerSliceAttributeValue) {
 										for _, innerSlice := range innerSliceAttributeValue.([]interface{}) {
-											for innerInnerSliceAttributeName, innerInnerSliceAttributeValue := range innerSlice.(map[string]interface{}) {
-												if CheckForMap(innerInnerSliceAttributeValue) {
-													//fmt.Println(innerInnerSliceAttributeName)
-													rootAttributesPart := ConvertMapToRootAttribute(innerInnerSliceAttributeName, innerSliceAttributeValue, attributes, blockName.Name)
-													rootAttributes = append(rootAttributes, rootAttributesPart)
+											innerMapCheck, ok := innerSlice.(map[string]interface{})
+											if ok {
+												for innerInnerSliceAttributeName, innerInnerSliceAttributeValue := range innerMapCheck {
+													if CheckForMap(innerInnerSliceAttributeValue) {
+														//fmt.Println("WE ARE HERE:", innerInnerSliceAttributeName)
+														rootAttributesPart := ConvertMapToRootAttribute(innerInnerSliceAttributeName, innerSliceAttributeValue, attributes, blockName)
+														rootAttributes = append(rootAttributes, rootAttributesPart)
+													}
 												}
+											}
+
+										}
+									} else {
+										//fmt.Println("ATTRIBUTE NAME:", innerSliceAttributeName)
+										htmlAttributeMatch := GeHtmlAttributeMatch(innerSliceAttributeName, attributes)
+										var blockNames []string
+										var attributesSorted []Attribute
+										for _, attribute := range htmlAttributeMatch {
+											if attribute.Type == "armObject" {
+												attributesSorted = append(attributesSorted, attribute)
+											}
+										}
+										for _, attribute := range attributesSorted {
+											blockNames = append(blockNames, attribute.Name)
+										}
+
+										for _, attribute := range attributesSorted {
+											rootAttribute := RootAttribute{
+												Name:      attribute.Name,
+												Value:     innerSliceAttributeValue,
+												BlockName: fmt.Sprintf("%s/%s", blockName, strings.Join(blockNames, "/")),
+												IsBlock:   true,
+											}
+											rootAttributes = append(rootAttributes, rootAttribute)
+										}
+										var innerBlockNames []string
+										innerBlocks := GeHtmlAttributeMatch(innerAttributeName, attributes)
+										for _, block := range innerBlocks {
+											innerBlockNames = append(innerBlockNames, block.Name)
+										}
+
+										for _, attribute := range htmlAttributeMatch {
+											if attribute.Type == "string" {
+												rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerSliceAttributeValue, attribute, fmt.Sprintf("%s/%s", blockName, strings.Join(innerBlockNames, "/"))))
 											}
 										}
 									}
@@ -519,39 +595,22 @@ func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attr
 						}
 					case interface{}:
 						{
-							fmt.Println("INNER ATTRIBUTE VALUE:", innerAttributeValue)
+							htmlAttributeMatch := GeHtmlAttributeMatch(innerAttributeName, attributes)
+							for _, attribute := range htmlAttributeMatch {
+								rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, attribute, blockName))
+							}
 						}
 					}
 					//rootAttributesPart := ConvertMapToRootAttribute(innerAttributeName, innerAttributeValue, attributes, blockName.Name)
 					//rootAttributes = append(rootAttributes, rootAttributesPart)
-					persistValue = checkForMap
-				}
-				if lenOfMaps == counter {
-					fmt.Println("WE ARE AT THE END OF THE ROUTE")
-					break
-				}
-
-				// Update persistValue to go deeper into the map
-			} else {
-				switch attributeValue.(type) {
-				case []interface{}:
-					{
-						fmt.Println("THIS IS AN ARRAY")
-					}
-				case interface{}:
-					{
-						fmt.Println("INTERFACENAME:", armPropertyName, "VALUE", attributeValue)
-					}
+					persistValue = checkForMap //Makes sure that nesting continues
 				}
 				break
+
+				// Update persistValue to go deeper into the map
 			}
-
-			//fmt.Println("THIS IS THE BLOCK NAME:", blockName)
-			//break
-			//fmt.Println("ATTRIBUTE NAME IS NOT A MAP:", attributeName, attributeValue)
-
-		} //We can get out of the for loop by making sure all usecases has been solved
-		//We might want to think about a final break regardless (Data might escape?)
+			break
+		}
 	}
 
 	/*
@@ -567,37 +626,53 @@ func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attr
 
 func ConvertMapToRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute, blockName string) RootAttribute {
 	for attributeName, attributeValue := range armPropertyValue.(map[string]interface{}) {
-		//fmt.Println("ATTRIBUTE NAME:", attributeName)
 		htmlAttribute := GeHtmlAttributeMatch(attributeName, attributes)
 
-		if htmlAttribute != (Attribute{}) {
-			//fmt.Println("\nATTRIBUTE NAME", htmlAttribute.Name, "TYPE", htmlAttribute.Type)
-			if htmlAttribute.Type == "armObject" {
-				rootAttribute := RootAttribute{
-					Name:      htmlAttribute.Name,
-					Value:     attributeValue,
-					BlockName: blockName,
-					IsBlock:   true,
+		for _, attribute := range htmlAttribute {
+			if attribute != (Attribute{}) {
+				if attribute.Type == "armObject" {
+					rootAttribute := RootAttribute{
+						Name:      attribute.Name,
+						Value:     attributeValue,
+						BlockName: blockName,
+						IsBlock:   true,
+					}
+					return rootAttribute
+				} else {
+					rootAttribute := RootAttribute{
+						Name:      attribute.Name,
+						Value:     attributeValue,
+						BlockName: blockName,
+						IsBlock:   false,
+					}
+					return rootAttribute
 				}
-				return rootAttribute
-			}
 
-			rootAttribute := RootAttribute{
-				Name:      htmlAttribute.Name,
-				Value:     attributeValue,
-				BlockName: blockName,
-				IsBlock:   false,
 			}
-			return rootAttribute
-		} else {
-			//fmt.Println("att name:", attributeName)
 		}
-
 	}
 	return (RootAttribute{})
 }
 
 func ConvertFlatValueToRootAttribute(armPropertyValue interface{}, attribute Attribute, blockName string) RootAttribute {
+	/*	if armPropertyValue == "Disabled" {
+			rootAttribute := RootAttribute{
+				Name:      attribute.Name,
+				Value:     false,
+				BlockName: blockName,
+				IsBlock:   false,
+			}
+			return rootAttribute
+		} else if armPropertyValue == "Enabled" {
+			rootAttribute := RootAttribute{
+				Name:      attribute.Name,
+				Value:     true,
+				BlockName: blockName,
+				IsBlock:   false,
+			}
+			return rootAttribute
+		}
+	*/
 	rootAttribute := RootAttribute{
 		Name:      attribute.Name,
 		Value:     armPropertyValue,
@@ -607,14 +682,37 @@ func ConvertFlatValueToRootAttribute(armPropertyValue interface{}, attribute Att
 	return rootAttribute
 }
 
-func GeHtmlAttributeMatch(armPropertyName string, htmlAttributes []Attribute) Attribute {
+func GeHtmlAttributeMatch(armPropertyName string, htmlAttributes []Attribute) []Attribute {
+	var htmlAttributeReturn []Attribute
 	armPropertyNameConvert := ConvertArmAttributeName(armPropertyName)
 	for _, htmlAttribute := range htmlAttributes {
-		if strings.HasPrefix(htmlAttribute.Name, armPropertyNameConvert) {
-			return htmlAttribute
+		if strings.ToLower(htmlAttribute.Name) != "id" {
+			if strings.Contains(armPropertyNameConvert, "windows") || strings.Contains(armPropertyNameConvert, "linux") {
+				if strings.Contains(armPropertyNameConvert, "windows") {
+					htmlAttributeReturn = append(htmlAttributeReturn, htmlAttribute)
+					return htmlAttributeReturn
+				} else if strings.Contains(armPropertyNameConvert, "linux") {
+					htmlAttributeReturn = append(htmlAttributeReturn, htmlAttribute)
+					return htmlAttributeReturn
+				}
+			}
+			if strings.HasPrefix(htmlAttribute.Name, armPropertyNameConvert) {
+				if strings.Contains(htmlAttribute.Name, "_") && strings.Contains(armPropertyNameConvert, "_") || !strings.Contains(htmlAttribute.Name, "_") && !strings.Contains(armPropertyNameConvert, "_") {
+					htmlAttributeReturn = append(htmlAttributeReturn, htmlAttribute)
+				}
+				for _, attribute := range htmlAttributes {
+					if strings.HasSuffix(attribute.Name, htmlAttribute.Name) && attribute.Type == "armObject" && attribute.Name != htmlAttribute.Name {
+						//fmt.Println("MATCHED:", attribute.Name, htmlAttribute.Name)
+						htmlAttributeReturn = append(htmlAttributeReturn, attribute)
+					}
+				}
+			} else if strings.Contains(htmlAttribute.Name, armPropertyNameConvert) {
+
+			}
 		}
 	}
-	return (Attribute{})
+
+	return htmlAttributeReturn
 }
 
 func CheckForMap(mapToCheck interface{}) bool {
@@ -625,57 +723,42 @@ func CheckForMap(mapToCheck interface{}) bool {
 }
 
 func CheckForSlice(sliceToCheck interface{}) bool {
+	var ifError bool
 	switch sliceToCheck.(type) {
 	case []interface{}:
 		{
-			fmt.Println("YEP THIS IS A LIST:", sliceToCheck)
-			return true
+			for _, test := range sliceToCheck.([]interface{}) {
+				if test != nil {
+					return true
+				}
+			}
 		}
 	case map[string]interface{}:
 		{
 			fmt.Errorf("The value provided is a map, please only provide slices or flat values\n", sliceToCheck)
 		}
 	}
-	return false
-}
-
-func CountNestingLevel(m map[string]interface{}) int {
-	maxLevel := 1 // Start with level 1 as the base level
-
-	for _, value := range m {
-		if nestedMap, ok := value.(map[string]interface{}); ok {
-			// If the value is another map, recurse and add 1 to the nesting level
-			nestedLevel := CountNestingLevel(nestedMap) + 1
-			if nestedLevel > maxLevel {
-				maxLevel = nestedLevel
-			}
-		}
-	}
-
-	return maxLevel
-}
-
-func GetInnerMapFlatValue(mapToCheck interface{}) interface{} {
-	mapConvert := reflect.ValueOf(mapToCheck)
-	var flatValueReturnType interface{}
-	var isFlatValue bool
 
 	defer func() {
-		if err := recover(); err != nil {
-			return
+		if r := recover(); r != nil {
 		}
 	}()
 
-	for _, mapOfAttribute := range mapConvert.MapKeys() {
-		isFlatValue = mapConvert.MapIndex(mapOfAttribute).Kind() == reflect.Interface
-		if isFlatValue {
-			flatValueReturnType = mapConvert.MapIndex(mapOfAttribute)
-			return flatValueReturnType
-		}
-		GetInnerMapFlatValue(mapConvert.MapIndex(mapOfAttribute))
-	}
+	return ifError
+}
 
-	return nil
+func GetInnerMapFlatValue(mapToCheck interface{}, armPropertyName string) interface{} {
+	checkMap, ok := mapToCheck.(map[string]interface{})
+	regex := regexp.MustCompile(`[a-z]+|[A-Z][a-z]*`)
+	if ok {
+		for attributeName, attributeValue := range checkMap {
+			startOfAttributeName := regex.FindAllString(armPropertyName, -1)[0]
+			if strings.Contains(attributeName, startOfAttributeName) {
+				return attributeValue
+			}
+		}
+	}
+	return mapToCheck
 }
 
 func NewCachedSystemFiles(HtmlObjects []HtmlObject) error {
