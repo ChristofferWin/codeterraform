@@ -98,13 +98,14 @@ func main() {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	/*
-		if err := VerifyArmFile(fileContent); err != nil {
-			fmt.Println("Error validating json file:", err)
-			return
-		}
-	*/
-	baseArmResources := GetArmBaseInformation(fileContent)
+
+	verifiedFiles := VerifyArmFile(fileContent)
+	if len(verifiedFiles) == 0 {
+		fmt.Println("No valid ARM templates found on path:", *filePath)
+		return
+	}
+
+	baseArmResources := GetArmBaseInformation(verifiedFiles)
 
 	if err != nil {
 		fmt.Println("Error while trying to retrieve the json ARM content", err)
@@ -158,8 +159,14 @@ func main() {
 		}
 	}
 
-	SortArmObject(baseArmResources, HtmlObjects)
-
+	test := GetRootAttributesToCompiledObjects(baseArmResources, HtmlObjects)
+	for _, y := range test {
+		fmt.Println("{\nNAME:", y.ResourceDefinitionName)
+		for _, x := range y.RootAttributes {
+			fmt.Println("ROOT NAME:", x.Name, "ROOT VALUE:", x.Value, "BLOCK?", x.IsBlock, "BLOCK NAME:", x.BlockName)
+		}
+	}
+	GetBlocksToCompiledObjects(test)
 }
 
 func ImportArmFile(filePath *string) ([][]byte, error) {
@@ -202,15 +209,36 @@ func ImportArmFile(filePath *string) ([][]byte, error) {
 	return files, err
 }
 
-/*
-func VerifyArmFile(filecontent [][]byte, fileName string) error {
-	for _, content := range filecontent {
-		err := fastjson.ValidateBytes(content)
-		return err
+func VerifyArmFile(filecontent [][]byte) [][]byte {
+	var jsonDump interface{}
+	var validJson [][]byte
+	var cleanFilecontent [][]byte
+	var armCheck bool
+	for _, fileContent := range filecontent {
+		err := json.Unmarshal(fileContent, &jsonDump)
+		if err != nil {
+			continue
+		} else {
+			validJson = append(validJson, fileContent)
+		}
 	}
-	return nil
+
+	for _, cleanContent := range validJson {
+		json.Unmarshal(cleanContent, &jsonDump)
+		testMap, ok := jsonDump.(map[string]interface{})
+		if ok {
+			for attributeName := range testMap {
+				if attributeName == "properties" {
+					armCheck = true
+				}
+			}
+			if armCheck {
+				cleanFilecontent = append(cleanFilecontent, cleanContent)
+			}
+		}
+	}
+	return cleanFilecontent
 }
-*/
 
 func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 	var jsonInterface interface{}
@@ -418,24 +446,20 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 	return sortedResourceTypes
 }
 
-func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
-	var rootAttributes []RootAttribute
-	//var rootAttributes2 []RootAttribute
-	var rootAttributesFromReturn []RootAttribute
-	//var armPropertyNameConvert string
+func GetRootAttributesToCompiledObjects(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []CompileObject {
+	var compiledObjects []CompileObject
 	var htmlObjectCapture HtmlObject
-	//var checkForMap map[string]interface{}
 	for _, armBasicObject := range armBasicObjects {
+		var rootAttributes []RootAttribute
+		var rootAttributesFromReturn []RootAttribute
 		for _, htmlObject := range HtmlObjects {
 			if htmlObject.Resource_type == armBasicObject.Resource_type {
 				htmlObjectCapture = htmlObject
-				//fmt.Println("MATCHED", armBasicObject.Resource_type)
 				break
 			}
 		}
 
 		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
-			//armPropertyNameConvert = ConvertArmAttributeName(armPropertyName)
 			checkForMap, ok := armPropertyValue.(map[string]interface{})
 
 			if !ok {
@@ -445,8 +469,7 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 						for _, innerPropertyValue := range armPropertyValue.([]interface{}) {
 							_, ok := innerPropertyValue.(map[string]interface{})
 							if ok {
-								//fmt.Println(innerPropertyValue)
-								rootAttributesFromReturn = GetRootAttribute(armPropertyName, innerPropertyValue, htmlObjectCapture.Attribute)
+								rootAttributesFromReturn = GetRootAttributes(armPropertyName, innerPropertyValue, htmlObjectCapture.Attribute)
 								rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
 							}
 						}
@@ -456,15 +479,12 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 			} else {
 				for innerAttributeName, innerAttributeValue := range checkForMap {
 					if CheckForMap(innerAttributeValue) {
-						//rootAttributesFromReturn = GetRootAttribute(innerAttributeName, innerAttributeValue, htmlObjectCapture.Attribute)
-						//rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
-						rootAttributesFromReturn = GetRootAttribute(innerAttributeName, innerAttributeValue, htmlObjectCapture.Attribute)
+						rootAttributesFromReturn = GetRootAttributes(innerAttributeName, innerAttributeValue, htmlObjectCapture.Attribute)
 						rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
 					} else {
 						htmlAttributeMatch := GeHtmlAttributeMatch(innerAttributeName, htmlObjectCapture.Attribute)
 						for _, attribute := range htmlAttributeMatch {
 							CheckForMap(attribute)
-							//fmt.Println(htmlAttributeMatch, "WE ARE HERE")
 							switch innerAttributeValue.(type) {
 							case []interface{}:
 								{
@@ -476,35 +496,43 @@ func SortArmObject(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []Comp
 													for innerMapAttributeName, innerMapAttributeValue := range innerSliceAttributeValue.(map[string]interface{}) {
 														htmlAttributeMatch := GeHtmlAttributeMatch(innerMapAttributeName, htmlObjectCapture.Attribute)
 														for _, match := range htmlAttributeMatch {
-															fmt.Println("WE ARE HERE!!")
 															rootAttributes = append(rootAttributes, ConvertMapToRootAttribute(innerMapAttributeName, innerMapAttributeValue, htmlAttributeMatch, match.Name))
 														}
-
 													}
 												}
-
 											}
 										}
 									}
 								}
 							}
-							//fmt.Println("\nARM PROPERTY NAME:", armPropertyName, "ARM PROPERTY VALUE:", armPropertyValue, "INNER ATTRIBUTE NAME:", innerAttributeName, "INNER ATTRIBUTE VALUE:", innerAttributeValue)
-							//rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, attribute, armPropertyName))
 						}
 					}
 				}
 			}
 		}
+		compiledObject := CompileObject{
+			ResourceDefinitionName: fmt.Sprintf("azurerm_%s", ConvertArmAttributeName(htmlObjectCapture.Resource_type)),
+			RootAttributes:         rootAttributes,
+			Variables:              nil,
+			BlockAttributes:        nil,
+		}
+		compiledObjects = append(compiledObjects, compiledObject)
 	}
-
-	for _, y := range rootAttributes {
-		fmt.Println("\n", y)
-	}
-
-	return nil
+	return compiledObjects
 }
 
-func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute) []RootAttribute {
+func GetBlocksToCompiledObjects(compiledObjects []CompileObject) []CompileObject {
+	var compiledObjectsForReturn []CompileObject
+	for _, object := range compiledObjects {
+		for _, block := range object.RootAttributes {
+			split := strings.Split(block.BlockName, "/")
+			fmt.Println(split)
+		}
+	}
+	return compiledObjectsForReturn
+}
+
+func GetRootAttributes(armPropertyName string, armPropertyValue interface{}, attributes []Attribute) []RootAttribute {
 	var rootAttributes []RootAttribute
 	var blockName string
 	blockNames := GeHtmlAttributeMatch(armPropertyName, attributes)
@@ -514,7 +542,7 @@ func GetRootAttribute(armPropertyName string, armPropertyValue interface{}, attr
 		}
 	}
 	if test := GeHtmlAttributeMatch(armPropertyName, attributes); len(test) > 1 {
-		//fmt.Println(test) //GATEKEEPER !
+		fmt.Println(test, "GATEWAY KEEPER") //GATEKEEPER !
 	}
 
 	for _, attributeValue := range armPropertyValue.(map[string]interface{}) {
