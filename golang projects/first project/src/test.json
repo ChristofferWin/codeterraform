@@ -1,69 +1,316 @@
 [
     {
-        "name": "test-1-file-1-vnet",
-        "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet",
-        "etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
-        "type": "Microsoft.Network/virtualNetworks/subnets",
-        "location": "eastus",
-        "properties": {
-            "provisioningState": "Succeeded",
-            "resourceGuid": "64c57928-3194-4d8c-80ab-389177d79cd7",
-            "addressSpace": {
-                "addressPrefixes": [
-                    "10.0.0.0/16"
-                ]
-            },
-            "networkProfile": {
-                "networkInterfaces": [
-                  {
-                    "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/networkInterfaces/test686",
-                    "properties": {
-                      "deleteOption": "Detach"
-                    },
-                    "resourceGroup": "test"
-                  }
-                ]
-            },
-            "subnets": [
-                {
-                    "name": "default",
-                    "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default",
-                    "etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
-                    "properties": {
-                        "provisioningState": "Succeeded",
-                        "addressPrefix": "10.0.0.0/24",
-                        "ipConfigurations": [
-                            {
-                                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/TEST/providers/Microsoft.Network/networkInterfaces/TEST686/ipConfigurations/IPCONFIG1"
-                            }
-                        ],
-                        "delegations": [],
-                        "privateEndpointNetworkPolicies": "Disabled",
-                        "privateLinkServiceNetworkPolicies": "Enabled"
-                    },
-                    "type": "Microsoft.Network/networkWatchers"
-                },
-                {
-                    "name": "default2",
-                    "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default",
-                    "etag": "W/\"73685588-a0ca-4796-8a47-6aa2369f9bd3\"",
-                    "properties": {
-                        "provisioningState": "Succeeded",
-                        "addressPrefix": "10.0.0.0/24",
-                        "ipConfigurations": [
-                            {
-                                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/TEST/providers/Microsoft.Network/networkInterfaces/TEST686/ipConfigurations/IPCONFIG1"
-                            }
-                        ],
-                        "delegations": [], 
-                        "privateEndpointNetworkPolicies": "Disabled",
-                        "privateLinkServiceNetworkPolicies": "Enabled"
-                    },
-                    "type": "Microsoft.Network/networkWatchers"
-                }
+    "name": "test-vnet",
+    "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet",
+    "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+    "type": "Microsoft.Network/virtualNetworks",
+    "location": "eastus",
+    "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "64c57928-3194-4d8c-80ab-389177d79cd7",
+        "addressSpace": {
+            "addressPrefixes": [
+                "10.0.0.0/16"
             ],
-            "virtualNetworkPeerings": [],
-            "enableDdosProtection": false
+            "ipamPoolPrefixAllocations": []
+        },
+        "subnets": [
+            {
+                "name": "default",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succee ded",
+                    "addressPrefix": "10.0.0.0/24",
+                    "ipamPoolPrefixAllocations": [],
+                    "ipConfigurations": [
+                        {
+                            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/TEST/providers/Microsoft.Network/networkInterfaces/TEST686/ipConfigurations/IPCONFIG1"
+                        }
+                    ],
+                    "delegations": [],
+                    "privateEndpointNetworkPolicies": "Disabled",
+                    "privateLinkServiceNetworkPolicies": "Enabled"
+                },
+                "type": "Microsoft.Network/virtualNetworks/subnets"
+            },
+            {
+                "name": "default2",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default2",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succeeded",
+                    "addressPrefix": "10.0.1.0/24",
+                    "ipamPoolPrefixAllocations": [],
+                    "delegations": [
+                        {
+                            "name": "Microsoft.BareMetal/AzureVMware",
+                            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default2/delegations/Microsoft.BareMetal/AzureVMware",
+                            "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                            "properties": {
+                                "provisioningState": "Succeeded",
+                                "serviceName": "Microsoft.BareMetal/AzureVMware",
+                                "actions": [
+                                    "Microsoft.Network/networkinterfaces/*",
+                                    "Microsoft.Network/virtualNetworks/subnets/join/action"
+                                ]
+                            },
+                            "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+                        }
+                    ],
+                    "purpose": "HostedWorkloads",
+                    "privateEndpointNetworkPolicies": "Disabled",
+                    "privateLinkServiceNetworkPolicies": "Enabled"
+                },
+                "type": "Microsoft.Network/virtualNetworks/subnets"
+            },
+            {
+                "name": "default3",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default3",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succeeded",
+                    "addressPrefix": "10.0.2.0/24",
+                    "ipamPoolPrefixAllocations": [],
+                    "serviceEndpoints": [
+                        {
+                            "provisioningState": "Succeeded",
+                            "service": "Microsoft.Storage.Global",
+                            "locations": [
+                                "*"
+                            ]
+                        },
+                        {
+                            "provisioningState": "Succeeded",
+                            "service": "Microsoft.ServiceBus",
+                            "locations": [
+                                "*"
+                            ]
+                        }
+                    ],
+                    "delegations": [
+                        {
+                            "name": "Microsoft.AzureCosmosDB/clusters",
+                            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default3/delegations/Microsoft.AzureCosmosDB/clusters",
+                            "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                            "properties": {
+                                "provisioningState": "Succeeded",
+                                "serviceName": "Microsoft.AzureCosmosDB/clusters",
+                                "actions": [
+                                    "Microsoft.Network/virtualNetworks/subnets/join/action"
+                                ]
+                            },
+                            "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+                        }
+                    ],
+                    "privateEndpointNetworkPolicies": "Disabled",
+                    "privateLinkServiceNetworkPolicies": "Enabled",
+                    "defaultOutboundAccess": false
+                },
+                "type": "Microsoft.Network/virtualNetworks/subnets"
+            }
+        ],
+        "virtualNetworkPeerings": [
+            {
+                "name": "From-HUB",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/virtualNetworkPeerings/From-HUB",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succeeded",
+                    "resourceGuid": "7d39d3b3-a5f6-0c29-26e0-630635888c0e",
+                    "peeringState": "Connected",
+                    "peeringSyncLevel": "FullyInSync",
+                    "remoteVirtualNetwork": {
+                        "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test2/providers/Microsoft.Network/virtualNetworks/test2-vnet"
+                    },
+                    "allowVirtualNetworkAccess": true,
+                    "allowForwardedTraffic": true,
+                    "allowGatewayTransit": false,
+                    "useRemoteGateways": false,
+                    "doNotVerifyRemoteGateways": false,
+                    "peerCompleteVnets": true,
+                    "remoteAddressSpace": {
+                        "addressPrefixes": [
+                            "192.168.0.0/16"
+                        ],
+                        "ipamPoolPrefixAllocations": []
+                    },
+                    "remoteVirtualNetworkAddressSpace": {
+                        "addressPrefixes": [
+                            "192.168.0.0/16"
+                        ],
+                        "ipamPoolPrefixAllocations": []
+                    },
+                    "remoteVirtualNetworkEncryption": {
+                        "enabled": false,
+                        "enforcement": "AllowUnencrypted"
+                    },
+                    "routeServiceVips": {}
+                },
+                "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
+            }
+        ],
+        "enableDdosProtection": true,
+        "ddosProtectionPlan": {
+            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/ddosProtectionPlans/test-ddos"
         }
     }
+},
+{
+    "name": "test-vnet",
+    "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet",
+    "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+    "type": "Microsoft.Network/virtualNetworks",
+    "location": "eastus",
+    "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "64c57928-3194-4d8c-80ab-389177d79cd7",
+        "addressSpace": {
+            "addressPrefixes": [
+                "10.0.0.0/16"
+            ],
+            "ipamPoolPrefixAllocations": []
+        },
+        "subnets": [
+            {
+                "name": "default",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succee ded",
+                    "addressPrefix": "10.0.0.0/24",
+                    "ipamPoolPrefixAllocations": [],
+                    "ipConfigurations": [
+                        {
+                            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/TEST/providers/Microsoft.Network/networkInterfaces/TEST686/ipConfigurations/IPCONFIG1"
+                        }
+                    ],
+                    "delegations": [],
+                    "privateEndpointNetworkPolicies": "Disabled",
+                    "privateLinkServiceNetworkPolicies": "Enabled"
+                },
+                "type": "Microsoft.Network/virtualNetworks/subnets"
+            },
+            {
+                "name": "default2",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default2",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succeeded",
+                    "addressPrefix": "10.0.1.0/24",
+                    "ipamPoolPrefixAllocations": [],
+                    "delegations": [
+                        {
+                            "name": "Microsoft.BareMetal/AzureVMware",
+                            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default2/delegations/Microsoft.BareMetal/AzureVMware",
+                            "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                            "properties": {
+                                "provisioningState": "Succeeded",
+                                "serviceName": "Microsoft.BareMetal/AzureVMware",
+                                "actions": [
+                                    "Microsoft.Network/networkinterfaces/*",
+                                    "Microsoft.Network/virtualNetworks/subnets/join/action"
+                                ]
+                            },
+                            "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+                        }
+                    ],
+                    "purpose": "HostedWorkloads",
+                    "privateEndpointNetworkPolicies": "Disabled",
+                    "privateLinkServiceNetworkPolicies": "Enabled"
+                },
+                "type": "Microsoft.Network/virtualNetworks/subnets"
+            },
+            {
+                "name": "default3",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default3",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succeeded",
+                    "addressPrefix": "10.0.2.0/24",
+                    "ipamPoolPrefixAllocations": [],
+                    "serviceEndpoints": [
+                        {
+                            "provisioningState": "Succeeded",
+                            "service": "Microsoft.Storage.Global",
+                            "locations": [
+                                "*"
+                            ]
+                        },
+                        {
+                            "provisioningState": "Succeeded",
+                            "service": "Microsoft.ServiceBus",
+                            "locations": [
+                                "*"
+                            ]
+                        }
+                    ],
+                    "delegations": [
+                        {
+                            "name": "Microsoft.AzureCosmosDB/clusters",
+                            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/subnets/default3/delegations/Microsoft.AzureCosmosDB/clusters",
+                            "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                            "properties": {
+                                "provisioningState": "Succeeded",
+                                "serviceName": "Microsoft.AzureCosmosDB/clusters",
+                                "actions": [
+                                    "Microsoft.Network/virtualNetworks/subnets/join/action"
+                                ]
+                            },
+                            "type": "Microsoft.Network/virtualNetworks/subnets/delegations"
+                        }
+                    ],
+                    "privateEndpointNetworkPolicies": "Disabled",
+                    "privateLinkServiceNetworkPolicies": "Enabled",
+                    "defaultOutboundAccess": false
+                },
+                "type": "Microsoft.Network/virtualNetworks/subnets"
+            }
+        ],
+        "virtualNetworkPeerings": [
+            {
+                "name": "From-HUB",
+                "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/virtualNetworks/test-vnet/virtualNetworkPeerings/From-HUB",
+                "etag": "W/\"3ea6f63a-cd2a-4a23-863d-3bcabcc97ffd\"",
+                "properties": {
+                    "provisioningState": "Succeeded",
+                    "resourceGuid": "7d39d3b3-a5f6-0c29-26e0-630635888c0e",
+                    "peeringState": "Connected",
+                    "peeringSyncLevel": "FullyInSync",
+                    "remoteVirtualNetwork": {
+                        "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test2/providers/Microsoft.Network/virtualNetworks/test2-vnet"
+                    },
+                    "allowVirtualNetworkAccess": true,
+                    "allowForwardedTraffic": true,
+                    "allowGatewayTransit": false,
+                    "useRemoteGateways": false,
+                    "doNotVerifyRemoteGateways": false,
+                    "peerCompleteVnets": true,
+                    "remoteAddressSpace": {
+                        "addressPrefixes": [
+                            "192.168.0.0/16"
+                        ],
+                        "ipamPoolPrefixAllocations": []
+                    },
+                    "remoteVirtualNetworkAddressSpace": {
+                        "addressPrefixes": [
+                            "192.168.0.0/16"
+                        ],
+                        "ipamPoolPrefixAllocations": []
+                    },
+                    "remoteVirtualNetworkEncryption": {
+                        "enabled": false,
+                        "enforcement": "AllowUnencrypted"
+                    },
+                    "routeServiceVips": {}
+                },
+                "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
+            }
+        ],
+        "enableDdosProtection": true,
+        "ddosProtectionPlan": {
+            "id": "/subscriptions/25d70457-06ad-442e-a428-fff5a8dd3db3/resourceGroups/test/providers/Microsoft.Network/ddosProtectionPlans/test-ddos"
+        }
+    }
+}
 ]
