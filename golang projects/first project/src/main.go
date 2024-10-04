@@ -145,7 +145,6 @@ func main() {
 				resourceTypesFromDif = append(resourceTypesFromDif, htmlObjectFromCache.Resource_type)
 			}
 		}
-
 	}
 
 	if htmlObjectsFromCache == nil {
@@ -189,13 +188,14 @@ func main() {
 				}
 			}
 		}
-		HtmlObjects = append(HtmlObjects, htmlObjectsFromCache...)
 		if !*noCache {
 			err = NewCachedSystemFiles(HtmlObjects)
 			if err != nil {
 				fmt.Println("An error occured while running function 'NewCachedSystemFiles'", err)
 			}
 		}
+	} else {
+		HtmlObjects = append(HtmlObjects, htmlObjectsFromCache...)
 	}
 
 	var cleanHtmlObjects []HtmlObject
@@ -205,12 +205,7 @@ func main() {
 			cleanHtmlObjects = append(cleanHtmlObjects, htmlObject)
 		}
 	}
-	/*
-		for _, cleanHtmlObject := range cleanHtmlObjects {
-			fmt.Println("---------------HTML", cleanHtmlObject.Resource_type, "ATTRIBUTE--------------")
 
-		}
-	*/
 	GetRootAttributes(baseArmResources, cleanHtmlObjects)
 
 }
@@ -323,6 +318,16 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 				jsonMap = jsonInterface.(map[string]interface{})
 				armResourceTypes = GetArmBaseInformationResourceTypes(jsonMap["properties"])
 
+				uniqueArmResourceTypesMap := make(map[string]bool)
+				uniqueArmResourceTypes := []string{}
+
+				for _, resourceValue := range armResourceTypes {
+					if !uniqueArmResourceTypesMap[resourceValue] {
+						uniqueArmResourceTypesMap[resourceValue] = true
+						uniqueArmResourceTypes = append(uniqueArmResourceTypes, resourceValue)
+					}
+				}
+
 				if jsonMap["kind"] != nil && strings.Contains(strings.ToLower(jsonMap["type"].(string)), "web/sites") {
 					specialResourceType = GetArmWebAndComputeKind(jsonMap["kind"])
 				} else if strings.ToLower(jsonMap["type"].(string)) == "microsoft.compute/virtualmachines" {
@@ -332,7 +337,7 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 				armObject := ArmObject{
 					Name:                  jsonMap["name"].(string),
 					Resource_id:           jsonMap["id"].(string),
-					Resource_types:        append(armResourceTypes, jsonMap["type"].(string)),
+					Resource_types:        append(uniqueArmResourceTypes, jsonMap["type"].(string)),
 					Location:              jsonMap["location"].(string),
 					Resource_group_name:   strings.Split(jsonMap["id"].(string), "/")[4],
 					Properties:            jsonMap["properties"],
@@ -349,6 +354,16 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 
 					armResourceTypes = GetArmBaseInformationResourceTypes(jsonMap["properties"])
 
+					uniqueArmResourceTypesMap := make(map[string]bool)
+					uniqueArmResourceTypes := []string{}
+
+					for _, resourceValue := range armResourceTypes {
+						if !uniqueArmResourceTypesMap[resourceValue] {
+							uniqueArmResourceTypesMap[resourceValue] = true
+							uniqueArmResourceTypes = append(uniqueArmResourceTypes, resourceValue)
+						}
+					}
+
 					if jsonMap["kind"] != nil && strings.Contains(strings.ToLower(jsonMap["type"].(string)), "web/sites") {
 						specialResourceType = GetArmWebAndComputeKind(jsonMap["kind"])
 					} else if strings.ToLower(jsonMap["type"].(string)) == "microsoft.compute/virtualmachines" {
@@ -358,7 +373,7 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 					armObject := ArmObject{
 						Name:                  jsonMap["name"].(string),
 						Resource_id:           jsonMap["id"].(string),
-						Resource_types:        append(armResourceTypes, jsonMap["type"].(string)),
+						Resource_types:        append(uniqueArmResourceTypes, jsonMap["type"].(string)),
 						Location:              jsonMap["location"].(string),
 						Resource_group_name:   strings.Split(jsonMap["id"].(string), "/")[4],
 						Properties:            jsonMap["properties"],
@@ -438,7 +453,7 @@ func GetArmWebAndComputeKind(armPropertyValue interface{}) string {
 							for _, minimumAttributeValue := range innerAttributeValue.(map[string]interface{}) {
 								if CheckForString(minimumAttributeValue) {
 									if strings.ToLower(minimumAttributeValue.(string)) == "windows" || strings.ToLower(minimumAttributeValue.(string)) == "linux" {
-										tempReturnArmKind = fmt.Sprintf("%s/%s", "virtualmachine", minimumAttributeValue)
+										tempReturnArmKind = fmt.Sprintf("%s_%s", strings.ToLower(minimumAttributeValue.(string)), "virtual_machine")
 									}
 								}
 							}
@@ -557,8 +572,8 @@ func ConvertArmToTerraformProvider(resourceType string, specialResouceType strin
 		}
 	} else if checkNamesForCompute.MatchString(resourceTypeLower) {
 		if specialResouceType != "" {
-			attributePartName := strings.Split(specialResouceType, "/")
-			convertResourceTypeTempName = fmt.Sprintf("%s_%s", attributePartName[1], resourceNameBaseConversion[1])
+			convertResourceTypeTempName = strings.ToLower(specialResouceType)
+			//convertResourceTypeTempName = fmt.Sprintf("%s_%s", attributePartName[1], resourceNameBaseConversion[1])
 		}
 	} else if checkNamesForLogAnalytics.MatchString(resourceTypeLower) {
 		if len(resourceNameBaseConversion) > 2 {
@@ -636,7 +651,8 @@ func ConvertArmAttributeName(armPropertyName string, armPropertyValue interface{
 
 	patternLongArmAttributeName := regexp.MustCompile("([a-z0-9])([A-Z])")
 	if patternLongArmAttributeName.MatchString(armPropertyName) {
-		fmt.Println(patternLongArmAttributeName.ReplaceAllString(armPropertyName, "${1}_${2}"))
+		returnConvertedName = strings.ToLower(strings.TrimSuffix(patternLongArmAttributeName.ReplaceAllString(armPropertyName, "${1}_${2}"), "s"))
+		//fmt.Println(returnConvertedName)
 	}
 
 	return returnConvertedName
@@ -808,6 +824,7 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 		}
 	}
 	//Adding all the sorted attributes to the final return armObject
+	fmt.Println("THIS IS THE RESOURCE TYPE:", resourceType)
 	htmlObject := HtmlObject{
 		Resource_type: resourceType,
 		Attribute:     uniqueHtmlAttributes,
@@ -839,13 +856,21 @@ func GetRootAttributes(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []
 	var rootAttributesForReturn []RootAttribute
 	var htmlObjectCapture HtmlObject
 	var masterKey string
+
+	//var matchingHtmlObjects []HtmlObject
+
 	for _, armBasicObject := range armBasicObjects {
+		allResourceTypes := []string{}
+		allResourceTypes = append(append(allResourceTypes, armBasicObject.Resource_types...), armBasicObject.Special_resource_type) //append(append(newBlockNames, blockPart[1]), blockPart[2])
 		var rootAttributes []RootAttribute
 		var rootAttributesFromReturn []RootAttribute
-		for _, htmlObject := range HtmlObjects {
-			if htmlObject.Resource_type == "" {
-				htmlObjectCapture = htmlObject
-				break
+		for _, armResourceType := range allResourceTypes {
+			fmt.Println("THIS IS THE RESOURCE TYPE:", armResourceType)
+			for _, htmlObject := range HtmlObjects {
+				if armResourceType == htmlObject.Resource_type {
+					fmt.Println("MATCHED:", htmlObject.Resource_type)
+					break
+				}
 			}
 		}
 
@@ -917,9 +942,9 @@ func GetRootAttributes(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []
 
 					if CheckForMap(innerAttributeValue) {
 						for innerInnerAttributeName, innerInnerAttributeValue := range innerAttributeValue.(map[string]interface{}) {
-							fmt.Println("where the fuck are we", innerInnerAttributeName)
+							//fmt.Println("where the fuck are we", innerInnerAttributeName)
 							htmlInnerInnerAttributeMatch := GetHtmlAttributeMatch(innerInnerAttributeName, htmlObjectCapture.Attribute, innerInnerAttributeValue)
-							fmt.Println("where the fuck are we", innerInnerAttributeName, htmlInnerInnerAttributeMatch)
+							//fmt.Println("where the fuck are we", innerInnerAttributeName, htmlInnerInnerAttributeMatch)
 							var blockNamesMinimum []string
 							for _, block := range htmlInnerInnerAttributeMatch {
 								if block.Type == "string" {
@@ -1028,10 +1053,12 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 	var summarizedRootAttributes []RootAttribute
 	var removeDuplicateValues []string
 
-	for index, rootAttribute := range rootAttributes {
-		fmt.Println(index, "ATTRIBUTE NAME:3333", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
-	}
-
+	//fmt.Println("WE ARE HERE:", len(rootAttributes))
+	/*
+		for index, rootAttribute := range rootAttributes {
+			fmt.Println(index, "ATTRIBUTE NAME:3333", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
+		}
+	*/
 	for index, rootAttribute := range rootAttributes {
 		if strings.HasPrefix(rootAttribute.BlockName, "/") || strings.HasSuffix(rootAttribute.BlockName, "/") {
 			rootAttributes[index].BlockName = strings.Trim(rootAttribute.BlockName, "/")
@@ -1089,55 +1116,52 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 		}
 	}
 
-	for _, name := range seenBlockNames {
-		fmt.Println("THIS NAME IS SEEN:", name)
-	}
-
-	for _, currentName := range currentBlockNames {
-		blockNamesPart := strings.Split(currentName, "/")
-		var newBlockName string
-		var persistSeenName string
-		var persistRootAttribute []string
-		if len(blockNamesPart) > 0 {
-			if strings.Contains(strings.Join(uniqueSeenBlockNames, ","), currentName) {
-				if strings.Contains(strings.Join(uniqueSeenBlockNames, ","), "_") && strings.Contains(currentName, "_") || !strings.Contains(strings.Join(uniqueSeenBlockNames, ","), "_") && !strings.Contains(currentName, "_") {
-					for _, seenName := range seenBlockNames {
-						if strings.Contains(currentName, seenName) && currentName != seenName && !strings.Contains(seenName, "os") { //Not the best, but I need to move forward, keep an eye on this
-							for _, rootAttribute := range rootAttributes {
-								if strings.Contains(rootAttribute.BlockName, seenName) {
-									blockNames := strings.Split(rootAttribute.BlockName, "/")
-									for index, blockName := range blockNames {
-										if blockName == seenName {
-											newBlockName = blockNames[index-1]
-											persistSeenName = seenName
-											if !strings.Contains(strings.Join(persistRootAttribute, ","), rootAttribute.UniqueBlockName) {
-												persistRootAttribute = append(persistRootAttribute, rootAttribute.UniqueBlockName)
+	/*
+		for _, currentName := range currentBlockNames {
+			blockNamesPart := strings.Split(currentName, "/")
+			var newBlockName string
+			var persistSeenName string
+			var persistRootAttribute []string
+			if len(blockNamesPart) > 0 {
+				if strings.Contains(strings.Join(uniqueSeenBlockNames, ","), currentName) {
+					if strings.Contains(strings.Join(uniqueSeenBlockNames, ","), "_") && strings.Contains(currentName, "_") || !strings.Contains(strings.Join(uniqueSeenBlockNames, ","), "_") && !strings.Contains(currentName, "_") {
+						for _, seenName := range seenBlockNames {
+							if strings.Contains(currentName, seenName) && currentName != seenName && !strings.Contains(seenName, "os") { //Not the best, but I need to move forward, keep an eye on this
+								for _, rootAttribute := range rootAttributes {
+									if strings.Contains(rootAttribute.BlockName, seenName) {
+										blockNames := strings.Split(rootAttribute.BlockName, "/")
+										for index, blockName := range blockNames {
+											if blockName == seenName {
+												newBlockName = blockNames[index-1]
+												persistSeenName = seenName
+												if !strings.Contains(strings.Join(persistRootAttribute, ","), rootAttribute.UniqueBlockName) {
+													persistRootAttribute = append(persistRootAttribute, rootAttribute.UniqueBlockName)
+												}
+												break
 											}
-											break
 										}
 									}
 								}
+								break
 							}
-							break
 						}
 					}
 				}
 			}
-		}
-		if newBlockName != "" {
-			for _, uniqueBlockName := range persistRootAttribute {
-				rootAttribute := RootAttribute{
-					Name:            persistSeenName,
-					Value:           nil,
-					IsBlock:         true,
-					BlockName:       newBlockName,
-					UniqueBlockName: uniqueBlockName,
+			if newBlockName != "" {
+				for _, uniqueBlockName := range persistRootAttribute {
+					rootAttribute := RootAttribute{
+						Name:            persistSeenName,
+						Value:           nil,
+						IsBlock:         true,
+						BlockName:       newBlockName,
+						UniqueBlockName: uniqueBlockName,
+					}
+					rootAttributes = append(rootAttributes, rootAttribute)
 				}
-				rootAttributes = append(rootAttributes, rootAttribute)
 			}
 		}
-	}
-
+	*/
 	patternToMatchAddress := `^address_p(?:refix(?:es)?|aces)?$`
 	regexPatternStructAddress := regexp.MustCompile(patternToMatchAddress)
 	patternToMatchProfile := `(true|false|enabled|disabled|policies|(\d+)|(\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?))$`
