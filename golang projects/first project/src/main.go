@@ -23,6 +23,12 @@ type Attribute struct {
 	Parent string
 }
 
+type ArmResourceType struct {
+	Resource_type  string `json:"type"`
+	CanBeSeperated bool
+	Parent         string
+}
+
 type ArmObject struct {
 	Name                  string   `json:"name"`
 	Resource_id           string   `json:"id"`
@@ -73,7 +79,7 @@ type TerraformObject struct {
 }
 
 var TerraformCompiledObject TerraformObject
-var HtmlObjects = []HtmlObject{}
+var htmlObjects = []HtmlObject{}
 var AttributeObjects = []Attribute{}
 var SystemTerraformDocsFileName string = "./terraformdecompile/terraformdocsresourcedefinitions.json"
 
@@ -83,6 +89,7 @@ func main() {
 	noCache := flag.Bool("no-cache", false, "Switch to determine whether to use the cache if any is present")
 	clearCache := flag.Bool("clear-cache", false, "Switch to determine whether the application shall remove all cache")
 	providerVersion := flag.String("provider-version", "latest", "Use a custom version for the terraform decompiler - Useful in cases where ARM templates are old and where an older provider version might give better results, '<major, minor, patch>', eg. '3.11.0' ")
+	seperateSubResources := flag.Bool("seperate-nested-resources", false, "Switch to determine whether the decompiler shall seperate nested resources into their own Terraform resource definiton, OBS. This switch will not be enabled before version 0.2.0.\nFollow the resource notes for more details")
 	flag.Parse()
 
 	if *clearCache {
@@ -106,6 +113,10 @@ func main() {
 	if len(verifiedFiles) == 0 {
 		fmt.Println("No valid ARM templates found on path:", *filePath)
 		return
+	}
+
+	if *seperateSubResources {
+		fmt.Println("This flag is not implemented in the current version of TerrafyArm")
 	}
 
 	baseArmResources := GetArmBaseInformation(verifiedFiles)
@@ -178,36 +189,35 @@ func main() {
 				}
 				if rawHtml != "not_found" && rawHtml != "" {
 					cleanHtml = SortRawHtml(rawHtml, resourceType)
-					HtmlObjects = append(HtmlObjects, cleanHtml)
+					htmlObjects = append(htmlObjects, cleanHtml)
 				} else {
 					htmlObject := HtmlObject{
 						Resource_type: resourceType,
 						Not_found:     true, //We need to add more information to this struct, e.g. even though we cant retrieve its HTML, it still has a type, etc.
 					}
-					HtmlObjects = append(HtmlObjects, htmlObject)
+					htmlObjects = append(htmlObjects, htmlObject)
 				}
 			}
 		}
 		if !*noCache {
-			err = NewCachedSystemFiles(HtmlObjects)
+			err = NewCachedSystemFiles(htmlObjects)
 			if err != nil {
 				fmt.Println("An error occured while running function 'NewCachedSystemFiles'", err)
 			}
 		}
 	} else {
-		HtmlObjects = append(HtmlObjects, htmlObjectsFromCache...)
+		htmlObjects = append(htmlObjects, htmlObjectsFromCache...)
 	}
 
-	var cleanHtmlObjects []HtmlObject
+	var cleanhtmlObjects []HtmlObject
 
-	for _, htmlObject := range HtmlObjects {
+	for _, htmlObject := range htmlObjects {
 		if !htmlObject.Not_found {
-			cleanHtmlObjects = append(cleanHtmlObjects, htmlObject)
+			cleanhtmlObjects = append(cleanhtmlObjects, htmlObject)
 		}
 	}
 
-	GetRootAttributes(baseArmResources, cleanHtmlObjects)
-
+	GetRootAttributes(baseArmResources, cleanhtmlObjects)
 }
 
 func ImportArmFile(filePath *string) ([][]byte, error) {
@@ -216,7 +226,7 @@ func ImportArmFile(filePath *string) ([][]byte, error) {
 	var files [][]byte
 	fileInfo, err := os.Stat(*filePath)
 	if err != nil {
-		fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filePath), "\nStracktrace:", err)
+		fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filePath), "\nStacktrace:", err)
 	}
 
 	isDir := fileInfo.IsDir()
@@ -226,7 +236,7 @@ func ImportArmFile(filePath *string) ([][]byte, error) {
 		files, err := os.ReadDir(*filePath)
 
 		if err != nil {
-			fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filePath), "\nStracktrace:", err)
+			fmt.Println("Error while trying to retrieve ARM json files on path:", string(*filePath), "\nStacktrace:", err)
 		}
 
 		for _, file := range files {
@@ -351,7 +361,6 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 				for _, item := range v {
 					specialResourceType := ""
 					jsonMap = item.(map[string]interface{})
-
 					armResourceTypes = GetArmBaseInformationResourceTypes(jsonMap["properties"])
 
 					uniqueArmResourceTypesMap := make(map[string]bool)
@@ -463,13 +472,13 @@ func GetArmWebAndComputeKind(armPropertyValue interface{}) string {
 			}
 		}
 
-	case string:
+	case string: //Need to change the name this produces
 		{
 			attributePartName := strings.Split(armPropertyValue.(string), ",")
 			if attributePartName[0] == "app" {
-				tempReturnArmKind = fmt.Sprintf("%s/%s", "app", attributePartName[1])
+				tempReturnArmKind = fmt.Sprintf("%s_%s", attributePartName[1], "web_app")
 			} else if attributePartName[0] == "func" {
-				tempReturnArmKind = fmt.Sprintf("%s/%s", "func", attributePartName[1])
+				tempReturnArmKind = fmt.Sprintf("%s_%s", attributePartName[1], "funcion_app")
 			}
 		}
 	}
@@ -646,14 +655,84 @@ func ConvertArmToTerraformProvider(resourceType string, specialResouceType strin
 	return convertResourceTypeName
 }
 
+func GetArmResourceTypes(armBaseTypes []string, htmlObjects []HtmlObject) []ArmResourceType {
+	var returnArmResourceTypes []ArmResourceType
+	var rootResourceType string
+
+	for _, armBaseType := range armBaseTypes {
+		if len(strings.Split(armBaseType, "/")) == 2 {
+			rootResourceType = armBaseType
+		} else if strings.Contains(armBaseType, "_") {
+			rootResourceType = armBaseType
+		}
+	}
+
+	armResourceType := ArmResourceType{
+		Resource_type:  rootResourceType,
+		CanBeSeperated: false,
+		Parent:         "root",
+	}
+
+	returnArmResourceTypes = append(returnArmResourceTypes, armResourceType)
+
+	for _, armBaseType := range armBaseTypes {
+		if armBaseType == rootResourceType {
+			for _, htmlObject := range htmlObjects {
+				if htmlObject.Resource_type == armBaseType {
+					for _, htmlAttribute := range htmlObject.Attribute {
+						for _, armNoneRoot := range armBaseTypes {
+							convertArmName := ConvertArmToTerraformProvider(armNoneRoot, "")
+							if htmlAttribute.Name == convertArmName {
+								armResourceType := ArmResourceType{
+									Resource_type:  armNoneRoot,
+									CanBeSeperated: true,
+									Parent:         armBaseType,
+								}
+								returnArmResourceTypes = append(returnArmResourceTypes, armResourceType)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for _, armBaseType := range armBaseTypes {
+		if armBaseType != rootResourceType {
+			match := false
+			for _, armResourceType := range returnArmResourceTypes {
+				if armResourceType.Resource_type == armBaseType {
+					match = true
+				}
+			}
+			if !match {
+				armResourceType := ArmResourceType{
+					Resource_type:  armBaseType,
+					CanBeSeperated: false,
+				}
+				returnArmResourceTypes = append(returnArmResourceTypes, armResourceType)
+			}
+		}
+	}
+
+	return returnArmResourceTypes
+}
+
 func ConvertArmAttributeName(armPropertyName string, armPropertyValue interface{}) string {
 	var returnConvertedName string
 
 	patternLongArmAttributeName := regexp.MustCompile("([a-z0-9])([A-Z])")
 	if patternLongArmAttributeName.MatchString(armPropertyName) {
-		returnConvertedName = strings.ToLower(strings.TrimSuffix(patternLongArmAttributeName.ReplaceAllString(armPropertyName, "${1}_${2}"), "s"))
-		//fmt.Println(returnConvertedName)
+		if strings.HasSuffix(armPropertyName, "s") && !strings.HasSuffix(armPropertyName, "es") {
+			returnConvertedName = strings.ToLower(strings.TrimSuffix(patternLongArmAttributeName.ReplaceAllString(armPropertyName, "${1}_${2}"), "s"))
+		} else {
+			returnConvertedName = strings.ToLower(strings.TrimSuffix(patternLongArmAttributeName.ReplaceAllString(armPropertyName, "${1}_${2}"), "es"))
+		}
+	} else {
+		returnConvertedName = armPropertyName
 	}
+
+	returnConvertedName = strings.TrimSuffix(returnConvertedName, "s")
 
 	return returnConvertedName
 }
@@ -824,7 +903,6 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 		}
 	}
 	//Adding all the sorted attributes to the final return armObject
-	fmt.Println("THIS IS THE RESOURCE TYPE:", resourceType)
 	htmlObject := HtmlObject{
 		Resource_type: resourceType,
 		Attribute:     uniqueHtmlAttributes,
@@ -852,194 +930,274 @@ func UniquifyResourceTypes(resourceTypes []string) []string {
 	return sortedResourceTypes
 }
 
-func GetRootAttributes(armBasicObjects []ArmObject, HtmlObjects []HtmlObject) []RootAttribute {
+func GetRootAttributes(armBasicObjects []ArmObject, htmlObjects []HtmlObject) []RootAttribute {
 	var rootAttributesForReturn []RootAttribute
 	var htmlObjectCapture HtmlObject
-	var masterKey string
-
-	//var matchingHtmlObjects []HtmlObject
-
+	var htmlObjectCaptures []HtmlObject
 	for _, armBasicObject := range armBasicObjects {
-		allResourceTypes := []string{}
-		allResourceTypes = append(append(allResourceTypes, armBasicObject.Resource_types...), armBasicObject.Special_resource_type) //append(append(newBlockNames, blockPart[1]), blockPart[2])
-		var rootAttributes []RootAttribute
-		var rootAttributesFromReturn []RootAttribute
+		//htmlObjectsCapture := HtmlObject{}
+		resourceTypes := []string{}
+		resourceTypesModified := []string{}
+		rootAttributesForReturn = []RootAttribute{}
+		combinedResourceTypes := append(armBasicObject.Resource_types, armBasicObject.Special_resource_type)
+		allResourceTypes := GetArmResourceTypes(combinedResourceTypes, htmlObjects)
+
 		for _, armResourceType := range allResourceTypes {
-			fmt.Println("THIS IS THE RESOURCE TYPE:", armResourceType)
-			for _, htmlObject := range HtmlObjects {
-				if armResourceType == htmlObject.Resource_type {
-					fmt.Println("MATCHED:", htmlObject.Resource_type)
-					break
+			resourceTypes = append(resourceTypes, armResourceType.Resource_type)
+			for _, htmlObject := range htmlObjects {
+				if htmlObject.Resource_type == armResourceType.Resource_type {
+					htmlObjectCaptures = append(htmlObjectCaptures, htmlObject)
 				}
 			}
 		}
 
-		for armPropertyName, armPropertyValue := range armBasicObject.Properties.(map[string]interface{}) {
+		for _, resourceType := range resourceTypes {
+			resourceTypeModified := strings.Split(resourceType, "/")
+			if len(resourceTypeModified) == 3 {
+				resourceTypesModified = append(resourceTypesModified, ConvertArmAttributeName(resourceTypeModified[2], nil))
+			}
+		}
 
-			checkForMap, ok := armPropertyValue.(map[string]interface{})
+		for _, unique := range resourceTypesModified {
+			fmt.Println("NOW WE HERE::", unique)
+		}
 
-			if !ok {
-				switch armPropertyValue.(type) {
-				case []interface{}:
-					{
-						for _, innerPropertyValue := range armPropertyValue.([]interface{}) {
-							masterKey = ""
-							if CheckForMap(innerPropertyValue) {
-								for innerInnerAttributeName, innerInnerAttributeValue := range innerPropertyValue.(map[string]interface{}) {
-									if innerInnerAttributeName == "name" {
-										if len(GetHtmlAttributeMatch(armPropertyName, htmlObjectCapture.Attribute, armPropertyValue)) > 0 {
-											masterKey = innerInnerAttributeValue.(string)
-											break
-										}
-									}
-								}
-							}
-
-							htmlAttributeMatch := GetHtmlAttributeMatch(armPropertyName, htmlObjectCapture.Attribute, armPropertyValue)
-							if len(htmlAttributeMatch) > 0 {
-								rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(nil, htmlAttributeMatch[0], "", masterKey))
-								_, ok := innerPropertyValue.(map[string]interface{})
-								if ok {
-									rootAttributesFromReturn = GetInnerRootAttributes(armPropertyName, innerPropertyValue, htmlObjectCapture.Attribute, masterKey)
-									rootAttributes = append(rootAttributes, rootAttributesFromReturn...)
-								}
-							}
-
-						}
+		for _, armResourceType := range allResourceTypes {
+			if armResourceType.CanBeSeperated {
+				captureHtml := HtmlObject{}
+				for _, htmlObject := range htmlObjectCaptures {
+					if armResourceType.Resource_type == htmlObject.Resource_type {
+						captureHtml = htmlObject
 					}
-				case map[string]interface{}:
-					{
-						fmt.Println("YEP, WE ARE HERE", armPropertyName)
-					}
-				case interface{}:
-					{
-						htmlAttributeMatch := GetHtmlAttributeMatch(armPropertyName, htmlObjectCapture.Attribute, armPropertyValue)
-						if len(htmlAttributeMatch) > 0 {
-							rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(armPropertyValue, htmlAttributeMatch[0], "", masterKey))
-						}
-					}
-
 				}
+				keyForSubType := ""
+				attributePartName := strings.Split(ConvertArmAttributeName(captureHtml.Resource_type, nil), "/")
+				if len(attributePartName) > 2 {
+					for attributeName, _ := range armBasicObject.Properties.(map[string]interface{}) {
+						if strings.Contains(attributeName, attributePartName[2]) {
+							keyForSubType = attributeName
+						}
+					}
+					retrievePartOfArmProperties := armBasicObject.Properties.(map[string]interface{})[keyForSubType]
+					for _, slice := range retrievePartOfArmProperties.([]interface{}) {
+						masterKey := GetArmMasterKey(slice)
+						rootAttributesForReturn = append(rootAttributesForReturn, GetInnerRootAttributes(slice, captureHtml, masterKey)...)
+					}
+				}
+				//rootAttributesForReturn = GetInnerRootAttributes(armBasicObject, captureHtml.Attribute) //We need to specifically capture the properties of the resource types that are matched by the if statement
+			} else if !(len(strings.Split(armResourceType.Resource_type, "/")) == 2) && strings.Contains(armResourceType.Resource_type, "/") {
+				fmt.Println("WE ARE HERE", armResourceType.Resource_type)
 			} else {
-				htmlAttributeMatch := GetHtmlAttributeMatch(armPropertyName, htmlObjectCapture.Attribute, armPropertyValue)
-				//fmt.Println("ARM ATTRIBUTE TO MATCH", armPropertyName)
-				var blockNames []string
-				for _, block := range htmlAttributeMatch {
-					if block.Type == "armObject" {
-						blockNames = append(blockNames, block.Name)
-						rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(armPropertyValue, block, "", masterKey))
+				for attributeName, attributeValue := range armBasicObject.Properties.(map[string]interface{}) {
+					captureHtml := HtmlObject{}
+					for _, htmlObjectCapture := range htmlObjectCaptures {
+						if len(strings.Split(htmlObjectCapture.Resource_type, "/")) == 2 || strings.Contains(htmlObjectCapture.Resource_type, "_") {
+							captureHtml = htmlObjectCapture
+						}
+					}
+					convertAttributeName := ConvertArmAttributeName(attributeName, nil)
+					if !strings.Contains(strings.Join(resourceTypesModified, ","), convertAttributeName) {
+						htmlAttributeMatch := GetHtmlAttributeMatch(attributeName, captureHtml.Attribute, attributeValue)
+						if len(htmlAttributeMatch) > 0 {
+							for _, match := range htmlAttributeMatch {
+								if CheckForMap(attributeValue) {
+									rootAttributesForReturn = append(rootAttributesForReturn, ConvertMapToRootAttribute(attributeName, attributeValue, captureHtml.Attribute, match.Name, ""))
+								} else {
+									rootAttributesForReturn = append(rootAttributesForReturn, ConvertFlatValueToRootAttribute(attributeValue, match, "root", ""))
+								}
+							}
+						}
+						if CheckForMap(attributeValue) {
+							var blockName string
+							for innerAttributeName, innerAttributeValue := range attributeValue.(map[string]interface{}) {
+								innerHtmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, captureHtml.Attribute, innerAttributeValue)
+								if len(innerHtmlAttributeMatch) > 0 {
+									for _, match := range innerHtmlAttributeMatch {
+										rootAttributesForReturn = append(rootAttributesForReturn, ConvertFlatValueToRootAttribute(innerAttributeValue, match, "root", ""))
+										if match.Type == "armObject" {
+											blockName = match.Name
+										}
+									}
+								}
+
+								if CheckForMap(innerAttributeValue) {
+									for minimumAttributeName, minimumAttributeValue := range innerAttributeValue.(map[string]interface{}) {
+										minimumHtmlAttributeMatch := GetHtmlAttributeMatch(minimumAttributeName, captureHtml.Attribute, minimumAttributeValue)
+										if len(minimumHtmlAttributeMatch) > 0 {
+											for _, match := range minimumHtmlAttributeMatch {
+												rootAttributesForReturn = append(rootAttributesForReturn, ConvertFlatValueToRootAttribute(minimumAttributeValue, match, blockName, ""))
+											}
+											if CheckForMap(minimumAttributeValue) {
+												rootAttributesForReturn = append(rootAttributesForReturn, GetInnerRootAttributes(minimumAttributeValue, captureHtml, "")...)
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				}
-				for innerAttributeName, innerAttributeValue := range checkForMap {
-					htmlInnerAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObjectCapture.Attribute, innerAttributeValue)
-					var blockNamesInner []string
-					for _, block := range htmlInnerAttributeMatch {
-						if block.Type == "armObject" {
-							blockNamesInner = append(blockNamesInner, block.Name)
-							rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, block, "", masterKey))
+
+			}
+		}
+
+		GetBlocksFromRootAttributes(rootAttributesForReturn, htmlObjectCapture)
+	}
+
+	return rootAttributesForReturn
+}
+
+func GetInnerRootAttributes(armProperties interface{}, htmlObject HtmlObject, masterKey string) []RootAttribute {
+	var returnRootAttributes []RootAttribute
+	var innerBlockName string
+
+	for attributeName, attributeValue := range armProperties.(map[string]interface{}) {
+		if CheckForMap(attributeValue) {
+			for innerAttributeName, innerAttributeValue := range attributeValue.(map[string]interface{}) {
+				fmt.Println("INNER ATTRIBUTE NAME:", innerAttributeName)
+				htmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObject.Attribute, innerAttributeValue)
+				if len(htmlAttributeMatch) > 0 {
+					for _, match := range htmlAttributeMatch {
+						returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, match, match.Parent, masterKey))
+					}
+				}
+
+				if CheckForSliceWithMaps(innerAttributeValue) {
+					for _, slice := range innerAttributeValue.([]interface{}) {
+						if CheckForMap(slice) {
+							for minimumAttributeName, minimumAttributeValue := range slice.(map[string]interface{}) {
+								minimumHtmlAttributeMatch := GetHtmlAttributeMatch(minimumAttributeName, htmlObject.Attribute, minimumAttributeValue)
+								if len(minimumHtmlAttributeMatch) > 0 {
+									for _, match := range minimumHtmlAttributeMatch {
+										returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(minimumAttributeValue, match, attributeName, masterKey))
+									}
+								}
+								if CheckForSliceWithMaps(minimumAttributeValue) {
+									for _, innerSlice := range minimumAttributeValue.([]interface{}) {
+										fmt.Println("NOW WE HERE_:", innerSlice)
+									}
+								} else if CheckForMap(minimumAttributeValue) {
+									for deepAttributeName, deepAttributeValue := range minimumAttributeValue.(map[string]interface{}) {
+										deepHtmlAttributeMatch := GetHtmlAttributeMatch(deepAttributeName, htmlObject.Attribute, deepAttributeValue)
+										if len(deepHtmlAttributeMatch) > 0 {
+											for _, match := range deepHtmlAttributeMatch {
+												returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(deepAttributeValue, match, minimumAttributeName, masterKey))
+											}
+										}
+									}
+								}
+							}
 						}
 					}
+				} else if CheckForMap(innerAttributeValue) {
+					for minimumAttributeName, minimumAttributeValue := range innerAttributeValue.(map[string]interface{}) {
+						fmt.Println("NMOW HERE", minimumAttributeName, minimumAttributeValue)
+					}
+				}
 
-					if CheckForMap(innerAttributeValue) {
-						for innerInnerAttributeName, innerInnerAttributeValue := range innerAttributeValue.(map[string]interface{}) {
-							//fmt.Println("where the fuck are we", innerInnerAttributeName)
-							htmlInnerInnerAttributeMatch := GetHtmlAttributeMatch(innerInnerAttributeName, htmlObjectCapture.Attribute, innerInnerAttributeValue)
-							//fmt.Println("where the fuck are we", innerInnerAttributeName, htmlInnerInnerAttributeMatch)
-							var blockNamesMinimum []string
-							for _, block := range htmlInnerInnerAttributeMatch {
-								if block.Type == "string" {
-									switch innerInnerAttributeValue.(type) {
-									case map[string]interface{}:
-										{
-											for minimumAttributeName, minimumAttributeValue := range innerInnerAttributeValue.(map[string]interface{}) {
-												fmt.Println("THIS IS THE ATTRIBUTE:", minimumAttributeName)
-												htmlMinimumAttributeMatch := GetHtmlAttributeMatch(minimumAttributeName, htmlObjectCapture.Attribute, minimumAttributeValue)
-												if len(htmlMinimumAttributeMatch) > 0 {
-													rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(minimumAttributeValue, htmlMinimumAttributeMatch[0], fmt.Sprintf("%s/%s", strings.Join(blockNames, "/"), strings.Join(blockNamesInner, "/")), masterKey))
-												}
-											}
-										}
-									case interface{}:
-										{
-											fmt.Println("I think we are missing some stuff here", innerInnerAttributeName)
-										}
-									}
-									rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerInnerAttributeValue, block, fmt.Sprintf("%s/%s", strings.Join(blockNames, "/"), strings.Join(blockNamesInner, "/")), masterKey))
-								} else {
-									blockNamesMinimum = append(blockNamesMinimum, block.Name)
-									rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerInnerAttributeValue, block, fmt.Sprintf("%s/%s", strings.Join(blockNamesInner, "/"), strings.Join(blockNames, "/")), masterKey))
+			}
+		} else if CheckForSliceWithMaps(attributeValue) {
+			for _, slice := range attributeValue.([]interface{}) {
+				if slice.(map[string]interface{})["properties"] != nil {
+					for innerAttributeName, innerAttributeValue := range slice.(map[string]interface{})["properties"].(map[string]interface{}) {
+						htmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObject.Attribute, innerAttributeValue)
+						if len(htmlAttributeMatch) > 0 {
+							for _, match := range htmlAttributeMatch {
+								if match.Type == "armObject" {
+									innerBlockName = match.Name
 								}
-							}
-							if CheckForMap(innerInnerAttributeValue) {
-								for _, minimumAttributeValue := range innerInnerAttributeValue.(map[string]interface{}) {
-									switch minimumAttributeValue.(type) {
-									case []interface{}:
-										{
-											for _, slice := range minimumAttributeValue.([]interface{}) {
-												for innerSliceAttributeName, innerSliceAttributeValue := range slice.(map[string]interface{}) {
-													htmlInnerSliceAttributeMatch := GetHtmlAttributeMatch(innerSliceAttributeName, htmlObjectCapture.Attribute, innerSliceAttributeValue)
-													if len(htmlInnerSliceAttributeMatch) > 0 {
-														rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerSliceAttributeValue, htmlInnerSliceAttributeMatch[0], fmt.Sprintf("%s/%s/%s", strings.Join(blockNames, "/"), strings.Join(blockNamesInner, "/"), strings.Join(blockNamesMinimum, "/")), masterKey))
+
+								if CheckForMap(innerAttributeValue) {
+									for minimumAttributeName, _ := range innerAttributeValue.(map[string]interface{}) {
+										fmt.Println("ARE WE HERE NOW?", minimumAttributeName)
+									}
+								} else if CheckForSliceWithMaps(innerAttributeValue) {
+									for _, slice := range innerAttributeValue.([]interface{}) {
+										if CheckForMap(slice) {
+											for minimumAttributeName, minimumAttributeValue := range slice.(map[string]interface{}) {
+												htmlAttributeMatch := GetHtmlAttributeMatch(minimumAttributeName, htmlObject.Attribute, nil)
+												if len(htmlAttributeMatch) > 0 {
+													for _, match := range htmlAttributeMatch {
+														returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(minimumAttributeValue, match, innerBlockName, masterKey))
 													}
 												}
 											}
 										}
 									}
 								}
+
 							}
 						}
-
-					} else {
-						htmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObjectCapture.Attribute, innerAttributeValue)
-						for _, attribute := range htmlAttributeMatch {
-							CheckForMap(attribute)
-							switch innerAttributeValue.(type) {
-							case []interface{}:
-								{
-									for _, slice := range innerAttributeValue.([]interface{}) {
-										checkForMap, ok := slice.(map[string]interface{})
-										if ok {
-											for _, innerSliceAttributeValue := range checkForMap {
-												if CheckForMap(innerSliceAttributeValue) {
-													for innerMapAttributeName, innerMapAttributeValue := range innerSliceAttributeValue.(map[string]interface{}) {
-														htmlAttributeMatch := GetHtmlAttributeMatch(innerMapAttributeName, htmlObjectCapture.Attribute, innerMapAttributeValue)
-														for _, match := range htmlAttributeMatch {
-															rootAttributes = append(rootAttributes, ConvertMapToRootAttribute(innerMapAttributeName, innerMapAttributeValue, htmlAttributeMatch, match.Name, masterKey))
-														}
-													}
-												}
-											}
-										} else {
-											htmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObjectCapture.Attribute, innerAttributeValue)
-											if len(htmlAttributeMatch) > 0 {
-												rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(slice, htmlAttributeMatch[0], "", masterKey))
-											}
-										}
+						fmt.Println("INNER ATTRIBUTE NAME", innerAttributeName)
+						if CheckForMap(innerAttributeValue) {
+							for minimumAttributeName, minimumAttributeValue := range innerAttributeValue.(map[string]interface{}) {
+								htmlAttributeMatch := GetHtmlAttributeMatch(minimumAttributeName, htmlObject.Attribute, minimumAttributeValue)
+								if len(htmlAttributeMatch) > 0 {
+									for _, match := range htmlAttributeMatch {
+										returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(minimumAttributeValue, match, innerBlockName, masterKey))
 									}
 								}
-							case interface{}:
-								{
-									blockNesting := GetHtmlAttributeMatch(armPropertyName, htmlObjectCapture.Attribute, armPropertyValue)
-									for _, block := range blockNesting {
-										if block.Type == "armProperty" {
-											blockNames = append(blockNames, block.Name)
-										}
-
-									}
-									innerAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObjectCapture.Attribute, innerAttributeValue)
-									if len(innerAttributeMatch) > 0 {
-										rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, innerAttributeMatch[0], strings.Join(blockNames, "/"), masterKey))
-									}
-								}
+							}
+						} else {
+							fmt.Println("WE missing something=?=", innerAttributeName)
+						}
+					}
+				} else {
+					for innerAttributeName, innerAttributeValue := range slice.(map[string]interface{}) {
+						innerHtmlMatch := GetHtmlAttributeMatch(innerAttributeName, htmlObject.Attribute, innerAttributeValue)
+						fmt.Println("INNER ATT NMAM;E", innerAttributeName)
+						if len(innerHtmlMatch) > 0 {
+							for _, match := range innerHtmlMatch {
+								returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, match, "", ""))
 							}
 						}
 					}
 				}
 			}
+		} else {
+			htmlAttributeMatchRoot := GetHtmlAttributeMatch(attributeName, htmlObject.Attribute, nil)
+			if len(htmlAttributeMatchRoot) > 0 {
+				for _, match := range htmlAttributeMatchRoot {
+					returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(attributeValue, match, match.Parent, masterKey))
+				}
+			}
 		}
-		GetBlocksFromRootAttributes(rootAttributes, htmlObjectCapture)
 	}
-	return rootAttributesForReturn
+
+	return returnRootAttributes
+}
+
+func GetSubArmPartOfProperties(armPropertyValue interface{}, resourceType string) []map[string]interface{} {
+	var armPropertyNameConvert string
+	var innerArmPropertyNameConvert string
+	var returnArmPropertyValue []map[string]interface{}
+	armPropertyNameConvertSlice := strings.Split(ConvertArmAttributeName(resourceType, nil), "/")
+	if len(armPropertyNameConvertSlice) == 3 {
+		armPropertyNameConvert = armPropertyNameConvertSlice[2]
+	}
+
+	for attributeName, attributeValue := range armPropertyValue.(map[string]interface{}) {
+		innerArmPropertyNameConvertSlice := strings.Split(ConvertArmAttributeName(attributeName, nil), "/")
+		if len(innerArmPropertyNameConvertSlice) == 3 {
+			innerArmPropertyNameConvert = innerArmPropertyNameConvertSlice[2]
+		}
+		if strings.TrimSuffix(innerArmPropertyNameConvert, "s") == armPropertyNameConvert {
+			switch attributeValue.(type) {
+			case []interface{}:
+				{
+					for _, slice := range attributeValue.([]interface{}) {
+						returnArmPropertyValue = append(returnArmPropertyValue, slice.(map[string]interface{})["properties"].(map[string]interface{}))
+					}
+				}
+
+			case map[string]interface{}:
+				{
+					returnArmPropertyValue = append(returnArmPropertyValue, attributeValue.(map[string]interface{})["properties"].(map[string]interface{}))
+				}
+			}
+		}
+	}
+	return returnArmPropertyValue
 }
 
 func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject HtmlObject) []BlockAttribute {
@@ -1051,14 +1209,14 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 	var seenBlockNames []string
 	var uniqueSeenBlockNames []string
 	var summarizedRootAttributes []RootAttribute
-	var removeDuplicateValues []string
+	//var removeDuplicateValues []string
 
 	//fmt.Println("WE ARE HERE:", len(rootAttributes))
-	/*
-		for index, rootAttribute := range rootAttributes {
-			fmt.Println(index, "ATTRIBUTE NAME:3333", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
-		}
-	*/
+
+	for index, rootAttribute := range rootAttributes {
+		fmt.Println(index, "ATTRIBUTE NAME:3333", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
+	}
+
 	for index, rootAttribute := range rootAttributes {
 		if strings.HasPrefix(rootAttribute.BlockName, "/") || strings.HasSuffix(rootAttribute.BlockName, "/") {
 			rootAttributes[index].BlockName = strings.Trim(rootAttribute.BlockName, "/")
@@ -1164,8 +1322,8 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 	*/
 	patternToMatchAddress := `^address_p(?:refix(?:es)?|aces)?$`
 	regexPatternStructAddress := regexp.MustCompile(patternToMatchAddress)
-	patternToMatchProfile := `(true|false|enabled|disabled|policies|(\d+)|(\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?))$`
-	regexPatternStructProfile := regexp.MustCompile(patternToMatchProfile)
+	//patternToMatchProfile := `(true|false|enabled|disabled|policies|(\d+)|(\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?))$`
+	//regexPatternStructProfile := regexp.MustCompile(patternToMatchProfile)
 
 	//Sanatize data
 	for index, rootAttribute := range rootAttributes {
@@ -1203,79 +1361,79 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 			}
 		}
 	}
-
-	//Summarize root attributes whereever possible
-	for _, rootAttribute := range rootAttributes {
-		var fromSliceValues []string
-		var fromFlatValues []string
-		var persistRootAttribute RootAttribute
-		match := false
-		if !rootAttribute.IsBlock && rootAttribute.UniqueBlockName != "" {
-			{
-				for _, innerRootAttribute := range rootAttributes {
-					if rootAttribute.BlockName == innerRootAttribute.BlockName && rootAttribute.UniqueBlockName == innerRootAttribute.UniqueBlockName && !regexPatternStructAddress.MatchString(innerRootAttribute.Name) && !regexPatternStructAddress.MatchString(rootAttribute.Name) && !regexPatternStructProfile.MatchString(innerRootAttribute.Name) && !regexPatternStructProfile.MatchString(rootAttribute.Name) && innerRootAttribute.Name != "name" && rootAttribute.Name != "name" {
-						switch innerRootAttribute.Value.(type) {
-						case []interface{}:
-							{
-								for _, value := range innerRootAttribute.Value.([]interface{}) {
-									fromSliceValues = append(fromSliceValues, value.(string), rootAttribute.UniqueBlockName, rootAttribute.Name)
+	/*
+		//Summarize root attributes whereever possible
+		for _, rootAttribute := range rootAttributes {
+			var fromSliceValues []string
+			var fromFlatValues []string
+			var persistRootAttribute RootAttribute
+			match := false
+			if !rootAttribute.IsBlock && rootAttribute.UniqueBlockName != "" {
+				{
+					for _, innerRootAttribute := range rootAttributes {
+						if rootAttribute.BlockName == innerRootAttribute.BlockName && rootAttribute.UniqueBlockName == innerRootAttribute.UniqueBlockName && !regexPatternStructAddress.MatchString(innerRootAttribute.Name) && !regexPatternStructAddress.MatchString(rootAttribute.Name) && !regexPatternStructProfile.MatchString(innerRootAttribute.Name) && !regexPatternStructProfile.MatchString(rootAttribute.Name) && innerRootAttribute.Name != "name" && rootAttribute.Name != "name" {
+							switch innerRootAttribute.Value.(type) {
+							case []interface{}:
+								{
+									for _, value := range innerRootAttribute.Value.([]interface{}) {
+										fromSliceValues = append(fromSliceValues, value.(string), rootAttribute.UniqueBlockName, rootAttribute.Name)
+									}
 								}
-							}
-						case interface{}:
-							{
-								if _, ok := innerRootAttribute.Value.(bool); !ok {
-									if _, mapOk := innerRootAttribute.Value.(map[string]interface{}); !mapOk {
-										if !regexPatternStructAddress.MatchString(innerRootAttribute.Name) && !regexPatternStructProfile.MatchString(innerRootAttribute.Value.(string)) && !strings.Contains(innerRootAttribute.Name, "id") && strings.HasSuffix(innerRootAttribute.Name, "s") {
-											fromFlatValues = append(fromFlatValues, innerRootAttribute.Value.(string), rootAttribute.UniqueBlockName, rootAttribute.Name)
+							case interface{}:
+								{
+									if _, ok := innerRootAttribute.Value.(bool); !ok {
+										if _, mapOk := innerRootAttribute.Value.(map[string]interface{}); !mapOk {
+											if !regexPatternStructAddress.MatchString(innerRootAttribute.Name) && !regexPatternStructProfile.MatchString(innerRootAttribute.Value.(string)) && !strings.Contains(innerRootAttribute.Name, "id") && strings.HasSuffix(innerRootAttribute.Name, "s") {
+												fromFlatValues = append(fromFlatValues, innerRootAttribute.Value.(string), rootAttribute.UniqueBlockName, rootAttribute.Name)
+											}
 										}
 									}
 								}
 							}
+							persistRootAttribute = rootAttribute
+							match = true
 						}
-						persistRootAttribute = rootAttribute
-						match = true
 					}
 				}
 			}
-		}
 
-		if match {
-			matchInner := false
-			result := []string{} //Remove tainted elements AFTER its checked whether its a duplicate or not
-			valueForBlock := append(fromSliceValues, fromFlatValues...)
-			if len(removeDuplicateValues) == len(valueForBlock) {
-				for index := range removeDuplicateValues {
-					if removeDuplicateValues[index] != valueForBlock[index] {
-						matchInner = true
+			if match {
+				matchInner := false
+				result := []string{} //Remove tainted elements AFTER its checked whether its a duplicate or not
+				valueForBlock := append(fromSliceValues, fromFlatValues...)
+				if len(removeDuplicateValues) == len(valueForBlock) {
+					for index := range removeDuplicateValues {
+						if removeDuplicateValues[index] != valueForBlock[index] {
+							matchInner = true
+						}
 					}
+				} else if len(removeDuplicateValues) == 0 {
+					matchInner = true
 				}
-			} else if len(removeDuplicateValues) == 0 {
-				matchInner = true
-			}
-			if matchInner {
+				if matchInner {
 
-				//Removing the tained values from valueForBlock and placing it in result
-				if len(valueForBlock) > 0 {
-					result = append(result, valueForBlock[0])
-				}
+					//Removing the tained values from valueForBlock and placing it in result
+					if len(valueForBlock) > 0 {
+						result = append(result, valueForBlock[0])
+					}
 
-				for i := 3; i < len(valueForBlock); i += 3 {
-					result = append(result, valueForBlock[i])
-				}
+					for i := 3; i < len(valueForBlock); i += 3 {
+						result = append(result, valueForBlock[i])
+					}
 
-				rootAttribute := RootAttribute{
-					Name:            persistRootAttribute.Name,
-					Value:           result,
-					IsBlock:         false,
-					BlockName:       persistRootAttribute.BlockName,
-					UniqueBlockName: persistRootAttribute.UniqueBlockName,
+					rootAttribute := RootAttribute{
+						Name:            persistRootAttribute.Name,
+						Value:           result,
+						IsBlock:         false,
+						BlockName:       persistRootAttribute.BlockName,
+						UniqueBlockName: persistRootAttribute.UniqueBlockName,
+					}
+					summarizedRootAttributes = append(summarizedRootAttributes, rootAttribute)
+					removeDuplicateValues = append(fromSliceValues, fromFlatValues...)
 				}
-				summarizedRootAttributes = append(summarizedRootAttributes, rootAttribute)
-				removeDuplicateValues = append(fromSliceValues, fromFlatValues...)
 			}
 		}
-	}
-
+	*/
 	mapOfSummarizedRootAttributes := make(map[string]bool)
 
 	for _, rootAttribute := range summarizedRootAttributes {
@@ -1405,137 +1563,46 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 	return nil //compiledObjectsForReturn
 }
 
-func GetInnerRootAttributes(armPropertyName string, armPropertyValue interface{}, attributes []Attribute, masterKey string) []RootAttribute {
-	var rootAttributes []RootAttribute
-	var blockName string
-	blockNames := GetHtmlAttributeMatch(armPropertyName, attributes, armPropertyValue)
-	if blockNames != nil {
-		if blockNames[0].Name != "properties" {
-			blockName = blockNames[0].Name
+func CheckForSliceWithMaps(armPropertyValue interface{}) bool {
+	switch armPropertyValue.(type) {
+	case []interface{}:
+		{
+			for _, value := range armPropertyValue.([]interface{}) {
+				if CheckForMap(value) {
+					return true
+				}
+			}
 		}
 	}
+	return false
+}
 
-	for attributeName, attributeValue := range armPropertyValue.(map[string]interface{}) {
-
-		// Initialize persistValue with the current attributeValue
-		persistValue := attributeValue
-		for {
-			// Try to cast persistValue to a map
-			checkForMap, ok := persistValue.(map[string]interface{})
-			if ok {
-				for innerAttributeName, innerAttributeValue := range checkForMap {
-					switch innerAttributeValue.(type) {
-					case []interface{}:
-						{
-							for _, slice := range innerAttributeValue.([]interface{}) {
-								for innerSliceAttributeName, innerSliceAttributeValue := range slice.(map[string]interface{}) {
-									if CheckForMap(innerSliceAttributeValue) {
-										innerBlockAttribute := GetHtmlAttributeMatch(innerAttributeName, attributes, innerAttributeValue)
-										var innerBlockNames []string
-										for _, block := range innerBlockAttribute {
-											innerBlockNames = append(innerBlockNames, block.Name)
-										}
-										fmt.Println("TJOPS TIS THE:", innerSliceAttributeName, masterKey)
-										rootAttributesPart := ConvertMapToRootAttribute(innerSliceAttributeName, innerSliceAttributeValue, attributes, fmt.Sprintf("%s/%s", blockName, strings.Join(innerBlockNames, "/")), masterKey)
-										rootAttributes = append(rootAttributes, rootAttributesPart)
-
-									} else if CheckForSlice(innerSliceAttributeValue) {
-										for _, innerSlice := range innerSliceAttributeValue.([]interface{}) {
-											innerMapCheck, ok := innerSlice.(map[string]interface{})
-											if ok {
-												for innerInnerSliceAttributeName, innerInnerSliceAttributeValue := range innerMapCheck {
-													if CheckForMap(innerInnerSliceAttributeValue) {
-														rootAttributesPart := ConvertMapToRootAttribute(innerInnerSliceAttributeName, innerSliceAttributeValue, attributes, blockName, masterKey)
-														rootAttributes = append(rootAttributes, rootAttributesPart)
-													}
-												}
-											} else {
-												htmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, attributes, innerAttributeValue)
-												var blockNames []string
-												for _, block := range htmlAttributeMatch {
-													if block.Type == "armObject" {
-														blockNames = append(blockNames, block.Name)
-													}
-												}
-												innerHtmlAttributeMatch := GetHtmlAttributeMatch(innerSliceAttributeName, attributes, innerSliceAttributeValue)
-												if len(innerHtmlAttributeMatch) > 0 {
-													rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerSliceAttributeValue, innerHtmlAttributeMatch[0], fmt.Sprintf("%s/%s", blockName, strings.Join(blockNames, "/")), masterKey))
-												}
-											}
-
-										}
-									} else {
-										htmlAttributeMatch := GetHtmlAttributeMatch(innerSliceAttributeName, attributes, innerSliceAttributeValue)
-										var attributesSorted []Attribute
-										for _, attribute := range htmlAttributeMatch {
-											if attribute.Type == "armObject" {
-												attributesSorted = append(attributesSorted, attribute)
-											}
-										}
-
-										innerBlockAttribute := GetHtmlAttributeMatch(armPropertyName, attributes, innerAttributeValue)
-										var rootBlockNames []string
-
-										for _, attribute := range innerBlockAttribute {
-											if attribute.Type == "armObject" {
-												rootBlockNames = append(rootBlockNames, attribute.Name)
-											}
-										}
-
-										for _, attribute := range attributesSorted {
-											rootAttribute := RootAttribute{
-												Name:      attribute.Name,
-												Value:     nil,
-												BlockName: strings.Join(rootBlockNames, "/"),
-												IsBlock:   true,
-											}
-											rootAttributes = append(rootAttributes, rootAttribute)
-										}
-										var innerBlockNames []string
-										innerBlocks := GetHtmlAttributeMatch(innerAttributeName, attributes, innerAttributeValue)
-										for _, block := range innerBlocks {
-											if block.Type == "armObject" {
-												innerBlockNames = append(innerBlockNames, block.Name)
-											}
-										}
-
-										for _, attribute := range htmlAttributeMatch {
-											if attribute.Type == "string" {
-												rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerSliceAttributeValue, attribute, fmt.Sprintf("%s/%s", blockName, strings.Join(innerBlockNames, "/")), masterKey))
-											}
-										}
-									}
-								}
-							}
-						}
-					case interface{}:
-						{
-							htmlAttributeMatch := GetHtmlAttributeMatch(innerAttributeName, attributes, innerAttributeValue)
-							for _, attribute := range htmlAttributeMatch {
-								if blockName != "" {
-									rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, attribute, blockName, masterKey))
-								}
-							}
-						}
-					}
-					persistValue = checkForMap //Makes sure that nesting continues
-				}
-				break
-
-				// Update persistValue to go deeper into the map
-			} else {
-				htmlInnerAttributeMatch := GetHtmlAttributeMatch(attributeName, attributes, attributeValue)
-				if len(htmlInnerAttributeMatch) > 0 {
-					for _, rootAttribute := range htmlInnerAttributeMatch {
-						rootAttributes = append(rootAttributes, ConvertFlatValueToRootAttribute(attributeValue, rootAttribute, blockName, masterKey))
+func GetArmMasterKey(armPropertyValue interface{}) string {
+	var masterKey string
+	if CheckForSlice(armPropertyValue) {
+		for _, slice := range armPropertyValue.([]interface{}) {
+			for name, value := range slice.(map[string]interface{}) {
+				if CheckForString(value) {
+					if CompareStrings(name, "name") {
+						masterKey = value.(string)
 					}
 				}
 			}
-			break
+		}
+	} else if CheckForMap(armPropertyValue) {
+		for name, value := range armPropertyValue.(map[string]interface{}) {
+			if CheckForString(value) {
+				if CompareStrings(name, "name") {
+					masterKey = value.(string)
+				}
+			}
 		}
 	}
+	return masterKey
+}
 
-	return rootAttributes
+func CompareStrings(armPropertyName1, armPropertyName2 string) bool {
+	return strings.ToLower(armPropertyName1) == strings.ToLower(armPropertyName2)
 }
 
 func ConvertMapToRootAttribute(armPropertyName string, armPropertyValue interface{}, attributes []Attribute, blockName string, masterKey string) RootAttribute {
@@ -1605,7 +1672,7 @@ func GetHtmlAttributeMatch(armPropertyName string, htmlAttributes []Attribute, a
 				if !strings.Contains(armPropertyNameConvert, "os_") && strings.Contains(htmlAttribute.Name, "_") && strings.Contains(armPropertyNameConvert, "_") || !strings.Contains(htmlAttribute.Name, "_") && !strings.Contains(armPropertyNameConvert, "_") && htmlAttribute.Name != "resource_group_name" && htmlAttribute.Name != "location" {
 					htmlAttributeReturn = append(htmlAttributeReturn, htmlAttribute)
 				} else if !strings.Contains(armPropertyNameConvert, "os_") && strings.Contains(htmlAttribute.Name, armPropertyNameConvert) && !strings.Contains(htmlAttribute.Name, "ids") { //This negative match will increase in size with experience
-					//fmt.Println("WHAT DID WE JUST MATCH?", htmlAttribute.Name, armPropertyNameConvert)
+					fmt.Println("WHAT DID WE JUST MATCH?", htmlAttribute.Name, armPropertyNameConvert)
 					htmlAttributeReturn = append(htmlAttributeReturn, htmlAttribute)
 				} else if strings.Contains(armPropertyNameConvert, "os_") && strings.Contains(htmlAttribute.Name, armPropertyNameConvert) && armPropertyNameConvert != htmlAttribute.Name {
 					checkForMap := CheckForMap(armPropertyValue)
@@ -1652,14 +1719,19 @@ func GetHtmlAttributeMatch(armPropertyName string, htmlAttributes []Attribute, a
 	if len(htmlAttributeReturn) == 0 {
 		blockPartName := strings.Split(armPropertyNameConvert, "_")
 		for _, htmlAttribute := range htmlAttributes {
-			if strings.Contains(htmlAttribute.Name, strings.Join(blockPartName[1:len(blockPartName)], "_")) {
+			if strings.Contains(htmlAttribute.Name, strings.Join(blockPartName[1:len(blockPartName)], "_")) || strings.HasSuffix(htmlAttribute.Name, blockPartName[0]) {
 				htmlAttributeReturn = append(htmlAttributeReturn, htmlAttribute)
 				break
 			}
 		}
 	}
 
+	if armPropertyName == "keyData" {
+		fmt.Println("TASKING:_", htmlAttributeReturn)
+	}
+
 	return htmlAttributeReturn
+
 }
 
 func CheckForMap(mapToCheck interface{}) bool {
@@ -1708,10 +1780,10 @@ func GetInnerMapFlatValue(mapToCheck interface{}, armPropertyName string) interf
 	return mapToCheck
 }
 
-func NewCachedSystemFiles(HtmlObjects []HtmlObject) error {
-	jsonData, err := json.MarshalIndent(HtmlObjects, "", "  ")
+func NewCachedSystemFiles(htmlObjects []HtmlObject) error {
+	jsonData, err := json.MarshalIndent(htmlObjects, "", "  ")
 	if err != nil {
-		fmt.Println("The following error occured when trying to convert htmlobjects to json:", err)
+		fmt.Println("The following error occured when trying to convert htmlObjects to json:", err)
 	}
 	if _, err := os.Stat(strings.Split(SystemTerraformDocsFileName, "/")[1]); os.IsNotExist(err) {
 		err = os.Mkdir(strings.Split(SystemTerraformDocsFileName, "/")[1], 0755)
