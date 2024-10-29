@@ -64,9 +64,10 @@ type Variable struct {
 }
 
 type BlockAttribute struct {
-	BlockName     string
-	RootAttribute []RootAttribute
-	Parent        string
+	BlockName       string
+	RootAttribute   []RootAttribute
+	Parent          string
+	UniqueBlockName string
 }
 
 type CompileObject struct {
@@ -371,63 +372,164 @@ func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResource
 	//resourceName := ""
 	//terraformProvider := ""
 	//terraformResourceType := ""
-	fmt.Println("HERE:32", terraformCompiledObject.ResourceName, len(terraformCompiledObject.BlockAttributes))
-	for _, block := range terraformCompiledObject.BlockAttributes {
-		fmt.Println("\n------------BLOCK BLOCK-------------")
-		fmt.Println("NAME:", block.BlockName, "PARENT:", block.Parent)
-		for index, rootAttribute := range block.RootAttribute {
-			fmt.Println(index, "ROOT NAME:", rootAttribute.Name, "IS BLOCK", rootAttribute.IsBlock, "PARENT", rootAttribute.BlockName, "UNIQUE", rootAttribute.UniqueBlockName, "VALUE", rootAttribute.Value)
+	/*
+		fmt.Println("HERE:32", terraformCompiledObject.ResourceName, len(terraformCompiledObject.BlockAttributes), terraformCompiledObject.ResourceType)
+		for _, block := range terraformCompiledObject.BlockAttributes {
+			fmt.Println("\n------------BLOCK BLOCK-------------")
+			fmt.Println("NAME:", block.BlockName, "PARENT:", block.Parent)
+			for index, rootAttribute := range block.RootAttribute {
+				fmt.Println(index, "ROOT NAME:", rootAttribute.Name, "IS BLOCK", rootAttribute.IsBlock, "PARENT", rootAttribute.BlockName, "UNIQUE", rootAttribute.UniqueBlockName, "VALUE", rootAttribute.Value)
+			}
 		}
-	}
+	*/
 	rootTerraformDefinition := NewTerraformResourceDefinitionName(terraformCompiledObject.ResourceName, terraformCompiledObject.ResourceType, terraformCompiledObject.ResourceDefinitionName)
 	rootTerraformConfig = append(rootTerraformConfig, rootTerraformDefinition)
 	firstTime := true
 	for _, blockAttribute := range terraformCompiledObject.BlockAttributes {
-		blockNameFixed := ConvertArmAttributeName(blockAttribute.BlockName, "")
-		if blockAttribute.Parent == "root" || blockAttribute.Parent == "" {
-			if blockNameFixed != "" && blockNameFixed == "root" {
-				for _, terraformAttribute := range blockAttribute.RootAttribute {
-					if !terraformAttribute.IsBlock && (terraformAttribute.BlockName == "root" || terraformAttribute.BlockName == "") {
-						if firstTime {
-							firstTime = false
-							for _, htmlAttribute := range terraformCompiledObject.HtmlObject.Attribute {
-								if htmlAttribute.Name == "name" && htmlAttribute.Parent == "root" {
-									rootAttribute := RootAttribute{
-										Name:  "name",
-										Value: terraformCompiledObject.ResourceName,
-									}
-									rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false))
+		//blockNameFixed := ConvertArmAttributeName(blockAttribute.BlockName, "")
+		if blockAttribute.Parent == "root" || ConvertArmAttributeName(blockAttribute.Parent, "") == terraformCompiledObject.ResourceType {
+			for _, terraformAttribute := range blockAttribute.RootAttribute {
+				if !terraformAttribute.IsBlock {
+					if firstTime {
+						firstTime = false
+						for _, htmlAttribute := range terraformCompiledObject.HtmlObject.Attribute {
+							if htmlAttribute.Name == "name" && htmlAttribute.Parent == "root" {
+								rootAttribute := RootAttribute{
+									Name:  "name",
+									Value: terraformCompiledObject.ResourceName,
 								}
-
-								if htmlAttribute.Name == "resource_group_name" && htmlAttribute.Parent == "root" {
-									rootAttribute := RootAttribute{
-										Name:  "resource_group_name",
-										Value: terraformCompiledObject.ArmObject.Resource_group_name,
-									}
-									rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false))
-								}
-
-								if htmlAttribute.Name == "location" && htmlAttribute.Parent == "root" {
-									rootAttribute := RootAttribute{
-										Name:  "location",
-										Value: terraformCompiledObject.ArmObject.Location,
-									}
-									rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false))
-								}
+								rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, false))
 							}
-							firstTime = false
-						} else {
-							rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", terraformAttribute, false))
+
+							if htmlAttribute.Name == "resource_group_name" && htmlAttribute.Parent == "root" {
+								rootAttribute := RootAttribute{
+									Name:  "resource_group_name",
+									Value: terraformCompiledObject.ArmObject.Resource_group_name,
+								}
+								rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, false))
+							}
+
+							if htmlAttribute.Name == "location" && htmlAttribute.Parent == "root" {
+								rootAttribute := RootAttribute{
+									Name:  "location",
+									Value: terraformCompiledObject.ArmObject.Location,
+								}
+								rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, false))
+							}
+
 						}
+						firstTime = false
 					} else {
-						fmt.Println("BLOCK NAME:3333", blockNameFixed, blockAttribute.RootAttribute)
+						if terraformAttribute.BlockName == "root" {
+							rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", terraformAttribute, false, false))
+						}
+					}
+				} else {
+					if blockAttribute.BlockName == "root" && blockAttribute.Parent == "root" {
+						rootTerraformConfig = append(rootTerraformConfig)
+						blockAttributesFromRoot := []BlockAttribute{}
+						for _, blockAttribute := range terraformCompiledObject.BlockAttributes {
+							if terraformAttribute.UniqueBlockName == blockAttribute.UniqueBlockName {
+								blockAttributesFromRoot = append(blockAttributesFromRoot, blockAttribute)
+							}
+						}
+
+						sortedBlockAttributes := SortBlockAttributesForTerraform(blockAttributesFromRoot)
+						rootBlockName := ""
+
+						for _, sortedBlock := range sortedBlockAttributes {
+							if sortedBlock.Parent == "root" {
+								rootBlockName = sortedBlock.BlockName
+							}
+						}
+
+						for index, sortedBlock := range sortedBlockAttributes {
+							DetermineMostNestedTerraformBlock(sortedBlock.RootAttribute, rootBlockName)
+							indentationTabs := strings.Repeat("  ", index)
+							rootTerraformConfig = append(rootTerraformConfig, AddObjectTerraformAttributeForResourceDefinition(fmt.Sprintf("\n%s\n%s {", indentationTabs, sortedBlock.BlockName), indentationTabs, sortedBlock.RootAttribute, false))
+						}
 					}
 				}
 			}
 		}
 	}
-	rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("\n}", RootAttribute{}, true))
+	rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("\n}", RootAttribute{}, true, false))
 	fmt.Println("CONFIG:", rootTerraformConfig)
+}
+
+func DetermineMostNestedTerraformBlock(terraformRootAttributes []RootAttribute, rootBlockName string) string {
+	match := false
+	for _, rootAttribute := range terraformRootAttributes {
+		for _, innerRootAttribute := range terraformRootAttributes {
+			if rootAttribute.Name == innerRootAttribute.BlockName {
+				match = true
+				break
+			}
+		}
+
+		if !match && rootAttribute.IsBlock {
+			fmt.Println("THIS MUST BE THE MOST INNER BLOCK", rootAttribute.Name, rootAttribute.BlockName)
+			match = false
+		}
+	}
+	return "false"
+}
+
+func SortBlockAttributesForTerraform(blockAttributesToSort []BlockAttribute) []BlockAttribute {
+	blocksForReturn := []BlockAttribute{}
+	uniqueBlocksForReturn := []BlockAttribute{}
+	mapOfBlocks := make(map[string]bool)
+	for _, blockAttribute := range blockAttributesToSort {
+		if blockAttribute.Parent == "root" {
+			blocksForReturn = append(blocksForReturn, blockAttribute)
+		}
+	}
+
+	for x, blockAttribute := range blockAttributesToSort {
+		if blockAttribute.Parent == blocksForReturn[0].BlockName {
+			blocksForReturn = append(blocksForReturn, blockAttribute)
+		}
+		if len(blockAttributesToSort) == x+1 {
+			for _, innerBlockAttribute := range blockAttributesToSort {
+				for _, captureBlock := range blocksForReturn {
+					if captureBlock.BlockName == innerBlockAttribute.Parent {
+						blocksForReturn = append(blocksForReturn, innerBlockAttribute)
+					}
+				}
+			}
+		}
+	}
+
+	for _, blockAttribute := range blocksForReturn {
+		if !mapOfBlocks[blockAttribute.BlockName] {
+			uniqueBlocksForReturn = append(uniqueBlocksForReturn, blockAttribute)
+			mapOfBlocks[blockAttribute.BlockName] = true
+		}
+	}
+
+	return uniqueBlocksForReturn
+}
+
+func SortRootAttributesForTerraform(rootAttributesToSort []RootAttribute) []RootAttribute {
+	nameAttributes := []RootAttribute{}
+	blockAttributes := []RootAttribute{}
+	nonBlockAttributes := []RootAttribute{}
+
+	for _, rootAttribute := range rootAttributesToSort {
+		if rootAttribute.Name == "name" {
+			nameAttributes = append(nameAttributes, rootAttribute)
+		} else if rootAttribute.IsBlock {
+			blockAttributes = append(blockAttributes, rootAttribute)
+		} else {
+			nonBlockAttributes = append(nonBlockAttributes, rootAttribute)
+		}
+	}
+
+	// Concatenate slices to form the final sorted slice
+	sortedRootAttributes := append(nameAttributes, nonBlockAttributes...)
+	sortedRootAttributes = append(sortedRootAttributes, blockAttributes...)
+
+	return sortedRootAttributes
 }
 
 func NewTerraformResourceDefinitionName(terraformResourceName string, terraformResourceType string, terraformProvider string) string {
@@ -435,7 +537,21 @@ func NewTerraformResourceDefinitionName(terraformResourceName string, terraformR
 	return fmt.Sprintf("resource \"%s_%s\" \"%s\" {", terraformProvider, terraformResourceType, terraformResourceName)
 }
 
-func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terraformAttribute RootAttribute, endTerraformDefinition bool) string {
+func AddObjectTerraformAttributeForResourceDefinition(terraformBlock string, indentation string, terraformAttributes []RootAttribute, endTerraformDefinition bool) string {
+	terraformFlatAttributes := []string{}
+	for index, terraformRootAttribute := range terraformAttributes {
+		if !terraformRootAttribute.IsBlock && index == 0 {
+			terraformFlatAttributes = append(terraformFlatAttributes, fmt.Sprintf("%s\n%s", terraformBlock, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, false)))
+		} else if !terraformRootAttribute.IsBlock && index != 0 {
+			terraformFlatAttributes = append(terraformFlatAttributes, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, true))
+		}
+
+	}
+
+	return strings.Join(terraformFlatAttributes, "\n")
+}
+
+func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terraformAttribute RootAttribute, endTerraformDefinition bool, noNewLine bool) string {
 	valueTypeName := FindTypeByString(terraformAttribute.Value)
 	if terraformBlock != "" {
 		if terraformAttribute != (RootAttribute{}) {
@@ -452,7 +568,7 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 			}
 		}
 	} else {
-		if !endTerraformDefinition {
+		if !endTerraformDefinition && !noNewLine {
 			if valueTypeName == "bool" {
 				return fmt.Sprintf("%s\n%s = %t", terraformBlock, terraformAttribute.Name, terraformAttribute.Value)
 			} else if valueTypeName == "slice" {
@@ -461,7 +577,11 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 		}
 	}
 
+	if noNewLine {
+		return fmt.Sprintf("%s = \"%s\"", terraformAttribute.Name, terraformAttribute.Value)
+	}
 	return fmt.Sprintf("\n%s = \"%s\"", terraformAttribute.Name, terraformAttribute.Value)
+
 }
 
 func CheckForTerraformExecuteable() bool {
@@ -922,14 +1042,11 @@ func ConvertArmToTerraformProvider(resourceType string, specialResouceType strin
 					if attributePartName[1] == strings.TrimSuffix(resourceNameBaseConversion[1], "s") {
 						convertResourceTypeTempName = fmt.Sprintf("%s_%s", dotpartAttributeName, resourceNameBaseConversion[2])
 					}
-				} else if convertResourceTypeTempName == "" {
 				}
 			}
 		}
 	} else if patternResourceType.MatchString(resourceType) && convertResourceTypeTempName == "" {
 		convertResourceTypeTempName = fmt.Sprintf("%s_%s", strings.Split(resourceNameBaseConversion[0], ".")[1], resourceNameBaseConversion[1])
-	} else {
-
 	}
 
 	convertResourceTypeName = strings.ToLower(strings.TrimSuffix(convertResourceTypeTempName, "s"))
@@ -1033,8 +1150,6 @@ func GetRawHtml(resourceType string, providerVersion string) (string, error) {
 	if convertResourceTypeName == "" {
 		return "", nil
 	}
-
-	fmt.Println("THIS IS IT:", convertResourceTypeName)
 
 	// Create context
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
@@ -1265,7 +1380,6 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 		}
 
 		for _, armResourceType := range allResourceTypes {
-			fmt.Println("FOUND THE FOLLOWING RESOURCE TYPE:", armResourceType)
 			resourceFileName := ""
 			keyForSubType := ""
 			masterKey := ""
@@ -1274,6 +1388,9 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 				for _, htmlObject := range htmlObjectCaptures {
 					if armResourceType.Resource_type == htmlObject.Resource_type {
 						captureHtml = htmlObject
+					}
+
+					if armResourceType.Parent == htmlObject.Resource_type {
 						htmlObjectCaptureNestedArmResources = htmlObject //Must have an if statement for when we enable the use of forcing the seperation of resources
 					}
 				}
@@ -1477,26 +1594,6 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 	}
 
 	for index, compiledObject := range compiledObjects {
-		//fmt.Println("NEW COMPILED OBJECT", compiledObject.ResourceName, "BLOCKS", compiledObject.BlockAttributes)
-		blockAttributesForRoot := []BlockAttribute{}
-		blockAttributesForRest := []BlockAttribute{}
-		for index2, blockAttribute := range compiledObject.BlockAttributes {
-			if blockAttribute.Parent == "" {
-				compiledObjects[index].BlockAttributes[index2].Parent = "root"
-			}
-			blockNameFixed := ConvertArmAttributeName(blockAttribute.BlockName, "")
-			if blockNameFixed == strings.Replace(compiledObject.FilePath, ".tf", "", 1) || blockAttribute.BlockName == "root" {
-				fmt.Println("WE ARE HERE BOIS", blockNameFixed)
-				blockAttributesForRoot = append(blockAttributesForRoot, blockAttribute)
-			} else if blockAttribute.BlockName != "root" && blockAttribute.BlockName != "" {
-				blockAttributesForRest = append(blockAttributesForRest, blockAttribute)
-			}
-		}
-		blockAttributesForRoot = append(blockAttributesForRoot, blockAttributesForRest...)
-		compiledObjects[index].BlockAttributes = blockAttributesForRoot
-	}
-
-	for index, compiledObject := range compiledObjects {
 		if len(compiledObject.BlockAttributes) > 1 {
 			match := false
 			for _, blockAttribute := range compiledObject.BlockAttributes {
@@ -1520,6 +1617,68 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 				}
 				rootBlockAttributeSlice = append(rootBlockAttributeSlice, blockAttribute)
 				compiledObjects[index].BlockAttributes = rootBlockAttributeSlice
+			}
+		}
+	}
+
+	for index, compiledObject := range compiledObjects {
+		//fmt.Println("NEW COMPILED OBJECT", compiledObject.ResourceName, "BLOCKS", compiledObject.BlockAttributes)
+		blockAttributesForRoot := []BlockAttribute{}
+		blockAttributesForRest := []BlockAttribute{}
+		for index2, blockAttribute := range compiledObject.BlockAttributes {
+			if blockAttribute.Parent == "" {
+				compiledObjects[index].BlockAttributes[index2].Parent = "root"
+			}
+			blockNameFixed := ConvertArmAttributeName(blockAttribute.BlockName, "")
+			if blockNameFixed == strings.Replace(compiledObject.FilePath, ".tf", "", 1) || blockAttribute.BlockName == "root" {
+				blockAttributesForRoot = append(blockAttributesForRoot, blockAttribute)
+			} else if blockAttribute.BlockName != "root" && blockAttribute.BlockName != "" {
+				blockAttributesForRest = append(blockAttributesForRest, blockAttribute)
+			}
+		}
+		blockAttributesForRoot = append(blockAttributesForRoot, blockAttributesForRest...)
+		compiledObjects[index].BlockAttributes = blockAttributesForRoot
+	}
+
+	for index, compiledObject := range compiledObjects {
+		rootAttributesForRootBlock := []RootAttribute{}
+		blockAttributesNoneRoot := []BlockAttribute{}
+		if !compiledObject.SeperatedResource {
+			for _, blockAttribute := range compiledObject.BlockAttributes {
+				if blockAttribute.Parent == "root" && blockAttribute.BlockName == "root" {
+					rootAttributesForRootBlock = append(rootAttributesForRootBlock, blockAttribute.RootAttribute...)
+				} else {
+					blockAttributesNoneRoot = append(blockAttributesNoneRoot, blockAttribute)
+				}
+			}
+			blockRootAttribute := BlockAttribute{
+				BlockName:     "root",
+				RootAttribute: rootAttributesForRootBlock,
+				Parent:        "root",
+			}
+			blockAttributesNoneRoot = append(blockAttributesNoneRoot, blockRootAttribute)
+			compiledObjects[index].BlockAttributes = blockAttributesNoneRoot
+		}
+	}
+	/*
+		removeEmptyBlocks := []BlockAttribute{}
+		for index, compiledObject := range compiledObjects { //This mix macthes blocks to wrong compiled object xD
+			for _, blockAttribute := range compiledObject.BlockAttributes { //Im simply trying to remove blocks that have 0 rootattributes
+				if len(blockAttribute.RootAttribute) > 1 {
+					removeEmptyBlocks = append(removeEmptyBlocks, blockAttribute)
+				}
+			}
+			if len(removeEmptyBlocks) > 1 {
+				compiledObjects[index].BlockAttributes = removeEmptyBlocks
+			}
+		}
+	*/
+	for _, compiledObject := range compiledObjects {
+		fmt.Println("\n--------COMPILED OBJECTS:-------", compiledObject.ResourceName)
+		for index, block := range compiledObject.BlockAttributes {
+			fmt.Println(index, "\n-------BLOCK33-----", block.BlockName, "PARENT", block.Parent, "LEN OF ROOT ATT")
+			for index2, rootAttribute := range block.RootAttribute {
+				fmt.Println(index2, "NAME", rootAttribute.Name, "BLOCK", rootAttribute.BlockName, "UNIQYUE", rootAttribute.UniqueBlockName, "IS", rootAttribute.IsBlock, "VALUE", rootAttribute.Value)
 			}
 		}
 	}
@@ -2033,6 +2192,14 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 		}
 	}
 
+	for index, rootAttribute := range almostSummarizeRootAttributes {
+		for _, attribute := range htmlObject.Attribute {
+			if rootAttribute.Name == attribute.Name && rootAttribute.Name != "name" && rootAttribute.Name != "id" {
+				almostSummarizeRootAttributes[index].BlockName = attribute.Parent
+			}
+		}
+	}
+
 	blockRootAttributes = []RootAttribute{}
 
 	for _, rootAttribute := range almostSummarizeRootAttributes {
@@ -2082,23 +2249,34 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 		Parent:        "root",
 	}
 
-	blocksForReturn = append(blocksForReturn, blockAttribute)
-
-	for _, block := range blocksForReturn {
-		fmt.Println("\n------------------BLOCK NAME:", block.BlockName, "PARENT", block.Parent, "-----------------------")
-		for _, attribute := range block.RootAttribute {
-			if attribute.UniqueBlockName == "" {
-				fmt.Println("\nRoot attribute name:", attribute.Name, "VALUE:", attribute.Value)
-			} else {
-				fmt.Println("\nRoot attribute name:", attribute.Name, "UNIQUE NAME", attribute.UniqueBlockName, "VALUE:", attribute.Value)
+	//Inject unique block name from root attributes of each block
+	for index, blockAttribute := range blocksForReturn {
+		uniqueBlockName := ""
+		for _, rootAttribute := range blockAttribute.RootAttribute {
+			if rootAttribute.UniqueBlockName != "" {
+				uniqueBlockName = rootAttribute.UniqueBlockName
 			}
 		}
+		blocksForReturn[index].UniqueBlockName = uniqueBlockName
 	}
 
-	for index, rootAttribute := range almostSummarizeRootAttributes {
-		fmt.Println(index, "ATTRIBUTE NAME", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
-	}
+	blocksForReturn = append(blocksForReturn, blockAttribute)
+	/*
+		for _, block := range blocksForReturn {
+			fmt.Println("\n------------------BLOCK NAME:", block.BlockName, "PARENT", block.Parent, "-----------------------")
+			for _, attribute := range block.RootAttribute {
+				if attribute.UniqueBlockName == "" {
+					fmt.Println("\nRoot attribute name:", attribute.Name, "VALUE:", attribute.Value)
+				} else {
+					fmt.Println("\nRoot attribute name:", attribute.Name, "UNIQUE NAME", attribute.UniqueBlockName, "VALUE:", attribute.Value)
+				}
+			}
+		}
 
+		for index, rootAttribute := range almostSummarizeRootAttributes {
+			fmt.Println(index, "ATTRIBUTE NAME", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
+		}
+	*/
 	return blocksForReturn
 }
 
