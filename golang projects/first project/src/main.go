@@ -18,6 +18,12 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+/*
+	Maybe look for required / not required in HTML as well? Seems to be useful when it comes to a possible check in each block to see if all required attributes are present.
+	If we take a peering as an example - an ARM template does not provide the other virtual network name directly - It might be impossible to get the actual value in any efficient way
+	But we can then at least insert a placeholder value - As we know the missing attribute´s litteral name, and we can then also add a comment to the end of the line telling the user to replace the value before running Terraform
+*/
+
 type Attribute struct {
 	Type       string `json:"Type"`
 	Name       string `json:"Name"`
@@ -251,9 +257,6 @@ func main() {
 	}
 
 	compiledObjects := CompileTerraformObjects(baseArmResources, cleanhtmlObjects, *seperateSubResources)
-	for _, object := range compiledObjects {
-		fmt.Println("FILE NAME FOUND:", object.FilePath, "NAME", object.SeperatedResource)
-	}
 	terraformObject := NewTerraformObject(compiledObjects, *providerVersion)
 
 	err = NewCachedSystemFiles([]HtmlObject{}, terraformObject)
@@ -274,7 +277,9 @@ func main() {
 	InitializeTerraformFile(providerFullPathName, *providerVersion, terraformObject.ProviderName)
 
 	for _, terraformCompiledObject := range terraformObject.CompileObjects {
-		NewTerraformConfig(terraformCompiledObject, *seperateDecompiledResources)
+		terraformStringConfig := NewTerraformConfig(terraformCompiledObject, *seperateDecompiledResources)
+		fmt.Println("DEFINITION:", terraformCompiledObject.ResourceName, "FILE PATH", fmt.Sprintf("%s/%s", *rootDecompilefolderPath, terraformCompiledObject.FilePath))
+		WriteTerraformConfigToDisk(terraformStringConfig, fmt.Sprintf("%s/%s", *rootDecompilefolderPath, terraformCompiledObject.FilePath))
 	}
 }
 
@@ -304,10 +309,6 @@ func NewCompiledFolderStructure(seperatedFiles bool, rootFolderPath string, terr
 		if index == 0 { //Create provider file
 			fileNames = append(fileNames, "providers.tf")
 		}
-	}
-
-	for _, name := range fileNames {
-		fmt.Println("COMMING NAME:", name)
 	}
 
 	for _, fileName := range fileNames {
@@ -362,12 +363,11 @@ func InitializeTerraformFile(terraformFilePath string, providerVersion string, p
 
 	finalInitializeTerraform := fmt.Sprintf("%s\n%s\n%s\n\n%s", initialCommentBlock, requiredProvidersBlock, initialize_terraform, requiredContextBlock)
 	ChangeExistingFile(terraformFilePath, finalInitializeTerraform)
-	if CheckForTerraformExecuteable() {
-		RunTerraformCommand("fmt", terraformFilePath)
-	}
+	RunTerraformCommand("fmt", terraformFilePath)
+
 }
 
-func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResources bool) {
+func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResources bool) string {
 	rootTerraformConfig := []string{}
 	//resourceName := ""
 	//terraformProvider := ""
@@ -382,6 +382,7 @@ func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResource
 			}
 		}
 	*/
+
 	rootTerraformDefinition := NewTerraformResourceDefinitionName(terraformCompiledObject.ResourceName, terraformCompiledObject.ResourceType, terraformCompiledObject.ResourceDefinitionName)
 	rootTerraformConfig = append(rootTerraformConfig, rootTerraformDefinition)
 	firstTime := true
@@ -426,7 +427,6 @@ func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResource
 					}
 				} else {
 					if blockAttribute.BlockName == "root" && blockAttribute.Parent == "root" {
-						rootTerraformConfig = append(rootTerraformConfig)
 						blockAttributesFromRoot := []BlockAttribute{}
 						for _, blockAttribute := range terraformCompiledObject.BlockAttributes {
 							if terraformAttribute.UniqueBlockName == blockAttribute.UniqueBlockName {
@@ -435,18 +435,35 @@ func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResource
 						}
 
 						sortedBlockAttributes := SortBlockAttributesForTerraform(blockAttributesFromRoot)
-						rootBlockName := ""
 
+						findMostNestedAttribute := []RootAttribute{}
 						for _, sortedBlock := range sortedBlockAttributes {
-							if sortedBlock.Parent == "root" {
-								rootBlockName = sortedBlock.BlockName
-							}
+							findMostNestedAttribute = append(findMostNestedAttribute, sortedBlock.RootAttribute...)
 						}
 
+						addingAnyMissingRootAttributes := []RootAttribute{}
+
 						for index, sortedBlock := range sortedBlockAttributes {
-							DetermineMostNestedTerraformBlock(sortedBlock.RootAttribute, rootBlockName)
+							if sortedBlock.Parent == "root" {
+								for _, attribute := range terraformCompiledObject.HtmlObject.Attribute {
+									if attribute.Name == "name" && attribute.Parent == sortedBlock.BlockName {
+										rootAttribute := RootAttribute{
+											Name:  "name",
+											Value: sortedBlock.UniqueBlockName,
+										}
+										addingAnyMissingRootAttributes = append(addingAnyMissingRootAttributes, rootAttribute)
+									}
+								}
+							}
+							addingAnyMissingRootAttributes = append(addingAnyMissingRootAttributes, sortedBlock.RootAttribute...)
+							sortedRootAttributes := SortRootAttributesForTerraform(addingAnyMissingRootAttributes)
+
 							indentationTabs := strings.Repeat("  ", index)
-							rootTerraformConfig = append(rootTerraformConfig, AddObjectTerraformAttributeForResourceDefinition(fmt.Sprintf("\n%s\n%s {", indentationTabs, sortedBlock.BlockName), indentationTabs, sortedBlock.RootAttribute, false))
+							rootTerraformConfig = append(rootTerraformConfig, AddObjectTerraformAttributeForResourceDefinition(fmt.Sprintf("\n%s\n%s {", indentationTabs, sortedBlock.BlockName), indentationTabs, sortedRootAttributes, false))
+							if index+1 == len(sortedBlockAttributes) {
+								rootTerraformConfig = append(rootTerraformConfig, fmt.Sprintf("\n%s", strings.Repeat("\n}", len(sortedBlockAttributes))))
+							}
+							addingAnyMissingRootAttributes = []RootAttribute{}
 						}
 					}
 				}
@@ -454,25 +471,7 @@ func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResource
 		}
 	}
 	rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("\n}", RootAttribute{}, true, false))
-	fmt.Println("CONFIG:", rootTerraformConfig)
-}
-
-func DetermineMostNestedTerraformBlock(terraformRootAttributes []RootAttribute, rootBlockName string) string {
-	match := false
-	for _, rootAttribute := range terraformRootAttributes {
-		for _, innerRootAttribute := range terraformRootAttributes {
-			if rootAttribute.Name == innerRootAttribute.BlockName {
-				match = true
-				break
-			}
-		}
-
-		if !match && rootAttribute.IsBlock {
-			fmt.Println("THIS MUST BE THE MOST INNER BLOCK", rootAttribute.Name, rootAttribute.BlockName)
-			match = false
-		}
-	}
-	return "false"
+	return strings.Join(rootTerraformConfig, "\n")
 }
 
 func SortBlockAttributesForTerraform(blockAttributesToSort []BlockAttribute) []BlockAttribute {
@@ -541,9 +540,11 @@ func AddObjectTerraformAttributeForResourceDefinition(terraformBlock string, ind
 	terraformFlatAttributes := []string{}
 	for index, terraformRootAttribute := range terraformAttributes {
 		if !terraformRootAttribute.IsBlock && index == 0 {
+			//fmt.Println("THIS IS IT!!!:", terraformRootAttribute)
 			terraformFlatAttributes = append(terraformFlatAttributes, fmt.Sprintf("%s\n%s", terraformBlock, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, false)))
 		} else if !terraformRootAttribute.IsBlock && index != 0 {
-			terraformFlatAttributes = append(terraformFlatAttributes, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, true))
+			//fmt.Println("W#E ARTE HBERER::", terraformRootAttribute)
+			terraformFlatAttributes = append(terraformFlatAttributes, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, false))
 		}
 
 	}
@@ -558,7 +559,8 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 			if valueTypeName == "bool" {
 				return fmt.Sprintf("%s\n%s = %t", terraformBlock, terraformAttribute.Name, terraformAttribute.Value)
 			} else if valueTypeName == "slice" {
-				return fmt.Sprintf("%s\n%s = %v", terraformBlock, terraformAttribute.Name, terraformAttribute.Value)
+				convertedValue := ConvertGoSliceToTerraformList(terraformAttribute.Value.([]interface{}))
+				return fmt.Sprintf("%s\n%s = %v", terraformBlock, terraformAttribute.Name, convertedValue)
 			} else {
 				return fmt.Sprintf("%s\n%s = \"%s\"", terraformBlock, terraformAttribute.Name, terraformAttribute.Value)
 			}
@@ -572,7 +574,8 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 			if valueTypeName == "bool" {
 				return fmt.Sprintf("%s\n%s = %t", terraformBlock, terraformAttribute.Name, terraformAttribute.Value)
 			} else if valueTypeName == "slice" {
-				return fmt.Sprintf("\n%s = %v", terraformAttribute.Name, terraformAttribute.Value)
+				convertedValue := ConvertGoSliceToTerraformList(terraformAttribute.Value.([]interface{}))
+				return fmt.Sprintf("\n%s = %v", terraformAttribute.Name, convertedValue)
 			}
 		}
 	}
@@ -582,6 +585,46 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 	}
 	return fmt.Sprintf("\n%s = \"%s\"", terraformAttribute.Name, terraformAttribute.Value)
 
+}
+
+func ConvertGoSliceToTerraformList(terraformAttribute []interface{}) string {
+	dataType := ""
+	returnValue := ""
+	inCaseOfStringType := []string{}
+	for _, value := range terraformAttribute {
+		switch value.(type) {
+		case string:
+			{
+				dataType = "string"
+				for _, value := range terraformAttribute {
+					inCaseOfStringType = append(inCaseOfStringType, value.(string))
+				}
+			}
+		case bool:
+			{
+				dataType = "bool"
+			}
+		case int:
+			{
+				dataType = "int"
+			}
+		case float64:
+			{
+				dataType = "float64"
+			}
+		}
+	}
+
+	if dataType == "string" {
+		returnValue = fmt.Sprintf("[%s]", fmt.Sprintf("\"%s\"", strings.Join(inCaseOfStringType, `", "`)))
+	} else {
+		if dataType == "bool" {
+			returnValue = fmt.Sprintf("[%s]", terraformAttribute...) //Hopefully not reached : -()
+		}
+
+	}
+
+	return returnValue
 }
 
 func CheckForTerraformExecuteable() bool {
@@ -595,6 +638,9 @@ func CheckForTerraformExecuteable() bool {
 }
 
 func RunTerraformCommand(terraformCommand string, terraformFilePath string) {
+	if !CheckForTerraformExecuteable() {
+		return
+	}
 	splitPath := strings.Split(terraformFilePath, "/")
 	finalPath := strings.Join(splitPath[:len(splitPath)-1], "/")
 	finalCommand := terraformCommand
@@ -1228,6 +1274,12 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	//Isolating only the 'argument references from the HTML dump'
 	extractedText := rawHtml[startIndex[1]:endIndex[0]]
 
+	if len(strings.Split(resourceType, "/")) == 2 {
+		os.WriteFile(fmt.Sprintf("%s.html", strings.Split(resourceType, "/")[1]), []byte(extractedText), 0644)
+	} else {
+		os.WriteFile(fmt.Sprintf("%s.html", strings.Split(resourceType, "/")[2]), []byte(extractedText), 0644)
+	}
+
 	linesHtml := strings.Split(extractedText, "\n")
 	patternHtmlBlockName := regexp.MustCompile(`<code>([^<]+)</code>`)
 	antiPatternBlockName := regexp.MustCompile(`bblock\b`)
@@ -1265,6 +1317,8 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 
 			if checkForList := regexp.MustCompile(`\blist\b`); checkForList.MatchString(line) {
 				typeOfHtmlAttribute = "list"
+			} else if checkForBool := regexp.MustCompile(`(?i)Defaults to <code>(true|false)</code>`); checkForBool.MatchString(line) {
+				typeOfHtmlAttribute = "bool"
 			} else {
 				typeOfHtmlAttribute = "string"
 			}
@@ -1673,15 +1727,7 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 			}
 		}
 	*/
-	for _, compiledObject := range compiledObjects {
-		fmt.Println("\n--------COMPILED OBJECTS:-------", compiledObject.ResourceName)
-		for index, block := range compiledObject.BlockAttributes {
-			fmt.Println(index, "\n-------BLOCK33-----", block.BlockName, "PARENT", block.Parent, "LEN OF ROOT ATT")
-			for index2, rootAttribute := range block.RootAttribute {
-				fmt.Println(index2, "NAME", rootAttribute.Name, "BLOCK", rootAttribute.BlockName, "UNIQYUE", rootAttribute.UniqueBlockName, "IS", rootAttribute.IsBlock, "VALUE", rootAttribute.Value)
-			}
-		}
-	}
+
 	/*
 		for _, compiledObject := range compiledObjects {
 			for _, blockAttribute := range compiledObject.BlockAttributes {
@@ -2117,6 +2163,28 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 		if !mapOfRootAttributes[fmt.Sprintf("%s/%s/%s", rootAttribute.Name, rootAttribute.UniqueBlockName, rootAttribute.BlockName)] && rootAttribute.Name != "" {
 			almostSummarizeRootAttributes = append(almostSummarizeRootAttributes, rootAttribute)
 			mapOfRootAttributes[fmt.Sprintf("%s/%s/%s", rootAttribute.Name, rootAttribute.UniqueBlockName, rootAttribute.BlockName)] = true
+		}
+	}
+
+	//Transform strings to slices in case the HTML attribute ís an actual list
+	for index, rootAttribute := range almostSummarizeRootAttributes {
+		switch rootAttribute.Value.(type) {
+		case string:
+			{
+				for _, attribute := range htmlObject.Attribute {
+					if rootAttribute.Name == attribute.Name && attribute.Type == "list" {
+						var convertStringToSlice []interface{}
+						convertStringToSlice = append(convertStringToSlice, rootAttribute.Value.(string))
+						almostSummarizeRootAttributes[index].Value = convertStringToSlice
+					} else if rootAttribute.Name == attribute.Name && attribute.Type == "bool" {
+						if strings.Contains(strings.ToLower(rootAttribute.Name), "enable") {
+							almostSummarizeRootAttributes[index].Value = true
+						} else {
+							almostSummarizeRootAttributes[index].Value = false
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -2579,6 +2647,14 @@ func NewTerraformObject(terraformCompiledObjects []CompileObject, providerVersio
 		CompileObjects:  terraformCompiledObjects,
 	}
 	return terraformObject
+}
+
+func WriteTerraformConfigToDisk(terraformConfig string, fileName string) {
+	err := os.WriteFile(fileName, []byte(terraformConfig), 0644)
+	if err != nil {
+		fmt.Println("the following error occured while trying to create file name:%s\n%s", fileName, err)
+	}
+	RunTerraformCommand("fmt", fileName)
 }
 
 func logVerbose(message string) {
