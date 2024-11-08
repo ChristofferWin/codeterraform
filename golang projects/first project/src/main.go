@@ -19,15 +19,48 @@ import (
 )
 
 /*
-	Maybe look for required / not required in HTML as well? Seems to be useful when it comes to a possible check in each block to see if all required attributes are present.
-	If we take a peering as an example - an ARM template does not provide the other virtual network name directly - It might be impossible to get the actual value in any efficient way
-	But we can then at least insert a placeholder value - As we know the missing attribute´s litteral name, and we can then also add a comment to the end of the line telling the user to replace the value before running Terraform
+   Application Name: TerrafyArm
+   Description: This application [brief description of what the application does, e.g., "processes Azure ARM templates and converts them into Terraform configurations"].
+
+   Usage:
+   - [Briefly describe how to run or use the application, e.g., "Run using 'go run main.go' or build using 'go build'."]
+   - Required arguments or configurations (if any): [List any required configurations or arguments].
+   - Optional arguments or configurations: [List any optional configurations or arguments].
+
+   Key Features:
+   - [Feature 1: Describe the first key feature or functionality]
+   - [Feature 2: Describe the second key feature or functionality]
+   - [Feature 3: Describe any additional notable feature or functionality]
+
+   Dependencies:
+   - [List any dependencies required, e.g., external packages, APIs, or environment configurations]
+
+   Author: [Your Name]
+   Created: [Creation Date]
+   Version: [Current Version]
+   License: [Specify the license under which this code is distributed]
+
+   Example:
+   ```
+   // Provide a basic usage example if applicable
+   ```
+
+   Note: [Any additional notes, warnings, or special instructions]
 */
 
 type Attribute struct {
+	Type       string          `json:"Type"`
+	Name       string          `json:"Name"`
+	Parent     string          `json:"Parent"`
+	Required   bool            `json:"Required"`
+	Descriptor string          `json:"Descriptor"`
+	ShadowCopy ShadowAttribute `json:"ShadowCopy"`
+}
+
+type ShadowAttribute struct {
 	Type       string `json:"Type"`
-	Name       string `json:"Name"`
-	Parent     string
+	Parent     string `json:"Parent"`
+	Required   bool   `json:"Required"`
 	Descriptor string `json:"Descriptor"`
 }
 
@@ -45,6 +78,7 @@ type ArmObject struct {
 	Resource_group_name   string
 	Properties            interface{} `json:"properties"` // Use interface{} for dynamic properties
 	Special_resource_type string      `json:"kind"`
+	Subscription_id       string
 }
 
 // Define the HtmlObject struct with a named attributes field
@@ -87,6 +121,7 @@ type CompileObject struct {
 	ResourceName           string
 	IsRoot                 bool
 	HtmlObject             HtmlObject
+	AliasProviderName      string
 }
 
 type TerraformObject struct {
@@ -95,12 +130,18 @@ type TerraformObject struct {
 	CompileObjects  []CompileObject
 }
 
+type TerraformStringConfigObject struct { //This block can be expanded so that in the future its easy to add new type of formatting
+	StringConfig string
+	FileName     string
+}
+
 var htmlObjects = []HtmlObject{}
 var AttributeObjects = []Attribute{}
 var SystemTerraformDocsFileName string = "./terrafyarm/htmlobjects.json"
 var SystemTerraformCompiledObjectsFileName string = "./terrafyarm/terraform-arm-compiled-objects.json"
 var currentVersion string = "0.1.0"
 var verbose bool
+var GlobalHtmlAttributesToMatchAgainst = []Attribute{}
 
 func init() {
 	// Define the verbose flag
@@ -122,20 +163,25 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Printf("The current version of the 'TerrafyArm' Decompiler is '%s'\nFor information about versions, please check the official Github release page at:\nhttps://github.com/ChristofferWin/TerrafyARM/releases", currentVersion)
+		log.Fatalf("The current version of the 'TerrafyArm' Decompiler is '%s'\nFor information about versions, please check the official Github release page at:\nhttps://github.com/ChristofferWin/TerrafyARM/releases", currentVersion)
 		return
 	}
 
 	if *customProviderContext != "" {
-		fmt.Printf("The argument of 'customProviderContext' Is not activated as of this current version...")
+		log.Fatalf("The argument of 'customProviderContext' Is not activated as of this current version...")
 		return
 	}
 
 	if *clearCache {
 		err := os.RemoveAll(strings.Split(SystemTerraformDocsFileName, "/")[1])
 		if err != nil {
-			fmt.Println("The following error occured while trying to delete the cache:", err)
+			log.Fatalf("The following error occured while trying to delete the cache:", err)
 		}
+		return
+	}
+
+	if *rootDecompilefolderPath == "" {
+		log.Fatalf("a path for flag '-output-file-path' must be provided...\nPlease use command 'terrafyarm -help' For details...")
 		return
 	}
 
@@ -144,13 +190,13 @@ func main() {
 
 	if err != nil {
 		// Handle the error if it occurs
-		fmt.Println("Error reading file:", err)
+		log.Fatalf("Error reading file:", err)
 		return
 	}
 
 	verifiedFiles := VerifyArmFile(fileContent)
 	if len(verifiedFiles) == 0 {
-		fmt.Println("No valid ARM templates found on path:", *filePath)
+		log.Fatalf("No valid ARM templates found on path:", *filePath)
 		return
 	}
 
@@ -161,7 +207,8 @@ func main() {
 	baseArmResources := GetArmBaseInformation(verifiedFiles)
 
 	if err != nil {
-		fmt.Println("Error while trying to retrieve the json ARM content", err)
+		log.Fatalf("Error while trying to retrieve the json ARM content", err)
+		return
 	}
 
 	var predetermineTypes []string
@@ -223,7 +270,7 @@ func main() {
 				rawHtml, err := GetRawHtml(resourceType, *providerVersion)
 
 				if err != nil {
-					fmt.Println("Error while trying to retrieve required documentation", err, resourceType)
+					log.Fatalf("Error while trying to retrieve required documentation: %s\n%s", resourceType, err)
 					break
 				}
 				if rawHtml != "not_found" && rawHtml != "" {
@@ -241,7 +288,7 @@ func main() {
 		if !*noCache {
 			err = NewCachedSystemFiles(htmlObjects, TerraformObject{})
 			if err != nil {
-				fmt.Println("An error occured while running function 'NewCachedSystemFiles'", err)
+				log.Fatalf("An error occured while running function 'NewCachedSystemFiles'\n%s", err)
 			}
 		}
 	} else {
@@ -261,7 +308,7 @@ func main() {
 
 	err = NewCachedSystemFiles([]HtmlObject{}, terraformObject)
 	if err != nil {
-		fmt.Println("An error occured while running function 'NewCachedSystemFiles'", err)
+		log.Fatalf("An error occured while running function 'NewCachedSystemFiles'", err)
 	}
 
 	terraformFileNames := NewCompiledFolderStructure(*seperateDecompiledResources, *rootDecompilefolderPath, terraformObject)
@@ -274,15 +321,36 @@ func main() {
 		}
 	}
 
-	InitializeTerraformFile(providerFullPathName, *providerVersion, terraformObject.ProviderName)
+	terraformObject = InitializeTerraformFile(providerFullPathName, *providerVersion, terraformObject.ProviderName, terraformObject)
+
+	terraformStringConfigTotal := []TerraformStringConfigObject{}
 
 	for _, terraformCompiledObject := range terraformObject.CompileObjects {
-		terraformStringConfig := NewTerraformConfig(terraformCompiledObject, *seperateDecompiledResources)
-		fmt.Println("DEFINITION:", terraformCompiledObject.ResourceName, "FILE PATH", fmt.Sprintf("%s/%s", *rootDecompilefolderPath, terraformCompiledObject.FilePath))
-		WriteTerraformConfigToDisk(terraformStringConfig, fmt.Sprintf("%s/%s", *rootDecompilefolderPath, terraformCompiledObject.FilePath))
+		terraformStringConfigObject := TerraformStringConfigObject{
+			StringConfig: NewTerraformConfig(terraformCompiledObject, *seperateSubResources),
+			FileName:     fmt.Sprintf("%s/%s", *rootDecompilefolderPath, terraformCompiledObject.FilePath),
+		}
+		terraformStringConfigTotal = append(terraformStringConfigTotal, terraformStringConfigObject)
+	}
+
+	for index, terraformConfig := range terraformStringConfigTotal {
+		//fmt.Println(terraformConfig.StringConfig)
+		WriteTerraformConfigToDisk(terraformConfig.StringConfig, terraformConfig.FileName)
+		if len(terraformStringConfigTotal) == index+1 {
+			for _, terraformFileName := range terraformFileNames {
+				RunTerraformCommand("fmt", terraformFileName)
+			}
+		}
 	}
 }
 
+/*
+	func RemoveDupplicateNewLines(terraformConfig string) string {
+		removedNewLines := []string{}
+		convertStringToSlice := strings.Split(terraformConfig, "\n")
+		for _
+	}
+*/
 func NewCompiledFolderStructure(seperatedFiles bool, rootFolderPath string, terraformObject TerraformObject) []string {
 	var fileNames []string
 	var terraformFilePaths []string
@@ -331,7 +399,30 @@ func NewCompiledFolderStructure(seperatedFiles bool, rootFolderPath string, terr
 	return terraformFilePaths
 }
 
-func InitializeTerraformFile(terraformFilePath string, providerVersion string, providerName string) {
+func InitializeTerraformFile(terraformFilePath string, providerVersion string, providerName string, terraformCompiledObject TerraformObject) TerraformObject {
+	masterSubscription := ""
+	mapOfSubCount := make(map[string]int)
+	mapOfTerraformProviders := make(map[string]string)
+	for _, compiledObject := range terraformCompiledObject.CompileObjects {
+		mapOfSubCount[compiledObject.ArmObject.Subscription_id]++
+		if compiledObject.ArmObject.Special_resource_type != "" {
+			mapOfTerraformProviders[compiledObject.ArmObject.Subscription_id] = fmt.Sprintf("sub%s_%s", strings.Split(compiledObject.ArmObject.Subscription_id, "-")[0], compiledObject.ArmObject.Special_resource_type)
+		} else {
+			for _, resourceType := range compiledObject.ArmObject.Resource_types {
+				if len(strings.Split(resourceType, "/")) == 2 {
+					mapOfTerraformProviders[compiledObject.ArmObject.Subscription_id] = fmt.Sprintf("sub%s_%s", strings.Split(compiledObject.ArmObject.Subscription_id, "-")[0], ConvertArmToTerraformProvider(resourceType, ""))
+				}
+			}
+		}
+	}
+	biggestCount := 0
+	for name, count := range mapOfSubCount {
+		if count > biggestCount {
+			biggestCount = count
+			masterSubscription = name
+		}
+	}
+
 	initialCommentBlock := `/*
 	This Terraform template is created using 'TerrafyArm'
 	Template CAN have issues - Please report these as issues over on github at https://github.com/ChristofferWin/TerrafyARM/issues
@@ -343,16 +434,43 @@ func InitializeTerraformFile(terraformFilePath string, providerVersion string, p
 	*/
 	`
 
-	requiredContextBlock := `/*
-	Required context block - By not defining any specific subscription_id, terraform will use in-line context
-	To read more about "in-lnline" Terraform Azure CLI context, please consolidate the following blog post: https://www.codeterraform.com/post/terraform-weekly-tips-1
-	In future versions it will be possible to parse custom provider context´s of which the user wants defined.
+	requiredContextBlockMaster := fmt.Sprintf(`/*
+	All the below defined providers, uses a generic pattern to retrieve each name.
+	As of version 0.1.0 the user cannot directly influence how each name is derrived, but this feature WILL be available at a later version...
+
+	Please note that each 'subscription_id' is derrived directly 1:1 from each arm template provided for the decompiler.
+
+	Please also note that the user / spn / identity running the terraform code MUST have the required read / right permissions on ALL defined 'subscription_id's
+	
 	*/
 
 	provider "azurerm" {
 	  features{}
+	  subscription_id = "%s" //Subscription seen the most times in all of the ARM templates provided (count = %d)
 	}
-	`
+	`, masterSubscription, biggestCount)
+
+	requiredContextBlockAliasSlice := []string{}
+	for subID, resourceName := range mapOfTerraformProviders {
+		if subID != masterSubscription {
+			requiredContextBlockAliasSlice = append(requiredContextBlockAliasSlice, fmt.Sprintf(`
+			provider "azurerm" {
+			  alias = "%s"
+			  subscription_id = "%s"
+			}
+		`, resourceName, subID))
+		}
+	}
+
+	for index, compiledObject := range terraformCompiledObject.CompileObjects {
+		for subID, resourceName := range mapOfTerraformProviders {
+			if compiledObject.ArmObject.Subscription_id == subID {
+				terraformCompiledObject.CompileObjects[index].AliasProviderName = resourceName
+			}
+		}
+	}
+
+	requiredContextBlockMaster = fmt.Sprintf("%s\n%s", requiredContextBlockMaster, strings.Join(requiredContextBlockAliasSlice, "\n"))
 
 	initialize_terraform := ""
 	if providerVersion == "latest" {
@@ -361,117 +479,177 @@ func InitializeTerraformFile(terraformFilePath string, providerVersion string, p
 		initialize_terraform = fmt.Sprintf("terraform {\n  required_providers {\n      %s = {\n         source = \"hashicorp/%s\"\n         version = \"%s\"\n         }\n      }\n}", providerName, providerName, providerVersion)
 	}
 
-	finalInitializeTerraform := fmt.Sprintf("%s\n%s\n%s\n\n%s", initialCommentBlock, requiredProvidersBlock, initialize_terraform, requiredContextBlock)
+	finalInitializeTerraform := fmt.Sprintf("%s\n%s\n%s\n\n%s", initialCommentBlock, requiredProvidersBlock, initialize_terraform, requiredContextBlockMaster)
 	ChangeExistingFile(terraformFilePath, finalInitializeTerraform)
 	RunTerraformCommand("fmt", terraformFilePath)
 
+	return terraformCompiledObject
 }
 
 func NewTerraformConfig(terraformCompiledObject CompileObject, seperatedResources bool) string {
 	rootTerraformConfig := []string{}
-	//resourceName := ""
-	//terraformProvider := ""
-	//terraformResourceType := ""
-	/*
-		fmt.Println("HERE:32", terraformCompiledObject.ResourceName, len(terraformCompiledObject.BlockAttributes), terraformCompiledObject.ResourceType)
-		for _, block := range terraformCompiledObject.BlockAttributes {
-			fmt.Println("\n------------BLOCK BLOCK-------------")
-			fmt.Println("NAME:", block.BlockName, "PARENT:", block.Parent)
-			for index, rootAttribute := range block.RootAttribute {
-				fmt.Println(index, "ROOT NAME:", rootAttribute.Name, "IS BLOCK", rootAttribute.IsBlock, "PARENT", rootAttribute.BlockName, "UNIQUE", rootAttribute.UniqueBlockName, "VALUE", rootAttribute.Value)
-			}
-		}
-	*/
+	returnRootTerraformConfig := []string{}
 
 	rootTerraformDefinition := NewTerraformResourceDefinitionName(terraformCompiledObject.ResourceName, terraformCompiledObject.ResourceType, terraformCompiledObject.ResourceDefinitionName)
 	rootTerraformConfig = append(rootTerraformConfig, rootTerraformDefinition)
-	firstTime := true
-	for _, blockAttribute := range terraformCompiledObject.BlockAttributes {
+
+	for _, block := range terraformCompiledObject.BlockAttributes {
+		fmt.Println(fmt.Sprintf("\n-----------------BLOCK %s-%s------------", block.BlockName, block.Parent))
+
+		for index, rootAttribute := range block.RootAttribute {
+			fmt.Println(index, "NAME", rootAttribute.Name, rootAttribute.BlockName)
+		}
+	}
+
+	for index, blockAttribute := range terraformCompiledObject.BlockAttributes {
+		mergedRootAttributes := []RootAttribute{}
+		mergedRootAttributes = append(mergedRootAttributes, blockAttribute.RootAttribute...)
+		placeholderAttributes := AddPlaceHolderTerraformAttributes(blockAttribute, terraformCompiledObject.HtmlObject)
+
+		if index == 0 {
+			for _, htmlAttribute := range terraformCompiledObject.HtmlObject.Attribute {
+				if htmlAttribute.Name == "name" && htmlAttribute.Parent == "root" {
+					rootAttribute := RootAttribute{
+						Name:  "name",
+						Value: terraformCompiledObject.ResourceName,
+					}
+					rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, true))
+				}
+
+				if htmlAttribute.Name == "resource_group_name" && htmlAttribute.Parent == "root" {
+					rootAttribute := RootAttribute{
+						Name:  "resource_group_name",
+						Value: terraformCompiledObject.ArmObject.Resource_group_name,
+					}
+					rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, true))
+				}
+
+				if htmlAttribute.Name == "location" && htmlAttribute.Parent == "root" {
+					rootAttribute := RootAttribute{
+						Name:  "location",
+						Value: terraformCompiledObject.ArmObject.Location,
+					}
+					rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, true))
+				}
+			}
+		}
+
+		if len(placeholderAttributes) > 0 {
+			mergedRootAttributes = append(mergedRootAttributes, placeholderAttributes...)
+		}
+
 		//blockNameFixed := ConvertArmAttributeName(blockAttribute.BlockName, "")
-		if blockAttribute.Parent == "root" || ConvertArmAttributeName(blockAttribute.Parent, "") == terraformCompiledObject.ResourceType {
-			for _, terraformAttribute := range blockAttribute.RootAttribute {
-				if !terraformAttribute.IsBlock {
-					if firstTime {
-						firstTime = false
-						for _, htmlAttribute := range terraformCompiledObject.HtmlObject.Attribute {
-							if htmlAttribute.Name == "name" && htmlAttribute.Parent == "root" {
-								rootAttribute := RootAttribute{
-									Name:  "name",
-									Value: terraformCompiledObject.ResourceName,
-								}
-								rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, false))
-							}
+		if blockAttribute.Parent == "root" && blockAttribute.UniqueBlockName == "" {
+			if blockAttribute.BlockName == "root" {
+				for _, terraformAttribute := range blockAttribute.RootAttribute {
+					if !terraformAttribute.IsBlock {
+						rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", terraformAttribute, false, false))
+					}
+				}
+			}
+		} else if blockAttribute.Parent == "root" && blockAttribute.UniqueBlockName != "" {
+			blockAttributesFromRoot := []BlockAttribute{}
+			for _, innerBlockAttribute := range terraformCompiledObject.BlockAttributes {
+				if innerBlockAttribute.BlockName != blockAttribute.BlockName && innerBlockAttribute.UniqueBlockName == blockAttribute.UniqueBlockName {
+					blockAttributesFromRoot = append(blockAttributesFromRoot, innerBlockAttribute)
+				}
+			}
 
-							if htmlAttribute.Name == "resource_group_name" && htmlAttribute.Parent == "root" {
-								rootAttribute := RootAttribute{
-									Name:  "resource_group_name",
-									Value: terraformCompiledObject.ArmObject.Resource_group_name,
-								}
-								rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, false))
-							}
+			for _, block := range blockAttributesFromRoot {
+				fmt.Println("block name", block.BlockName, "parent", block.Parent, block.UniqueBlockName)
+			}
 
-							if htmlAttribute.Name == "location" && htmlAttribute.Parent == "root" {
-								rootAttribute := RootAttribute{
-									Name:  "location",
-									Value: terraformCompiledObject.ArmObject.Location,
-								}
-								rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", rootAttribute, false, false))
-							}
+			sortedBlockAttributes := SortBlockAttributesForTerraform(blockAttributesFromRoot)
+			addingAnyMissingRootAttributes := []RootAttribute{}
 
-						}
-						firstTime = false
-					} else {
-						if terraformAttribute.BlockName == "root" {
-							rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("", terraformAttribute, false, false))
+			for index, sortedBlock := range sortedBlockAttributes {
+				if sortedBlock.Parent == "root" {
+					for _, attribute := range terraformCompiledObject.HtmlObject.Attribute {
+						if attribute.Name == "name" && attribute.Parent == sortedBlock.BlockName {
+							rootAttribute := RootAttribute{
+								Name:  "name",
+								Value: sortedBlock.UniqueBlockName,
+							}
+							addingAnyMissingRootAttributes = append(addingAnyMissingRootAttributes, rootAttribute)
 						}
 					}
-				} else {
-					if blockAttribute.BlockName == "root" && blockAttribute.Parent == "root" {
-						blockAttributesFromRoot := []BlockAttribute{}
-						for _, blockAttribute := range terraformCompiledObject.BlockAttributes {
-							if terraformAttribute.UniqueBlockName == blockAttribute.UniqueBlockName {
-								blockAttributesFromRoot = append(blockAttributesFromRoot, blockAttribute)
-							}
-						}
+				}
+				fmt.Println("SORTED BLOCKS:", sortedBlockAttributes)
+				addingAnyMissingRootAttributes = append(addingAnyMissingRootAttributes, sortedBlock.RootAttribute...)
+				sortedRootAttributes := SortRootAttributesForTerraform(addingAnyMissingRootAttributes)
+				indentationTabs := strings.Repeat("  ", index)
 
-						sortedBlockAttributes := SortBlockAttributesForTerraform(blockAttributesFromRoot)
+				rootTerraformConfig = append(rootTerraformConfig, AddObjectTerraformAttributeForResourceDefinition(fmt.Sprintf("\n%s\n%s {", indentationTabs, sortedBlock.BlockName), indentationTabs, sortedRootAttributes, false))
+				if index+1 == len(sortedBlockAttributes) {
+					rootTerraformConfig = append(rootTerraformConfig, fmt.Sprintf("\n%s", strings.Repeat("\n}", len(sortedBlockAttributes))))
+				}
+				addingAnyMissingRootAttributes = []RootAttribute{}
+			}
+		}
+	}
 
-						findMostNestedAttribute := []RootAttribute{}
-						for _, sortedBlock := range sortedBlockAttributes {
-							findMostNestedAttribute = append(findMostNestedAttribute, sortedBlock.RootAttribute...)
-						}
+	rootTerraformConfig = append(rootTerraformConfig, fmt.Sprintf(`
+	provider = azurerm.%s	
+	}
+	`, terraformCompiledObject.AliasProviderName))
 
-						addingAnyMissingRootAttributes := []RootAttribute{}
+	for _, terraformConfigBlob := range rootTerraformConfig {
+		splitBlob := strings.Split(terraformConfigBlob, "\n")
+		for index2, terraformLine := range splitBlob {
+			if terraformLine == "" {
+				if strings.Contains(splitBlob[index2+1], "{") {
+					returnRootTerraformConfig = append(returnRootTerraformConfig, terraformLine)
+				}
+			} else {
+				returnRootTerraformConfig = append(returnRootTerraformConfig, terraformLine)
+			}
+		}
+	}
+	return strings.Join(returnRootTerraformConfig, "\n")
+}
 
-						for index, sortedBlock := range sortedBlockAttributes {
-							if sortedBlock.Parent == "root" {
-								for _, attribute := range terraformCompiledObject.HtmlObject.Attribute {
-									if attribute.Name == "name" && attribute.Parent == sortedBlock.BlockName {
-										rootAttribute := RootAttribute{
-											Name:  "name",
-											Value: sortedBlock.UniqueBlockName,
-										}
-										addingAnyMissingRootAttributes = append(addingAnyMissingRootAttributes, rootAttribute)
-									}
-								}
-							}
-							addingAnyMissingRootAttributes = append(addingAnyMissingRootAttributes, sortedBlock.RootAttribute...)
-							sortedRootAttributes := SortRootAttributesForTerraform(addingAnyMissingRootAttributes)
+func AddPlaceHolderTerraformAttributes(blockAttribute BlockAttribute, htmlObject HtmlObject) []RootAttribute {
+	allRequiredAttributes := []Attribute{}
+	mapOfMissingAttributes := make(map[string]bool)
+	returnRootAttributes := []RootAttribute{}
 
-							indentationTabs := strings.Repeat("  ", index)
-							rootTerraformConfig = append(rootTerraformConfig, AddObjectTerraformAttributeForResourceDefinition(fmt.Sprintf("\n%s\n%s {", indentationTabs, sortedBlock.BlockName), indentationTabs, sortedRootAttributes, false))
-							if index+1 == len(sortedBlockAttributes) {
-								rootTerraformConfig = append(rootTerraformConfig, fmt.Sprintf("\n%s", strings.Repeat("\n}", len(sortedBlockAttributes))))
-							}
-							addingAnyMissingRootAttributes = []RootAttribute{}
-						}
+	for _, attribute := range htmlObject.Attribute {
+		if attribute.Required && attribute.Parent == blockAttribute.BlockName && attribute.Name != "name" && attribute.Name != "location" && attribute.Name != "resource_group_name" {
+			allRequiredAttributes = append(allRequiredAttributes, attribute)
+		}
+	}
+
+	for _, terraformAttribute := range blockAttribute.RootAttribute {
+		for _, requiredAttribute := range allRequiredAttributes {
+			if terraformAttribute.Name == requiredAttribute.Name {
+				mapOfMissingAttributes[requiredAttribute.Name] = true
+				break
+			}
+
+			if !mapOfMissingAttributes[requiredAttribute.Name] {
+				mapOfMissingAttributes[requiredAttribute.Name] = false
+				break
+			}
+		}
+	}
+
+	for name, isFound := range mapOfMissingAttributes {
+		if !isFound {
+			for _, requiredAttribute := range allRequiredAttributes {
+				if name == requiredAttribute.Name {
+					rootAttribute := RootAttribute{
+						Name:            requiredAttribute.Name,
+						Value:           "PLACE-HOLDER-VALUE",
+						BlockName:       requiredAttribute.Parent,
+						IsBlock:         false,
+						UniqueBlockName: blockAttribute.UniqueBlockName,
 					}
+					returnRootAttributes = append(returnRootAttributes, rootAttribute)
 				}
 			}
 		}
 	}
-	rootTerraformConfig = append(rootTerraformConfig, AddFlatTerraformAttributeForResourceDefinition("\n}", RootAttribute{}, true, false))
-	return strings.Join(rootTerraformConfig, "\n")
+	return returnRootAttributes
 }
 
 func SortBlockAttributesForTerraform(blockAttributesToSort []BlockAttribute) []BlockAttribute {
@@ -485,8 +663,10 @@ func SortBlockAttributesForTerraform(blockAttributesToSort []BlockAttribute) []B
 	}
 
 	for x, blockAttribute := range blockAttributesToSort {
-		if blockAttribute.Parent == blocksForReturn[0].BlockName {
-			blocksForReturn = append(blocksForReturn, blockAttribute)
+		if len(blocksForReturn) > 0 {
+			if blockAttribute.Parent == blocksForReturn[0].BlockName {
+				blocksForReturn = append(blocksForReturn, blockAttribute)
+			}
 		}
 		if len(blockAttributesToSort) == x+1 {
 			for _, innerBlockAttribute := range blockAttributesToSort {
@@ -496,6 +676,8 @@ func SortBlockAttributesForTerraform(blockAttributesToSort []BlockAttribute) []B
 					}
 				}
 			}
+		} else {
+			fmt.Println("SORTING ME BITCHERS::", blockAttributesToSort)
 		}
 	}
 
@@ -540,11 +722,9 @@ func AddObjectTerraformAttributeForResourceDefinition(terraformBlock string, ind
 	terraformFlatAttributes := []string{}
 	for index, terraformRootAttribute := range terraformAttributes {
 		if !terraformRootAttribute.IsBlock && index == 0 {
-			//fmt.Println("THIS IS IT!!!:", terraformRootAttribute)
 			terraformFlatAttributes = append(terraformFlatAttributes, fmt.Sprintf("%s\n%s", terraformBlock, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, false)))
 		} else if !terraformRootAttribute.IsBlock && index != 0 {
-			//fmt.Println("W#E ARTE HBERER::", terraformRootAttribute)
-			terraformFlatAttributes = append(terraformFlatAttributes, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, false))
+			terraformFlatAttributes = append(terraformFlatAttributes, AddFlatTerraformAttributeForResourceDefinition("", terraformRootAttribute, false, true))
 		}
 
 	}
@@ -554,6 +734,15 @@ func AddObjectTerraformAttributeForResourceDefinition(terraformBlock string, ind
 
 func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terraformAttribute RootAttribute, endTerraformDefinition bool, noNewLine bool) string {
 	valueTypeName := FindTypeByString(terraformAttribute.Value)
+	terraformStringValue := ""
+	if valueTypeName == "string" {
+		if terraformAttribute.Value == "PLACE-HOLDER-VALUE" {
+			terraformStringValue = fmt.Sprintf("%s #This value is NOT valid for deployment, as it could not be located in the arm template related to the resource... Please replace this value with the correct one as its REQUIRED", terraformAttribute.Value)
+		} else {
+			terraformStringValue = terraformAttribute.Value.(string)
+		}
+	}
+
 	if terraformBlock != "" {
 		if terraformAttribute != (RootAttribute{}) {
 			if valueTypeName == "bool" {
@@ -570,7 +759,7 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 			}
 		}
 	} else {
-		if !endTerraformDefinition && !noNewLine {
+		if !endTerraformDefinition && valueTypeName != "string" {
 			if valueTypeName == "bool" {
 				return fmt.Sprintf("%s\n%s = %t", terraformBlock, terraformAttribute.Name, terraformAttribute.Value)
 			} else if valueTypeName == "slice" {
@@ -581,9 +770,9 @@ func AddFlatTerraformAttributeForResourceDefinition(terraformBlock string, terra
 	}
 
 	if noNewLine {
-		return fmt.Sprintf("%s = \"%s\"", terraformAttribute.Name, terraformAttribute.Value)
+		return fmt.Sprintf("%s = \"%s\"", terraformAttribute.Name, terraformStringValue)
 	}
-	return fmt.Sprintf("\n%s = \"%s\"", terraformAttribute.Name, terraformAttribute.Value)
+	return fmt.Sprintf("\n%s = \"%s\"", terraformAttribute.Name, terraformStringValue)
 
 }
 
@@ -648,7 +837,7 @@ func RunTerraformCommand(terraformCommand string, terraformFilePath string) {
 	command.Dir = finalPath
 	_, err := command.CombinedOutput()
 	if err != nil {
-		logVerbose(fmt.Sprintf("an error occured while trying to run command '%s'", terraformCommand))
+		logVerbose(fmt.Sprintf("an error occured while trying to run command '%s\n%s'", terraformCommand, err))
 	}
 }
 
@@ -800,6 +989,7 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 					Resource_group_name:   strings.Split(jsonMap["id"].(string), "/")[4],
 					Properties:            jsonMap["properties"],
 					Special_resource_type: specialResourceType,
+					Subscription_id:       strings.Split(jsonMap["id"].(string), "/")[2],
 				}
 				armBasicObjects = append(armBasicObjects, armObject)
 
@@ -835,6 +1025,7 @@ func GetArmBaseInformation(filecontent [][]byte) []ArmObject {
 						Resource_group_name:   strings.Split(jsonMap["id"].(string), "/")[4],
 						Properties:            jsonMap["properties"],
 						Special_resource_type: specialResourceType,
+						Subscription_id:       strings.Split(jsonMap["id"].(string), "/")[2],
 					}
 					armBasicObjects = append(armBasicObjects, armObject)
 				}
@@ -1274,12 +1465,6 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 	//Isolating only the 'argument references from the HTML dump'
 	extractedText := rawHtml[startIndex[1]:endIndex[0]]
 
-	if len(strings.Split(resourceType, "/")) == 2 {
-		os.WriteFile(fmt.Sprintf("%s.html", strings.Split(resourceType, "/")[1]), []byte(extractedText), 0644)
-	} else {
-		os.WriteFile(fmt.Sprintf("%s.html", strings.Split(resourceType, "/")[2]), []byte(extractedText), 0644)
-	}
-
 	linesHtml := strings.Split(extractedText, "\n")
 	patternHtmlBlockName := regexp.MustCompile(`<code>([^<]+)</code>`)
 	antiPatternBlockName := regexp.MustCompile(`bblock\b`)
@@ -1315,6 +1500,12 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 				}
 			}
 
+			required := false
+
+			if checkForRequired := regexp.MustCompile(`\b(Required)\b`); checkForRequired.MatchString(line) {
+				required = true
+			}
+
 			if checkForList := regexp.MustCompile(`\blist\b`); checkForList.MatchString(line) {
 				typeOfHtmlAttribute = "list"
 			} else if checkForBool := regexp.MustCompile(`(?i)Defaults to <code>(true|false)</code>`); checkForBool.MatchString(line) {
@@ -1327,21 +1518,61 @@ func SortRawHtml(rawHtml string, resourceType string) HtmlObject { //See the str
 				Type:       typeOfHtmlAttribute,
 				Parent:     parentName,
 				Descriptor: descriptor,
+				Required:   required,
 			}
 			allHtmlAttributes = append(allHtmlAttributes, htmlAttiribute)
 		}
 	}
 
+	mapOfHtmlAttributesToCache := make(map[string]bool)
 	mapOfHtmlAttributes := make(map[string]bool)
+
 	patternValidHtmlAttributeName := regexp.MustCompile(`^[a-z]+(_[a-z]+)*$`)
 
 	for _, htmlAttribute := range allHtmlAttributes {
-		if !mapOfHtmlAttributes[htmlAttribute.Name] && patternValidHtmlAttributeName.MatchString(htmlAttribute.Name) {
+		if !mapOfHtmlAttributesToCache[htmlAttribute.Name] && patternValidHtmlAttributeName.MatchString(htmlAttribute.Name) {
 			uniqueHtmlAttributes = append(uniqueHtmlAttributes, htmlAttribute)
 			if htmlAttribute.Name != "name" {
-				mapOfHtmlAttributes[htmlAttribute.Name] = true
+				mapOfHtmlAttributesToCache[htmlAttribute.Name] = true
 			}
 		}
+
+		if !mapOfHtmlAttributes[fmt.Sprintf("%s,%s", htmlAttribute.Name, htmlAttribute.Parent)] && patternValidHtmlAttributeName.MatchString(htmlAttribute.Name) {
+			if htmlAttribute.Name != "name" {
+				mapOfHtmlAttributes[fmt.Sprintf("%s,%s", htmlAttribute.Name, htmlAttribute.Parent)] = true
+			}
+		}
+
+	}
+
+	for index, attribute := range uniqueHtmlAttributes {
+		for name := range mapOfHtmlAttributes {
+			nameSplit := strings.Split(name, ",") //[0] == name, [1] == parent
+			if len(nameSplit) > 1 {
+				if attribute.Name == nameSplit[0] && attribute.Parent != nameSplit[1] {
+					captureHtmlAttribute := Attribute{}
+					for _, innerAttribute := range allHtmlAttributes {
+						if innerAttribute.Name == nameSplit[0] && innerAttribute.Parent == nameSplit[1] {
+							captureHtmlAttribute = innerAttribute
+							break
+						}
+					}
+					if captureHtmlAttribute.Parent != attribute.Name {
+						shadowCopy := ShadowAttribute{
+							Type:       captureHtmlAttribute.Type,
+							Parent:     captureHtmlAttribute.Parent,
+							Required:   captureHtmlAttribute.Required,
+							Descriptor: captureHtmlAttribute.Descriptor,
+						}
+						uniqueHtmlAttributes[index].ShadowCopy = shadowCopy
+					}
+				}
+			}
+		}
+	}
+
+	for index, attribute := range GlobalHtmlAttributesToMatchAgainst {
+		fmt.Println(index, "NAME:", attribute.Name, "PARENT", attribute.Parent)
 	}
 
 	for index, htmlAttribute := range uniqueHtmlAttributes {
@@ -1462,7 +1693,7 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 						rootAttributesFromNestedResources = append(rootAttributesFromNestedResources, GetInnerRootAttributes(slice, captureHtml, masterKey, keyForSubType)...)
 					}
 				}
-				//rootAttributesForReturn = GetInnerRootAttributes(armBasicObject, captureHtml.Attribute) //We need to specifically capture the properties of the resource types that are matched by the if statement
+
 			} else if !(len(strings.Split(armResourceType.Resource_type, "/")) == 2) && strings.Contains(armResourceType.Resource_type, "/") {
 				//notPartOfRoot = true
 				captureHtml := HtmlObject{}
@@ -1502,7 +1733,7 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 						if len(htmlAttributeMatch) > 0 && !CheckForEmptyArmValue(attributeValue) {
 							for _, match := range htmlAttributeMatch {
 								if CheckForMap(attributeValue) {
-									rootAttributesForReturn = append(rootAttributesForReturn, ConvertMapToRootAttribute(attributeName, attributeValue, captureHtml.Attribute, match.Parent, ""))
+									rootAttributesForReturn = append(rootAttributesForReturn, ConvertMapToRootAttribute(match.Name, attributeValue, captureHtml.Attribute, match.Parent, ""))
 								} else {
 									rootAttributesForReturn = append(rootAttributesForReturn, ConvertFlatValueToRootAttribute(attributeValue, match, match.Parent, ""))
 								}
@@ -1554,8 +1785,6 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 													}
 												}
 											}
-										} else if CheckForSliceWithMaps(minimumAttributeValue) {
-											//fmt.Println("NOW WE HERE::", minimumAttributeValue)
 										}
 									}
 								}
@@ -1583,7 +1812,7 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 					} else {
 						for _, resourceType := range armBasicObject.Resource_types {
 							if len(strings.Split(resourceType, "/")) == 2 {
-								resourceFileName = fmt.Sprintf("%s.tf", ConvertArmAttributeName(strings.Split(resourceType, "/")[1], ""))
+								resourceFileName = fmt.Sprintf("%s.tf", ConvertArmToTerraformProvider(resourceType, ""))
 							}
 						}
 					}
@@ -1592,7 +1821,17 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 				}
 
 				if armResourceType.Parent == "root" {
-					blockObjectsRootResources = append(blockObjectsRootResources, GetBlocksFromRootAttributes(rootAttributesForReturn, htmlObjectCaptureRootArmResources)...)
+					for _, innerArmResourceType := range allResourceTypes {
+						if strings.Contains(innerArmResourceType.Resource_type, armResourceType.Resource_type) && armResourceType.Resource_type != innerArmResourceType.Resource_type && innerArmResourceType.CanBeSeperated {
+							blockObjectsRootResources = append(blockObjectsRootResources, GetBlocksFromRootAttributes(rootAttributesForReturn, htmlObjectCaptureRootArmResources, true)...)
+							break
+						}
+					}
+
+					if len(blockObjectsRootResources) == 0 {
+						blockObjectsRootResources = append(blockObjectsRootResources, GetBlocksFromRootAttributes(rootAttributesForReturn, htmlObjectCaptureRootArmResources, false)...)
+					}
+
 					compileObjectRootResources := CompileObject{
 						ResourceDefinitionName: "azurerm", //Must be changed from static the moment the decompiler supports more than just azurerm
 						ArmObject:              armBasicObject,
@@ -1608,7 +1847,7 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 					compiledObjects = append(compiledObjects, compileObjectRootResources)
 
 				} else if !armResourceType.CanBeSeperated {
-					blockObjectsSeperatedResources = append(blockObjectsSeperatedResources, GetBlocksFromRootAttributes(rootAttributesFromSeperatedResources, htmlObjectCaptureSeperatedResource)...)
+					blockObjectsSeperatedResources = append(blockObjectsSeperatedResources, GetBlocksFromRootAttributes(rootAttributesFromSeperatedResources, htmlObjectCaptureSeperatedResource, false)...)
 					compileObjectSeperatedResources := CompileObject{
 						ResourceDefinitionName: "azurerm", //Must be changed from static the moment the decompiler supports more than just azurerm
 						ArmObject:              armBasicObject,
@@ -1624,7 +1863,7 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 				}
 			}
 		}
-		blockObjectsNestedResources = append(blockObjectsNestedResources, GetBlocksFromRootAttributes(rootAttributesFromNestedResources, htmlObjectCaptureNestedArmResources)...)
+		blockObjectsNestedResources = append(blockObjectsNestedResources, GetBlocksFromRootAttributes(rootAttributesFromNestedResources, htmlObjectCaptureNestedArmResources, false)...)
 		for index, compiledObject := range compiledObjects {
 			if compiledObject.ResourceName == armBasicObject.Name && len(blockObjectsNestedResources) > 0 {
 				compiledObjects[index].BlockAttributes = append(compiledObjects[index].BlockAttributes, blockObjectsNestedResources...)
@@ -1714,30 +1953,32 @@ func CompileTerraformObjects(armBasicObjects []ArmObject, htmlObjects []HtmlObje
 			compiledObjects[index].BlockAttributes = blockAttributesNoneRoot
 		}
 	}
-	/*
-		removeEmptyBlocks := []BlockAttribute{}
-		for index, compiledObject := range compiledObjects { //This mix macthes blocks to wrong compiled object xD
-			for _, blockAttribute := range compiledObject.BlockAttributes { //Im simply trying to remove blocks that have 0 rootattributes
-				if len(blockAttribute.RootAttribute) > 1 {
-					removeEmptyBlocks = append(removeEmptyBlocks, blockAttribute)
+
+	for index, compiledObject := range compiledObjects {
+		blockAttributesNotEmpty := []BlockAttribute{}
+		for index2, blockAttribute := range compiledObject.BlockAttributes {
+			if len(blockAttribute.RootAttribute) > 0 {
+				if blockAttribute.BlockName == "root" && blockAttribute.Parent == "" {
+					compiledObject.BlockAttributes[index2].Parent = "root"
 				}
-			}
-			if len(removeEmptyBlocks) > 1 {
-				compiledObjects[index].BlockAttributes = removeEmptyBlocks
+				blockAttributesNotEmpty = append(blockAttributesNotEmpty, compiledObject.BlockAttributes[index2])
 			}
 		}
-	*/
-
+		compiledObjects[index].BlockAttributes = blockAttributesNotEmpty
+	}
 	/*
 		for _, compiledObject := range compiledObjects {
-			for _, blockAttribute := range compiledObject.BlockAttributes {
-				cleanUpFalseRootAttributes := []RootAttribute{}
-				for _, rootAttributes := range blockAttribute.RootAttribute {
-					if
+			fmt.Println("\nCOMPILED OBJECT --------------", compiledObject.ResourceName)
+			for _, block := range compiledObject.BlockAttributes {
+				fmt.Println(fmt.Sprintf("\n-------------BLOCK----------------%s-%s", block.BlockName, block.Parent))
+				for index2, rootAttribute := range block.RootAttribute {
+					fmt.Println(index2, "NAME", rootAttribute.Name, "BLOCK", rootAttribute.BlockName, "IS", rootAttribute.IsBlock)
 				}
 			}
 		}
 	*/
+	fmt.Println("LEN OF COMPILED OBJECTS:", len(compiledObjects))
+
 	return compiledObjects
 }
 
@@ -1764,8 +2005,6 @@ func GetInnerRootAttributes(armProperties interface{}, htmlObject HtmlObject, ma
 					for _, match := range htmlAttributeMatch {
 						returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, match, blockName, masterKey))
 					}
-				} else if CheckForEmptyArmValue(innerAttributeValue) {
-					//fmt.Println("We are missing out on:", innerAttributeName, innerAttributeValue)
 				}
 
 				if CheckForSliceWithMaps(innerAttributeValue) {
@@ -1795,12 +2034,7 @@ func GetInnerRootAttributes(armProperties interface{}, htmlObject HtmlObject, ma
 							}
 						}
 					}
-				} else if CheckForMap(innerAttributeValue) {
-
-				} else {
-					//fmt.Println("FINALLY FOUND IT:", innerAttributeName, innerAttributeValue)
 				}
-
 			}
 		} else if CheckForSliceWithMaps(attributeValue) {
 			for _, slice := range attributeValue.([]interface{}) {
@@ -1813,11 +2047,7 @@ func GetInnerRootAttributes(armProperties interface{}, htmlObject HtmlObject, ma
 								returnRootAttributes = append(returnRootAttributes, ConvertFlatValueToRootAttribute(innerAttributeValue, match, match.Parent, masterKey))
 							}
 						}
-						if CheckForMap(innerAttributeValue) {
-							for minimumAttributeName, _ := range innerAttributeValue.(map[string]interface{}) {
-								fmt.Println("ARE WE HERE NOW?", minimumAttributeName)
-							}
-						} else if CheckForSliceWithMaps(innerAttributeValue) {
+						if CheckForSliceWithMaps(innerAttributeValue) {
 							for _, slice := range innerAttributeValue.([]interface{}) {
 								if CheckForMap(slice) {
 									for minimumAttributeName, minimumAttributeValue := range slice.(map[string]interface{}) {
@@ -1835,7 +2065,6 @@ func GetInnerRootAttributes(armProperties interface{}, htmlObject HtmlObject, ma
 						if CheckForMap(innerAttributeValue) {
 							masterKey := GetArmMasterKey(innerAttributeValue)
 							for minimumAttributeName, minimumAttributeValue := range innerAttributeValue.(map[string]interface{}) {
-								fmt.Println("ARE WE HERE NOW????", minimumAttributeName)
 								htmlAttributeMatch := GetHtmlAttributeMatch(minimumAttributeName, htmlObject.Attribute, minimumAttributeValue, innerAttributeName)
 								if len(htmlAttributeMatch) > 0 && !CheckForEmptyArmValue(minimumAttributeValue) {
 									for _, match := range htmlAttributeMatch {
@@ -1843,8 +2072,6 @@ func GetInnerRootAttributes(armProperties interface{}, htmlObject HtmlObject, ma
 									}
 								}
 							}
-						} else {
-							fmt.Println("WE missing something=?=", innerAttributeName)
 						}
 					}
 				} else {
@@ -1930,7 +2157,7 @@ func GetSubArmPartOfProperties(armPropertyValue interface{}, resourceType string
 	return returnArmPropertyValue
 }
 
-func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject HtmlObject) []BlockAttribute {
+func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject HtmlObject, isSeperated bool) []BlockAttribute {
 	var blocksForReturn []BlockAttribute
 	var summarizedRootAttributes []RootAttribute
 	var removeDuplicateValues []string
@@ -1938,54 +2165,42 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 	var removeShadowRootAttributes []RootAttribute
 
 	for index, rootAttribute := range rootAttributes {
+		if isSeperated {
+			rootAttributes[index].BlockName = "root"
+		} else if rootAttribute.Name != "name" && rootAttribute.Name != "id" {
+			for _, attribute := range htmlObject.Attribute {
+				if rootAttribute.Name == attribute.Name {
+					rootAttributes[index].BlockName = attribute.Parent
+				}
+			}
+		}
+	}
+
+	for index, rootAttribute := range rootAttributes {
 		if !strings.Contains(rootAttribute.Name, "name") && !strings.Contains(rootAttribute.Name, "id") {
+			matches := []Attribute{}
 			for _, htmlObject := range htmlObjects {
 				for _, attribute := range htmlObject.Attribute {
 					if rootAttribute.Name == attribute.Name {
-						if rootAttribute.BlockName != attribute.Parent {
-							rootAttributes[index].BlockName = attribute.Parent
+						matches = append(matches, attribute)
+					}
+				}
+			}
+			if len(matches) > 1 {
+				maxRootAttributeMatchLength := 0
+				correctParent := ""
+				for _, attribute := range matches {
+					rootAttributesToMatch := []RootAttribute{}
+					for _, innerRootAttribute := range rootAttributes {
+						if innerRootAttribute.BlockName == attribute.Parent {
+							rootAttributesToMatch = append(rootAttributesToMatch, innerRootAttribute)
 						}
 					}
-				}
-			}
-		}
-	}
-
-	for index, rootAttribute := range rootAttributes {
-		if strings.HasPrefix(rootAttribute.BlockName, "/") || strings.HasSuffix(rootAttribute.BlockName, "/") {
-			rootAttributes[index].BlockName = strings.Trim(rootAttribute.BlockName, "/")
-		}
-
-		if strings.Contains(rootAttribute.BlockName, "//") {
-			rootAttributes[index].BlockName = strings.Replace(rootAttribute.BlockName, "//", "/", 1)
-		}
-	}
-	for index, rootAttribute := range rootAttributes {
-		partOfBlockNames := strings.Split(rootAttribute.BlockName, "/")
-		if len(partOfBlockNames) > 2 {
-			if strings.HasPrefix(rootAttribute.BlockName, partOfBlockNames[1]) {
-				blockNamePart := partOfBlockNames[0]
-				rootAttributes[index].BlockName = fmt.Sprintf("%s/%s", blockNamePart, strings.Join(partOfBlockNames[2:], "/"))
-			} else {
-				var uniqueBlockNames []string
-				for _, name := range partOfBlockNames {
-					if !strings.Contains(strings.Join(uniqueBlockNames, ","), name) {
-						uniqueBlockNames = append(uniqueBlockNames, name)
+					if len(rootAttributesToMatch) > maxRootAttributeMatchLength {
+						correctParent = attribute.Parent
 					}
 				}
-				rootAttributes[index].BlockName = strings.Join(uniqueBlockNames, "/")
-			}
-		} else if len(partOfBlockNames) == 2 {
-			if partOfBlockNames[0] == partOfBlockNames[1] {
-				rootAttributes[index].BlockName = partOfBlockNames[0]
-			} else if strings.HasPrefix(rootAttribute.BlockName, partOfBlockNames[1]) {
-				if strings.Contains(rootAttribute.BlockName, "os") {
-					if !strings.Contains(rootAttribute.Name, "name") {
-						rootAttributes[index].BlockName = partOfBlockNames[0]
-					} else {
-						rootAttributes[index].BlockName = partOfBlockNames[1]
-					}
-				}
+				rootAttributes[index].BlockName = correctParent
 			}
 		}
 	}
@@ -2147,8 +2362,6 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 		if CheckForString(rootAttribute.Value) {
 			if strings.TrimSpace(rootAttribute.UniqueBlockName) != strings.TrimSpace(rootAttribute.Value.(string)) {
 				removeShadowRootAttributes = append(removeShadowRootAttributes, rootAttribute)
-			} else {
-
 			}
 		} else {
 			if !CheckForMap(rootAttribute.Value) && !CheckForSliceWithMaps(rootAttribute.Value) {
@@ -2201,7 +2414,7 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 		}
 	}
 
-	//Add the nested object root attribute
+	//Add the nested object root attribute (The below has no effect on root attribute types without a unique value, hence all these block attributes are never created)
 	uniqueBlockNames := []string{}
 	mapOfUniqueBlockNames := make(map[string]bool)
 	for _, rootAttribute := range almostSummarizeRootAttributes {
@@ -2220,6 +2433,59 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 			UniqueBlockName: uniqueBlockNames[index],
 		}
 		almostSummarizeRootAttributes = append(almostSummarizeRootAttributes, rootAttribute)
+	}
+
+	mapOfUniqueBlockNames = make(map[string]bool)
+	for _, rootAttribute := range almostSummarizeRootAttributes {
+		if rootAttribute.UniqueBlockName == "" && !mapOfUniqueBlockNames[rootAttribute.BlockName] {
+			mapOfUniqueBlockNames[rootAttribute.BlockName] = true
+		}
+	}
+
+	for name, _ := range mapOfUniqueBlockNames {
+		rootAttribute := RootAttribute{
+			Name:            name,
+			Value:           nil,
+			IsBlock:         true,
+			BlockName:       "root",
+			UniqueBlockName: "",
+		}
+		almostSummarizeRootAttributes = append(almostSummarizeRootAttributes, rootAttribute)
+	}
+
+	for index, rootAttribute := range almostSummarizeRootAttributes {
+		for _, attribute := range htmlObject.Attribute {
+			if rootAttribute.Name == attribute.Name && rootAttribute.Name != "name" && rootAttribute.Name != "id" {
+				almostSummarizeRootAttributes[index].BlockName = attribute.Parent
+			}
+		}
+	}
+
+	//rootAttributesForBlockAttributes := []RootAttribute{}
+
+	for index, rootAttribute := range almostSummarizeRootAttributes {
+		//match := false
+		newParentName := ""
+		mapOfRootAttributes := make(map[string]bool)
+		capturesimilarRootAttributesOldParent := []RootAttribute{}
+		capturesimilarRootAttributesNewParent := []RootAttribute{}
+		for _, attribute := range htmlObject.Attribute {
+			if rootAttribute.Name == attribute.Name && attribute.ShadowCopy.Parent != attribute.Parent && attribute.ShadowCopy.Parent != "" {
+				for _, innerRootAttribute := range almostSummarizeRootAttributes {
+					if innerRootAttribute.BlockName == attribute.Parent && !mapOfRootAttributes[fmt.Sprintf("%s,%s", innerRootAttribute.Name, innerRootAttribute.UniqueBlockName)] && innerRootAttribute.BlockName != "root" {
+						capturesimilarRootAttributesOldParent = append(capturesimilarRootAttributesOldParent, innerRootAttribute)
+						mapOfRootAttributes[fmt.Sprintf("%s,%s", innerRootAttribute.Name, innerRootAttribute.UniqueBlockName)] = true
+					} else if innerRootAttribute.BlockName == attribute.ShadowCopy.Parent && !mapOfRootAttributes[fmt.Sprintf("%s,%s", innerRootAttribute.Name, innerRootAttribute.UniqueBlockName)] && innerRootAttribute.BlockName != "root" {
+						newParentName = attribute.ShadowCopy.Parent
+						capturesimilarRootAttributesNewParent = append(capturesimilarRootAttributesNewParent, innerRootAttribute)
+						mapOfRootAttributes[fmt.Sprintf("%s,%s", innerRootAttribute.Name, innerRootAttribute.UniqueBlockName)] = true
+					}
+				}
+				if newParentName != "root" && newParentName != "" && len(capturesimilarRootAttributesNewParent) > len(capturesimilarRootAttributesOldParent) {
+					almostSummarizeRootAttributes[index].BlockName = newParentName
+				}
+			}
+		}
 	}
 
 	blockRootAttributes := []RootAttribute{}
@@ -2256,14 +2522,6 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 					almostSummarizeRootAttributes = append(almostSummarizeRootAttributes, rootAttribute)
 					mapOfUniqueMissingBlockRootAttributes[rootAttribute.UniqueBlockName] = true
 				}
-			}
-		}
-	}
-
-	for index, rootAttribute := range almostSummarizeRootAttributes {
-		for _, attribute := range htmlObject.Attribute {
-			if rootAttribute.Name == attribute.Name && rootAttribute.Name != "name" && rootAttribute.Name != "id" {
-				almostSummarizeRootAttributes[index].BlockName = attribute.Parent
 			}
 		}
 	}
@@ -2329,23 +2587,188 @@ func GetBlocksFromRootAttributes(rootAttributes []RootAttribute, htmlObject Html
 	}
 
 	blocksForReturn = append(blocksForReturn, blockAttribute)
-	/*
-		for _, block := range blocksForReturn {
-			fmt.Println("\n------------------BLOCK NAME:", block.BlockName, "PARENT", block.Parent, "-----------------------")
-			for _, attribute := range block.RootAttribute {
-				if attribute.UniqueBlockName == "" {
-					fmt.Println("\nRoot attribute name:", attribute.Name, "VALUE:", attribute.Value)
-				} else {
-					fmt.Println("\nRoot attribute name:", attribute.Name, "UNIQUE NAME", attribute.UniqueBlockName, "VALUE:", attribute.Value)
-				}
+
+	//Remove any root attribute of which has the name "resource_group_name"
+	for index, blockAttribute := range blocksForReturn {
+		rootAttributes := []RootAttribute{}
+		for _, rootAttribute := range blockAttribute.RootAttribute {
+			if rootAttribute.Name != "resource_group_name" {
+				rootAttributes = append(rootAttributes, rootAttribute)
 			}
 		}
 
-		for index, rootAttribute := range almostSummarizeRootAttributes {
-			fmt.Println(index, "ATTRIBUTE NAME", rootAttribute.Name, "||", "BLOCK NAME", rootAttribute.BlockName, "||", "IS BLOCK", rootAttribute.IsBlock, "||", "UNIQUE NAME:", rootAttribute.UniqueBlockName, "VALUE:", rootAttribute.Value)
+		blocksForReturn[index].RootAttribute = rootAttributes
+	}
+	/*
+		mapOfBlockAttributes := make(map[string]bool)
+		summarizedBlocksForReturn := []BlockAttribute{}
+		for _, blockAttribute := range blocksForReturn {
+			if len(blockAttribute.RootAttribute) == 0 {
+				break
+			}
+			if blockAttribute.UniqueBlockName != "" {
+				if !mapOfBlockAttributes[fmt.Sprintf("%s,%s", blockAttribute.BlockName, blockAttribute.UniqueBlockName)] && blockAttribute.BlockName != "" {
+					summarizedBlocksForReturn = append(summarizedBlocksForReturn, blockAttribute)
+					mapOfBlockAttributes[fmt.Sprintf("%s,%s", blockAttribute.BlockName, blockAttribute.UniqueBlockName)] = true
+				}
+			} else {
+				if !mapOfBlockAttributes[fmt.Sprintf("%s,%s", blockAttribute.BlockName, blockAttribute.Parent)] && blockAttribute.BlockName != "" {
+					summarizedBlocksForReturn = append(summarizedBlocksForReturn, blockAttribute)
+					mapOfBlockAttributes[fmt.Sprintf("%s,%s", blockAttribute.BlockName, blockAttribute.UniqueBlockName)] = true
+				}
+			}
+			fmt.Println("BLOCK:", blockAttribute)
 		}
 	*/
-	return blocksForReturn
+
+	for index, blockAttriubte := range blocksForReturn {
+		if blockAttriubte.BlockName == "identity" {
+			match := false
+			for _, rootAttribute := range blockAttribute.RootAttribute {
+				if rootAttribute.Name == "type" && rootAttribute.Value == "SystemAssigned" {
+					match = true
+				} else if rootAttribute.Name == "identity_ids" && CheckForSlice(rootAttribute.Value) {
+					if len(rootAttribute.Value.([]interface{})) > 0 {
+						match = true
+					}
+				}
+			}
+			if !match {
+				blocksForReturn[index].RootAttribute = []RootAttribute{}
+			}
+		} else {
+			for _, attribute := range htmlObject.Attribute {
+				if blockAttriubte.BlockName == attribute.Name && attribute.ShadowCopy.Parent != "" {
+					rootAttributesFromOldBlock := []RootAttribute{}
+					rootAttributesFromNewBlock := []RootAttribute{}
+					for _, innerBlockAttribute := range blocksForReturn {
+						if innerBlockAttribute.BlockName == blockAttribute.BlockName {
+							rootAttributesFromOldBlock = append(rootAttributesFromOldBlock, innerBlockAttribute.RootAttribute...)
+						} else if innerBlockAttribute.BlockName == attribute.ShadowCopy.Parent {
+							rootAttributesFromNewBlock = append(rootAttributesFromNewBlock, innerBlockAttribute.RootAttribute...)
+						}
+					}
+					if len(rootAttributesFromOldBlock) > len(rootAttributesFromNewBlock) {
+						blocksForReturn[index].Parent = attribute.ShadowCopy.Parent
+					}
+				}
+			}
+		}
+	}
+
+	mapOfRootBlocks := make(map[string]bool)
+	blockAttributesForReturn := []BlockAttribute{}
+	for _, blockAttribute := range blocksForReturn {
+		if len(blockAttribute.RootAttribute) > 0 {
+			rootAttributesCleaned := []RootAttribute{}
+
+			for _, rootAttribute := range blockAttribute.RootAttribute {
+				if rootAttribute.Name != "root" && rootAttribute.Name != "" {
+					rootAttributesCleaned = append(rootAttributesCleaned, rootAttribute)
+				}
+			}
+
+			newBlockAttribute := blockAttribute
+			newBlockAttribute.RootAttribute = rootAttributesCleaned
+
+			if blockAttribute.BlockName == "root" && blockAttribute.Parent == "root" {
+				if !mapOfRootBlocks[fmt.Sprintf("%s,%s", blockAttribute.BlockName, blockAttribute.Parent)] {
+					mapOfRootBlocks[fmt.Sprintf("%s,%s", blockAttribute.BlockName, blockAttribute.Parent)] = true
+					blockAttributesForReturn = append(blockAttributesForReturn, newBlockAttribute)
+				}
+			} else {
+				blockAttributesForReturn = append(blockAttributesForReturn, newBlockAttribute)
+			}
+		}
+	}
+
+	mapOfValueCount := make(map[string]int)
+	for _, blockAttribute := range blockAttributesForReturn {
+		for _, rootAttribute := range blockAttribute.RootAttribute {
+			if CheckForString(rootAttribute.Value) && rootAttribute.Name != "name" && rootAttribute.Name != "id" && CheckForEmptyArmValue(rootAttribute.UniqueBlockName) {
+				mapOfValueCount[rootAttribute.Value.(string)]++
+			}
+		}
+	}
+	rootAttributeNames := []string{}
+	for value, _ := range mapOfValueCount {
+		if mapOfValueCount[value] > 1 && mapOfValueCount[value] <= 3 {
+			for _, blockAttribute := range blockAttributesForReturn {
+				for _, rootAttribute := range blockAttribute.RootAttribute {
+					if rootAttribute.Value == value {
+						rootAttributeNames = append(rootAttributeNames, rootAttribute.Name)
+					}
+				}
+			}
+		}
+	}
+
+	poisonedRootAttributeNames := []string{}
+	for _, name := range rootAttributeNames {
+		nameSlice := strings.Split(name, "_")
+		captureNames := []string{}
+		if len(nameSlice) == 1 {
+			for _, innerName := range rootAttributeNames {
+				if strings.Contains(innerName, name) && name != innerName {
+					captureNames = append(captureNames, innerName)
+				}
+			}
+			for _, capturedName := range captureNames {
+				capturedNameSlice := strings.Split(capturedName, "_")
+				if len(capturedNameSlice) > 1 {
+					if nameSlice[0] == capturedNameSlice[0] { //Poison found
+						poisonedRootAttributeNames = append(poisonedRootAttributeNames, capturedName)
+					}
+				}
+			}
+		}
+	}
+
+	blocksWithPoisonRemoved := []BlockAttribute{}
+	for _, blockAttribute := range blockAttributesForReturn {
+		match := false
+		for _, rootAttribute := range blockAttribute.RootAttribute {
+			for _, poisonedName := range poisonedRootAttributeNames {
+				if rootAttribute.Name == poisonedName {
+					match = true
+				}
+			}
+		}
+		if !match {
+			blocksWithPoisonRemoved = append(blocksWithPoisonRemoved, blockAttribute)
+		}
+	}
+
+	for index, blockAttribute := range blocksWithPoisonRemoved {
+		if blockAttribute.BlockName == "root" && len(blocksWithPoisonRemoved) > 1 {
+			rootAttributesToKeep := []RootAttribute{}
+			for _, rootAttribute := range blockAttribute.RootAttribute {
+				match := false
+				for _, innerBlockAttribute := range blocksWithPoisonRemoved {
+					if rootAttribute.Name == innerBlockAttribute.BlockName {
+						match = true
+						break
+					}
+				}
+				if match {
+					rootAttributesToKeep = append(rootAttributesToKeep, rootAttribute)
+				}
+			}
+
+			blocksWithPoisonRemoved[index].RootAttribute = rootAttributesToKeep
+		}
+	}
+
+	/*
+		fmt.Println("\n\n\n\n------------------------OBJECT--------------------------")
+		for index, blockAttribute := range blocksWithPoisonRemoved {
+			fmt.Println(index, "----------------BLOCK---------------", blockAttribute.BlockName, "PARENT", blockAttribute.Parent, blockAttribute.UniqueBlockName)
+			for index2, rootAttribute := range blockAttribute.RootAttribute {
+				fmt.Println(index2, "ROOT", rootAttribute.Name, rootAttribute.IsBlock, rootAttribute.UniqueBlockName, rootAttribute.Value)
+			}
+		}
+	*/
+	return blocksWithPoisonRemoved
 }
 
 func CheckForSliceWithMaps(armPropertyValue interface{}) bool {
@@ -2611,14 +3034,14 @@ func NewCachedSystemFiles(htmlObjects []HtmlObject, terraformObjects TerraformOb
 		}
 	}
 
-	if len(htmlObjects) > 0 {
+	if len(htmlObjects) <= 0 {
+		if err := os.WriteFile(SystemTerraformCompiledObjectsFileName, prettyJson, 0644); err != nil {
+			return fmt.Errorf("failed to write JSON to file %s: %w", SystemTerraformCompiledObjectsFileName, err)
+		}
+	} else {
 		// Write the modified pretty-printed JSON directly to the file
 		if err := os.WriteFile(SystemTerraformDocsFileName, prettyJson, 0644); err != nil {
 			return fmt.Errorf("failed to write JSON to file %s: %w", SystemTerraformDocsFileName, err)
-		}
-	} else {
-		if err := os.WriteFile(SystemTerraformCompiledObjectsFileName, prettyJson, 0644); err != nil {
-			return fmt.Errorf("failed to write JSON to file %s: %w", SystemTerraformCompiledObjectsFileName, err)
 		}
 	}
 
@@ -2650,11 +3073,12 @@ func NewTerraformObject(terraformCompiledObjects []CompileObject, providerVersio
 }
 
 func WriteTerraformConfigToDisk(terraformConfig string, fileName string) {
-	err := os.WriteFile(fileName, []byte(terraformConfig), 0644)
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("the following error occured while trying to create file name:%s\n%s", fileName, err)
 	}
-	RunTerraformCommand("fmt", fileName)
+	defer file.Close()
+	file.WriteString(fmt.Sprintf("%s\n", terraformConfig))
 }
 
 func logVerbose(message string) {
