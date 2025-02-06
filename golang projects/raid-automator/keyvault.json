@@ -1,0 +1,13 @@
+{
+    "name": "some-name",
+    "keyvaultToken": [
+        {
+            "name": "raidHelperToken",
+            "version": null
+        },
+        {
+            "name": "botToken",
+            "version": null
+        }
+    ]
+}

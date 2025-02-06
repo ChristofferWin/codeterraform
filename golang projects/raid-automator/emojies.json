@@ -1,0 +1,254 @@
+[
+    {
+        "ID":"1335630436596191242",
+        "emojiShortName":"human",
+        "emojiName":"race_human_female",
+        "emojiType": 0,
+        "emojiNickName": "race"
+    },
+    {
+        "ID":"1335630433630687374",
+        "emojiShortName":"dwarf",
+        "emojiName":"race_dwarf_female",
+        "emojiType": 0,
+        "emojiNickName": "race"
+    },
+    {
+        "ID":"1335630432846352395",
+        "emojiShortName":"gnome",
+        "emojiName":"race_gnome_female",
+        "emojiType": 0,
+        "emojiNickName": "race"
+    },
+    {
+        "ID":"1335630435417460786",
+        "emojiShortName":"nightelf",
+        "emojiName":"race_nightelf_female",
+        "emojiType": 0,
+        "emojiNickName": "race"
+    },
+    {
+        "ID":"1336091961651626126",
+        "emojiShortName":"druid",
+        "emojiName":"druid",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091960666099712",
+        "emojiShortName":"hunter",
+        "emojiName":"hunter",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091959445684284",
+        "emojiShortName":"mage",
+        "emojiName":"mage_1",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091958010970265",
+        "emojiShortName":"paladin",
+        "emojiName":"paladin",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091956048171038",
+        "emojiShortName":"priest",
+        "emojiName":"priest",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091954504663161",
+        "emojiShortName":"rogue",
+        "emojiName":"rogue",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091953082667019",
+        "emojiShortName":"warlock",
+        "emojiName":"warlock",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336091951807725579",
+        "emojiShortName":"warrior",
+        "emojiName":"warrior",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1336087504553644104",
+        "emojiShortName":"rest",
+        "emojiName":"druid_restoration",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335664200617300140",
+        "emojiShortName":"fera",
+        "emojiName":"druid_feral",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087500178985031",
+        "emojiShortName":"bala",
+        "emojiName":"druid_balance",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087839150178395",
+        "emojiShortName":"beas",
+        "emojiName":"hunter_beastmastery",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087496567558204",
+        "emojiShortName":"mark",
+        "emojiName":"hunter_marksmanship",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },  
+    {
+        "ID":"1336087493191139461",
+        "emojiShortName":"surv",
+        "emojiName":"hunter_survival",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335630428173897779",
+        "emojiShortName":"arc-fro",
+        "emojiName":"mage_arcane",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087490364182598",
+        "emojiShortName":"wc-fro",
+        "emojiName":"mage_frost",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336093303740825621",
+        "emojiShortName":"fire",
+        "emojiName":"mage_fire",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335667568286896148",
+        "emojiShortName":"imp-might",
+        "emojiName":"paladin_might",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335667566336544814",
+        "emojiShortName":"kings",
+        "emojiName":"paladin_kings",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335630431282004058",
+        "emojiShortName":"imp-conc",
+        "emojiName":"paladin_conc",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335630430010871911",
+        "emojiShortName":"sanc",
+        "emojiName":"paladin_sanc",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087484131446875",
+        "emojiShortName":"holy",
+        "emojiName":"priest_holy",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087485645848607",
+        "emojiShortName":"disc",
+        "emojiName":"priest_disc",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087482743259166",
+        "emojiShortName":"shadow",
+        "emojiName":"priest_shadow",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"🗡️",
+        "emojiShortName":"dagg",
+        "emojiName":"rogue_combat",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"⚔️",
+        "emojiShortName":"swor",
+        "emojiName":"rogue_combat",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087479618506853",
+        "emojiShortName":"ds-ru",
+        "emojiName":"warlock_destruction",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087478385512490",
+        "emojiShortName":"dm-ru",
+        "emojiName":"warlock_demonology",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087475982041198",
+        "emojiShortName":"fury",
+        "emojiName":"warrior_fury",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1336087474601988096",
+        "emojiShortName":"fury-prot",
+        "emojiName":"warrior_prot",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1335684875499343973",
+        "emojiShortName":"douse",
+        "emojiName":"douse",
+        "emojiType": 3,
+        "emojiNickName": "raid"
+    },
+    {
+        "ID":"1312847304725893190",
+        "emojiShortName":"cracked",
+        "emojiName":"cracked",
+        "emojiType": 3,
+        "emojiNickName": "fun"
+    }
+]

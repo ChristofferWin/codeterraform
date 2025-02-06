@@ -1,0 +1,219 @@
+[
+    {
+      "name": "Druid",
+      "listOfSpecs": [
+        {
+          "classSpec": "Balance",
+          "memeSpec": true,
+          "classGuideLink": ""
+        },
+        {
+          "classSpec": "Feral",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/druid/feral/dps-overview-pve"
+        },
+        {
+          "classSpec": "Restoration",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/druid/healer-overview-pve"
+        }
+      ],
+      "possibleRaces": [
+       "Nightelf"
+      ]
+    },
+    {
+      "name": "Hunter",
+      "listOfSpecs": [
+        {
+          "classSpec": "Beast Mastery",
+          "memeSpec": true,
+          "classGuideLink": ""
+        },
+        {
+          "classSpec": "Marksmanship",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/hunter/marksmanship/dps-overview-pve"
+        },
+        {
+          "classSpec": "Survival",
+          "memeSpec": true,
+          "classGuideLink": ""
+        }
+      ],
+      "possibleRaces": [
+        "Dwarf",
+        "Nightelf"
+      ]
+    },
+    {
+      "name": "Mage",
+      "listOfSpecs": [
+        {
+          "classSpec": "Arcane-Frost",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/talent-calc/mage/2300450310031531--053500030013"
+        },
+        {
+          "classSpec": "Fire",
+          "memeSpec": true,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/mage/fire/dps-overview-pve"
+        },
+        {
+          "classSpec": "WS",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/talent-calc/mage/230045200003--05350013122301051"
+        }
+      ],
+      "possibleRaces":[
+        "Gnome",
+        "Human"
+      ]
+    },
+    {
+      "name": "Paladin",
+      "listOfSpecs": [
+        {
+          "classSpec": "Holy-imp-might",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/paladin/healer-overview-pve"
+        },
+        {
+          "classSpec": "Holy-imp-conc",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/paladin/healer-overview-pve"
+        },
+        {
+          "classSpec": "Holy-imp-sanq",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/paladin/healer-overview-pve"
+        },
+        {
+          "classSpec": "Protection",
+          "memeSpec": true,
+          "classGuideLink": ""
+        },
+        {
+          "classSpec": "Retribution",
+          "memeSpec": true,
+          "classGuideLink": ""
+        }
+      ],
+      "possibleRaces":[
+        "Human",
+        "Dwarf"
+      ]
+    },
+    {
+      "name": "Priest",
+      "listOfSpecs": [
+        {
+          "classSpec": "Discipline",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/talent-calc/mage/2300450310031531--053500030013"
+        },
+        {
+          "classSpec": "Holy",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/talent-calc/mage/2300450310031531--053500030013"
+        },
+        {
+          "classSpec": "Shadow",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/priest/shadow/dps-overview-pve"
+        }
+      ],
+      "possibleRaces":[
+        "Human",
+        "Dwarf",
+        "Nightelf"
+      ]
+    },
+    {
+      "name": "Rogue",
+      "listOfSpecs": [
+        {
+          "classSpec": "Assassination",
+          "memeSpec": true,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/rogue/assassination/dps-overview-pve"
+        },
+        {
+          "classSpec": "Combat/Swords",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/priest/shadow/dps-overview-pve"
+        },
+        {
+            "classSpec": "Combat/Daggers",
+            "memeSpec": false,
+            "classGuideLink": "https://www.wowhead.com/classic/talent-calc/rogue/005023104-3203052020550100201-05"
+        },
+        {
+          "classSpec": "Subtlety",
+          "memeSpec": true,
+          "classGuideLink": ""
+        }
+      ],
+      "possibleRaces":[
+        "Dwarf",
+        "Gnome",
+        "Human",
+        "Nightelf"
+      ]
+    },
+    {
+      "name": "Warlock",
+      "listOfSpecs": [
+        {
+          "classSpec": "MD-ruin",
+          "memeSpec": false,
+          "classGuideLink": "https://wow.zamimg.com/uploads/guide/images/18346.png"
+        },
+        {
+          "classSpec": "DS-ruin",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/talent-calc/warlock/25002-2050300142301-52500051020001"
+        },
+        {
+          "classSpec": "Demonology",
+          "memeSpec": true,
+          "classGuideLink": ""
+        }
+      ],
+      "possibleRaces":[
+        "Gnome",
+        "Human"
+      ]
+    },
+    {
+      "name": "Warrior",
+      "listOfSpecs": [
+        {
+          "classSpec": "Arms",
+          "memeSpec": true,
+          "classGuideLink": ""
+        },
+        {
+          "classSpec": "Fury",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/warrior/fury/dps-overview-pve"
+        },
+        {
+          "classSpec": "Fury-Prot",
+          "memeSpec": false,
+          "classGuideLink": "https://www.warcrafttavern.com/wow-classic/guides/pve-protection-warrior-tank-talents-builds/"
+        },
+        {
+          "classSpec": "Prot",
+          "memeSpec": true,
+          "classGuideLink": ""
+        }
+      ],
+      "possibleRaces":[
+        "Dwarf",
+        "Gnome",
+        "Human",
+        "Nightelf"
+      ]
+    }
+  ]
+  
