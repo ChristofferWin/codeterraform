@@ -4099,7 +4099,7 @@ func GetEmojies(typeEmoji int, nickNames []string) []emojies {
 }
 
 func NewDiscordSession(debug bool) *discordgo.Session {
-	botSession, err := discordgo.New("Bot " + "")
+	botSession, err := discordgo.New("Bot " + "ZOe2ZAgfTaDjCH6Tx_M4Kp-brX3-g31s")
 	if debug {
 		botSession.LogLevel = discordgo.LogDebug
 	}
