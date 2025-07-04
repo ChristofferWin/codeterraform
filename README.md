@@ -2,13 +2,13 @@
 Repo build to support the blog residing at https://codeterraform.com
 
 ## Most recent update
-On the 15th of July 2024, a major update has been released for the hub-spoke typology Terraform module.
+The PowerShell module used to retrieve Azure Virtual Machine images directly from the Azure Marketplace has received a MASSIVE upgrade in its latest major release, version 3.0.2.
 
-With this new version 2.0.0, we can deploy a hub and any number of spokes on DIFFERENT Azure subscriptions with ease... 
+The module now makes it possible to browse the ENTIRE Azure image marketplace, requiring only a valid Azure location to get started.
 
-This is a HUGE milestone for the module as it means its now capable of working directly in enterprise environments of ANY size. 
+Read more about the module’s capabilities here. => https://github.com/ChristofferWin/codeterraform/blob/main/powershell%20projects/modules/Get-AzVMSku/Examples.md#table-of-contents
 
-It has never been easier to design / deploy / maintain any Network topology in Azure, try it today! Visit the <a href="https://github.com/ChristofferWin/codeterraform/blob/main/terraform%20projects/modules/azurerm-hub-spoke/readme.md">readme</a> to get started !
+Download and get started today => https://www.powershellgallery.com/packages/Get-AzVMSku/3.0.2
 
 ## Newest release: The Terraform module "azurerm-hub-spoke"
 
