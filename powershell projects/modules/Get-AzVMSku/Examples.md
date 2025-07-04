@@ -1,4 +1,3 @@
-# Table of content
 # Table of Contents
 - [Description](#description)
 - [Return object schema](#return-object-schema)
