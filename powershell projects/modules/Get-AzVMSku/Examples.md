@@ -1,7 +1,18 @@
 # Table of content
+# Table of Contents
+- [Description](#description)
+- [Return object schema](#return-object-schema)
+- [Examples](#examples)
+  - [Example 1 - Using the different show-commands](#example-1---using-the-different-show-commands)
+  - [Example 2 - Browse the Azure Image Marketplace](#example-2---browse-the-azure-image-marketplace)
+  - [Example 3 - Browsing, but with filters](#example-3---browsing-but-with-filters)
+  - [Example 4 - Use module in CI / CD pipelines](#example-4---use-module-in-ci--cd-pipelines)
+  - [Example 5 - Handling VMs](#example-5---handling-vms)
+  - [Example 6 - Accepting Image Marketplace terms](#example-6---accepting-image-marketplace-terms)
+
 
 ## Description
-This mark-down showcases different examples of how to use the PowerShell module Get-AzVMSku. One very important factor to note is these examples ONLY show-case using major version 3.0.0 and up - Before this version the module worked very differently and could only serve within statically typed Operating-systems which now has changed drastically.
+This markdown showcases different examples of how to use the PowerShell module Get-AzVMSku. One very important factor to note is these examples ONLY showcase using major version 3.0.0 and up - Before this version the module worked very differently and could only serve within statically typed operating systems which now has changed drastically.
 
 <b> USING PARAMETER 'Verbose' IS ALWAYS RECOMMENDED </b>
 
@@ -15,6 +26,9 @@ PLEASE NOTE:
    4. We can auto-select newest SKU-version via parameter 'NewestSKUsVersions'
 
 <b>Please see the examples for more details on the above.</b>
+
+[⬆️ Back to Table of Contents](#table-of-contents)
+
 
 ## Return object schema
 ```ps1
@@ -73,9 +87,10 @@ The VM-Quota limit is a nested hash-table where data is stored about:
 3. VMSizeDistribution = A PScustom object that calculates HOW many of any SPECIFIC vm-size under a SPECIFIC family can be created before the limit of the total Azure Subscription quota is reached.
 #>
 ```
+[⬆️ Back to Table of Contents](#table-of-contents)
 
 ## Examples
-Below you can see examples show-casing all the different scenarios the module can compute - Please make sure to read the comment-blocks as they show intend.
+Below you can see examples showcasing all the different scenarios the module can compute - Please make sure to read the comment-blocks as they show intent.
 
 ### Example 1 - Using the different show-commands
 The module can serve information about all possible Azure locations which the module accepts + It can print descriptions about any Azure Virtual machine family directly from Microsoft.
@@ -111,8 +126,9 @@ D-Series   The D-series Azure VMs offer a combination of vCPUs, memory, and temp
 ............
 #>
 ```
+[⬆️ Back to Table of Contents](#table-of-contents)
 
-### Example 2 - Browse the Azure Image Market place
+### Example 2 - Browse the Azure Image Marketplace
 The module allows for a full browsing experience without knowing ANYTHING about any specific vendor, what they offer and so on. The only thing we need to provide as a base, is the location
 
 <b>USE ONLY LOCATION TO BROWSE</b>
@@ -140,9 +156,10 @@ We can now select a specific vendor and depending on the vendor and offer chosen
 The above will completly depend on the selections we make and in case any given SKU / Version only has 1 option, the module will auto-select it and move on.
 #>
 ```
+[⬆️ Back to Table of Contents](#table-of-contents)
 
 ### Example 3 - Browsing, but with filters
-More than simply browsing everything thats available - We can add filters to our image search to make the returned results more bareable.
+More than simply browsing everything that's available - We can add filters to our image search to make the returned results more bearable.
 
 <b>USING PUBLISHERNAME</b>
 ```ps1
@@ -186,6 +203,7 @@ Your selection...:
 Leaving us with only flex offers from the vendor 'paloaltonetworks'
 #>
 ```
+[⬆️ Back to Table of Contents](#table-of-contents)
 
 ### Example 4 - Use module in CI / CD pipelines
 In pipelines / automation we cannot allow interactions as it will fail any automatic flow. To get around this, we can combine all filters and the parameter 'NoInteractive' To make sure the module can run correctly without ANY user-interactions.
@@ -232,8 +250,9 @@ VERBOSE: You can use the command Set-AzVMSku to accept the Azure Market terms. P
     #######################################
 #>
 ```
+[⬆️ Back to Table of Contents](#table-of-contents)
 
-### Example 5 - Handeling VMs
+### Example 5 - Handling VMs
 The module per default account for VM-sizes available in the current location / Azure region. To this it also calculates the VM-quotas available for the Azure subscription. With this we can:
 
 1. Filter on VM-sizes, per default, the module will retrieve every single possible size and quota
@@ -294,3 +313,44 @@ The output will simply have the following 3 properties empty:
 3. VMQuotas
 #>
 ```
+[⬆️ Back to Table of Contents](#table-of-contents)
+
+### Example 6 - Accepting Image Marketplace terms
+As it is with most Azure Images, specific Azure Image terms apply which we must accept BEFORE being able to deploy using an image.
+
+We can do this seamlessly using the helper-function that is part of the module-package.
+
+<b>ACCEPTING MARKET-PLACE TERMS</b>
+```ps1
+Get-AzVmSku -Location westeurope | Set-AzVMSku
+
+#The module will first print ALL specific terms to accept:
+
+<# FULL OUTPUT of paloaltonetworks terms (links)
+[Privacy Policy => https://www.paloaltonetworks.com/legal/privacy.html]
+
+[License => https://storeordersprodsn.blob.core.windows.net/legalterms/3E5ED_legalterms_PALOALTONETWORKS%253a24AIRS%253a2DFLEX%253a24AIRS%253a2DBYOL%253a24T622IBUBKL6J3MHL5NUAWG2XNZ5H5FVSJGLCOC54LB63AGIONYH5CDZVDEYDONEFK2NHKCZROAP7ZU5PLZHXJ5ZNBFEUCBOWWMC4DSY.txt]
+
+[Marketplace Terms => https://storeordersprodsn.blob.core.windows.net/marketplaceterms/3EDEF_marketplaceterms_VIRTUALMACHINE%253a24AAK2OAIZEAWW5H4MSP5KSTVB6NDKKRTUBAU23BRFTWN4YC2MQLJUB5ZEYUOUJBVF3YK34CIVPZL2HWYASPGDUY5O2FWEGRBYOXWZE5Y.txt]
+
+Do you accept these terms? [y(yes)/n(no)]: 
+#>
+
+#Accepting terms with y gives:
+<#
+The agreement for URN: paloaltonetworks:airs-flex:airs-byol:11.2.501 has been accepted and the image can be used in deployments
+#>
+#The image can NOW be used in ANY deployment on that specific Azure subscription
+```
+
+<b>ACCEPTING TERMS WITH FORCE</b>
+```ps1
+#In automation scenarios, we want to skip confirmation
+
+Get-AzVmSku -Location westeurope | Set-AzVMSku -Force
+
+<#
+Same output as above, but the module wont ask for a confirmation
+#>
+```
+[⬆️ Back to Table of Contents](#table-of-contents)
