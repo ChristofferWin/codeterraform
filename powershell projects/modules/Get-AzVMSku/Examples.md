@@ -257,7 +257,7 @@ The module per default account for VM-sizes available in the current location / 
 1. Filter on VM-sizes, per default, the module will retrieve every single possible size and quota
 2. Completly remove VM-information which makes the return MUCH faster
 
-PLEASE read about the return-object structure for a better understanding of the VM-related properties.
+PLEASE read about the [⬆️ Return-Object schema](#return-object-schema) structure for a better understanding of the VM-related properties.
 
 <b>FILTER ON VM-SIZES</b>
 ```ps1
