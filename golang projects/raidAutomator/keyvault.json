@@ -1,0 +1,13 @@
+{
+    "URI": "https://raidautomatorkv",
+    "keyvaultToken": [
+        {
+            "name": "botToken",
+            "version": null
+        },
+        {
+            "name": "raidHelperToken",
+            "version": null
+        }
+    ]
+}

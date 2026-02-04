@@ -1,0 +1,69 @@
+{
+ "serverID": "630793944632131594",
+ "channelID": "1467645049633505551",
+ "warcraftLogsGuildID": "773986",
+ "warcraftLogsAppID": "a09d4ea0-ff4f-4d30-8d8b-f25f30303c8d",
+ "discordAppID": "",
+ "announce": {
+  "actions": {
+   "name": "actions",
+   "order": 3,
+   "description": "**What does the bot offer?**\n",
+   "shortDescription": "",
+   "dateString": "",
+   "gifLocalPath": "",
+   "mainThread": true,
+   "toc": true
+  },
+  "feedback": {
+   "name": "feedback",
+   "order": 0,
+   "description": "",
+   "shortDescription": "Help out by giving feedback using `/feedback`",
+   "dateString": "",
+   "gifLocalPath": "",
+   "mainThread": false,
+   "toc": false
+  },
+  "howto": {
+   "name": "howto",
+   "order": 0,
+   "description": "This  is the start of the howto channel thread",
+   "shortDescription": "See all available commands using `/howto`",
+   "dateString": "",
+   "gifLocalPath": "",
+   "mainThread": false,
+   "toc": false
+  },
+  "howto-interact": {
+   "name": "howto-interact",
+   "order": 2,
+   "description": "​\n **How do I start using the bot?**\n\u003e 1) You must be discord rank `raider` to talk to Cracked\n\u003e 2) You can use ANY channel where you're allowed to write\n\u003e 3) Start a command using `/` in the chat field\n\u003e 4) Most messages created by the bot can ONLY be seen by you\n​",
+   "shortDescription": "",
+   "dateString": "",
+   "gifLocalPath": "./gifs/dismiss-message.gif",
+   "mainThread": true,
+   "toc": false
+  },
+  "introduction": {
+   "name": "introduction",
+   "order": 1,
+   "description": "My name is **Cracked** And I am a Discord bot ready to serve raiders in **\u003cHardened\u003e**\nLets go through some of the cool stuff, that I can do for you!",
+   "shortDescription": "",
+   "dateString": "",
+   "gifLocalPath": "",
+   "mainThread": true,
+   "toc": false
+  },
+  "my": {
+   "name": "my",
+   "order": 0,
+   "description": "This  is the start of the howto channel thread",
+   "shortDescription": "Multiple useful commands under `/my` such as `/myraiderperformance`",
+   "dateString": "",
+   "gifLocalPath": "",
+   "mainThread": false,
+   "toc": false
+  }
+ }
+}
