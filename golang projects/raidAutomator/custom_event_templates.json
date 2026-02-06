@@ -1,0 +1,19 @@
+[
+    {
+        "leaderId":"346353264461217795",
+        "templateId": "2",
+        "date:": "",
+        "time": "19:30",
+        "title:": "IN BETWEEN MAIN RAIDS",
+        "description":"Remember to help guildies - SIGN UP",
+        "softres": {
+            "instance":"",
+            "faction": "Alliance",
+            "resLimitPerCharacter": 1,
+            "resLimitPerItem": 0,
+            "discordProtection": true,
+            "hideReserves": false,
+            "botBehaviour": "dm"
+        }
+    }
+]
