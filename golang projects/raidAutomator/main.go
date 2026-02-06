@@ -45,23 +45,23 @@ type errorLog struct {
 }
 
 type config struct {
-	ServerID string `json:"serverID"`
-	ChannelID string `json:"channelID"`
-	WarcraftLogsGuildID string `json:"warcraftLogsGuildID"`
-	WarcraftLogsAppID string `json:"warcraftLogsAppID"`
-	DiscordAppID string `json:"discordAppID"`
-	Announce map[string]topic `json:"announce"` //Define map of thread-name of slash commands you want to announce
+	ServerID            string           `json:"serverID"`
+	ChannelID           string           `json:"channelID"`
+	WarcraftLogsGuildID string           `json:"warcraftLogsGuildID"`
+	WarcraftLogsAppID   string           `json:"warcraftLogsAppID"`
+	DiscordAppID        string           `json:"discordAppID"`
+	Announce            map[string]topic `json:"announce"` //Define map of thread-name of slash commands you want to announce
 }
 
 type topic struct {
-	Name string `json:"name"`
-	Order int `json:"order"` //Prio will be from lowest > highest, so 1 is the first in order of topic
-	Description string `json:"description"`
+	Name             string `json:"name"`
+	Order            int    `json:"order"` //Prio will be from lowest > highest, so 1 is the first in order of topic
+	Description      string `json:"description"`
 	ShortDescription string `json:"shortDescription"`
-	DateString  string `json:"dateString"`
-	GIFLocalPath string `json:"gifLocalPath"` //File path relative on the local system
-	MainThread bool 	`json:"mainThread"` //If this is true - the topic will be used on the front page of the bot channel and NOT as part of its own thread
-	ToC bool			`json:"toc"` //ToC = Is this topic supposed to link all the threads together, forming a table of contents (ToC) in the main-thread
+	DateString       string `json:"dateString"`
+	GIFLocalPath     string `json:"gifLocalPath"` //File path relative on the local system
+	MainThread       bool   `json:"mainThread"`   //If this is true - the topic will be used on the front page of the bot channel and NOT as part of its own thread
+	ToC              bool   `json:"toc"`          //ToC = Is this topic supposed to link all the threads together, forming a table of contents (ToC) in the main-thread
 }
 
 type keyvaultToken struct {
@@ -70,7 +70,7 @@ type keyvaultToken struct {
 }
 
 type keyvault struct {
-	URI    string
+	Name   string
 	Tokens []keyvaultToken `json:"keyvaultToken"`
 }
 
@@ -114,7 +114,7 @@ type class struct {
 	SpecEmojiID        string `json:"specEmojiID"`
 	HasDouseEmoji      string `json:"HasDouseEmoji"`
 	HasDouseEmojiID    string `json:"HasDouseEmojiID"`
-	ClassType 		   string `json:"classType"`
+	ClassType          string `json:"classType"`
 }
 
 type raiderProfile struct {
@@ -122,7 +122,7 @@ type raiderProfile struct {
 	MainCharName          string                `json:"mainCharName"`
 	ID                    string                `json:"id"`
 	IsOfficer             bool                  `json:"isOfficer"`
-	GuildRole             discordRole 			`json:"guildRole"`
+	GuildRole             discordRole           `json:"guildRole"`
 	GuildRoleEmojieID     string                `json:"guildRoleEmojieID"`
 	DiscordRoles          []string              `json:"discordRoles"`
 	ChannelID             string                `json:"channelId"`
@@ -132,20 +132,20 @@ type raiderProfile struct {
 	DateJoinedGuild       string                `json:"date_joined_guild"`
 	RaidData              logsRaider            `json:"raidData"`
 	MainSwitch            map[string]bool       `json:"mainSwitch"`
-	BenchInfo			  map[string][]bench	`json:"benchInfo"`
-	TotalMainRaidsJoined  int					`json:"totalMainRaidsJoined"`
-	TotalRaidsJoined      int 					`json:"totalRaidsJoined"`
+	BenchInfo             map[string][]bench    `json:"benchInfo"`
+	TotalMainRaidsJoined  int                   `json:"totalMainRaidsJoined"`
+	TotalRaidsJoined      int                   `json:"totalRaidsJoined"`
 }
 
 type raiderProfiles struct {
-	GuildName string `json:"guildName"`
-	CountOfLogs int `json:"countOfLogs"`
-	LastTimeChangedString string `json:"lastTimeChanged"`
-	Raiders []raiderProfile `json:"raiderProfiles"`
+	GuildName             string          `json:"guildName"`
+	CountOfLogs           int             `json:"countOfLogs"`
+	LastTimeChangedString string          `json:"lastTimeChanged"`
+	Raiders               []raiderProfile `json:"raiderProfiles"`
 }
 
 type discordRole struct {
-	RoleID string
+	RoleID   string
 	RoleName string
 }
 
@@ -167,18 +167,18 @@ type lootLog struct {
 
 type trackRaid struct { //Helper struct for scanning raid-helper events efficiently on discord``
 	PlayersAlreadyTracked map[string]bench `json:"playersAlreadyTracked"` //We will only track weekly benches using this field - As the automatic part that tracks benches, only tracks for current main raid (this week)
-	RaidDiscordTitle string `json:"raidDiscordTitle"`
-	DiscordMessageID string `json:"discordMessageID"`
-	ChannelID string `json:"channelID"`
+	RaidDiscordTitle      string           `json:"raidDiscordTitle"`
+	DiscordMessageID      string           `json:"discordMessageID"`
+	ChannelID             string           `json:"channelID"`
 }
 
 type bench struct {
-	RaidLeaderName string //Get from raid-helper edit message of signup
-	RaidLeaderDiscordID string //Get interaction of benchreason of officer / raidleader
-	Reason string //Submit modolar on discordgo
-	DateString string //Get from warcraftlog
-	RaidTitle string //Get from raid-helper edit message of signup
-	RaidNames []string //Get from warcraftlog
+	RaidLeaderName      string   //Get from raid-helper edit message of signup
+	RaidLeaderDiscordID string   //Get interaction of benchreason of officer / raidleader
+	Reason              string   //Submit modolar on discordgo
+	DateString          string   //Get from warcraftlog
+	RaidTitle           string   //Get from raid-helper edit message of signup
+	RaidNames           []string //Get from warcraftlog
 }
 
 type attendance struct {
@@ -190,45 +190,45 @@ type attendance struct {
 }
 
 type logsRaiderBoss struct {
-	Name string
-	KillCount int
-	KillTime string //In mm:ss
-	MaxTotalDamage float64
-	DPS float64
-	HPS float64
+	Name            string
+	KillCount       int
+	KillTime        string //In mm:ss
+	MaxTotalDamage  float64
+	DPS             float64
+	HPS             float64
 	MaxTotalHealing float64
 }
 
 type logsRaiderParse struct {
-	RaidTier string //40 man raiding - 25 man raiding - 10 man raiding
-	RankWorld float64
-	RankRegion float64
-	RankServer float64
-	GameVersion string
+	RaidTier      string //40 man raiding - 25 man raiding - 10 man raiding
+	RankWorld     float64
+	RankRegion    float64
+	RankServer    float64
+	GameVersion   string
 	RelativeToTop float64 //% calculated from points difference in % of whats calculated in func CalculateRaidPerformance - This number will always be negative OR 0 if your top 1
-	Deviation float64 //Calculated as RelativeToTop but the value can only be POSTIVE OR NEGATIVE AND NOT 0 - as its relative to yourself from the week before
-	Parse map[string]float64
-	Points int
-	Top1 bool
-	Top2 bool
-	Top3 bool
-	Top5 bool
-	BestBoss logsRaiderBoss
-	BestBossDiff logsRaiderBoss
-	WorstBoss logsRaiderBoss
+	Deviation     float64 //Calculated as RelativeToTop but the value can only be POSTIVE OR NEGATIVE AND NOT 0 - as its relative to yourself from the week before
+	Parse         map[string]float64
+	Points        int
+	Top1          bool
+	Top2          bool
+	Top3          bool
+	Top5          bool
+	BestBoss      logsRaiderBoss
+	BestBossDiff  logsRaiderBoss
+	WorstBoss     logsRaiderBoss
 	WorstBossDiff logsRaiderBoss
-	SpecName string
+	SpecName      string
 }
 
-type logsRaider struct { 
-	TimeOfData  string 				 `json:"timeOfData"`
-	CountOfRaidersInCalculation int  `json:"countOfRaidersInCalculation"` 
-	URL         string               `json:"url"`
-	WorldBuffs  map[int]logWorldBuff `json:"worldBuffs"`
-	Consumes    bool                 `json:"consumes"`
-	Parses      logsRaiderParse      `json:"parses"`
-	LastRaid    logPlayer            `json:"lastRaidStats"`
-	AverageRaid map[string]logPlayer `json:"averageRaidStats"` //Given a period of three months \ two months \ 1 month
+type logsRaider struct {
+	TimeOfData                  string               `json:"timeOfData"`
+	CountOfRaidersInCalculation int                  `json:"countOfRaidersInCalculation"`
+	URL                         string               `json:"url"`
+	WorldBuffs                  map[int]logWorldBuff `json:"worldBuffs"`
+	Consumes                    bool                 `json:"consumes"`
+	Parses                      logsRaiderParse      `json:"parses"`
+	LastRaid                    logPlayer            `json:"lastRaidStats"`
+	AverageRaid                 map[string]logPlayer `json:"averageRaidStats"` //Given a period of three months \ two months \ 1 month
 }
 
 type logAllData struct { //Raw data
@@ -271,13 +271,13 @@ type logPlayer struct {
 	WorldBuffs       []logWorldBuff
 	WorldBuffSummary string
 	//Enchants         []logPlayerEnchant
-	Deaths           []logPlayerDeath
-	DeathSummary     string
-	Abilities        []logPlayerAbility
+	Deaths          []logPlayerDeath
+	DeathSummary    string
+	Abilities       []logPlayerAbility
 	AbillitySummary string
-	MinuteAPM        float64
-	ActiveTimeMS     int64
-	Consumables      map[string]consumable
+	MinuteAPM       float64
+	ActiveTimeMS    int64
+	Consumables     map[string]consumable
 }
 
 type logPlayerSpec struct {
@@ -341,7 +341,7 @@ type applicationCommand struct {
 	Name               string
 	Template           *discordgo.ApplicationCommand
 	Responses          map[string]applicationResponse
-	Messages 		   map[string]*discordgo.MessageCreate
+	Messages           map[string]*discordgo.MessageCreate
 	RequiresPriviledge bool
 	Interaction        *discordgo.Interaction
 }
@@ -363,11 +363,11 @@ type raidHelper struct {
 
 // Must follow the API structure of the official documentation https://raid-helper.dev/documentation/api
 type raidHelperEvent struct {
-	LeaderID    string            `json:"leaderId"`
-	Time        string            `json:"time"`
-	Date        string            `json:"date"`
-	Title       string            `json:"title"`
-	Description string            `json:"description"`
+	LeaderID    string `json:"leaderId"`
+	Time        string `json:"time"`
+	Date        string `json:"date"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 // Must follow the API structure of the official documentation https://raid-helper.dev/documentation/api
@@ -402,29 +402,31 @@ type WarcraftLogTokenCurrent struct {
 
 type SyncGroupScema struct {
 	ColorOfRole *int
-	GroupNames []string
+	GroupNames  []string
 }
 
 var (
 	classesImport  = []classesInternal{}
 	emojiesImport  = []emojies{}
 	KeyvaultConfig = keyvault{}
-	configCurrent = config{
-		ServerID: serverID,
+	configCurrent  = config{
+		ServerID:            serverID,
 		WarcraftLogsGuildID: strconv.Itoa(warcraftLogsGuildID),
-		WarcraftLogsAppID: warcraftLogsAppID,
-		DiscordAppID: crackedAppID,
+		WarcraftLogsAppID:   warcraftLogsAppID,
+		DiscordAppID:        crackedAppID,
 	}
+
+	automaticAnnounceDiscordChannel = &discordgo.Channel{}
 
 	//Used by function CalculateRaiderPerformance()
 	mapOfPointScale = map[string]int{
-		"pointScaleAPM/APM": 2,
-		"pointScaleDeath/Death rate": 4,
+		"pointScaleAPM/APM":                2,
+		"pointScaleDeath/Death rate":       4,
 		"pointScaleParse/Parse low & high": 8,
-		"pointScaleStat/DPS & HPS": 8,
+		"pointScaleStat/DPS & HPS":         8,
 	}
 
-	mapOfBossesToSkip = map[string]int{
+	mapOfBossesToSkip = map[string]int{ //Should finish this - Will depend on if their are bosses in TBC that is also not regarded in warcraftlogs
 		"Gothik the Harvester": 123,
 	}
 
@@ -532,45 +534,45 @@ var (
 	}
 
 	slashCommandAllUsers = map[string]applicationCommand{
-			"aboutme": {
-				Template: &discordgo.ApplicationCommand{
-					Name:        "aboutme",
-					Description: fmt.Sprintf("See information about your main char in <Hardened> %s", crackedBuiltin),
-					Version:     "1",
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-							Name:        "logs",
-							Description: "Use the 'logs' command to open a sub-menu related to your personal log data",
-							Required:    false,
-							Options: []*discordgo.ApplicationCommandOption{
-								{
-									Type:        discordgo.ApplicationCommandOptionBoolean,
-									Name:        "newest",
-									Description: "See stats about your last main-raid's performance",
-									Required:    false,
-								},
-								{
-									Type:        discordgo.ApplicationCommandOptionInteger,
-									Name:        "count",
-									Description: "Specify the number of raids to include in the performance calculation",
-									Required:    false,
-								},
-								{
-									Type:        discordgo.ApplicationCommandOptionBoolean,
-									Name:        "allstars",
-									Description: "See information about your warcraft-logs allstar's for your main",
-									Required:    false,
-								},
-								{
-									Type:        discordgo.ApplicationCommandOptionString,
-									Name:        "date",
-									Description: "See stats from a specific raid, parse date e.g. 17-04-2025",
-									Required:    false,
-								},
+		"aboutme": {
+			Template: &discordgo.ApplicationCommand{
+				Name:        "aboutme",
+				Description: fmt.Sprintf("See information about your main char in <Hardened> %s", crackedBuiltin),
+				Version:     "1",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Name:        "logs",
+						Description: "Use the 'logs' command to open a sub-menu related to your personal log data",
+						Required:    false,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Type:        discordgo.ApplicationCommandOptionBoolean,
+								Name:        "newest",
+								Description: "See stats about your last main-raid's performance",
+								Required:    false,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionInteger,
+								Name:        "count",
+								Description: "Specify the number of raids to include in the performance calculation",
+								Required:    false,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionBoolean,
+								Name:        "allstars",
+								Description: "See information about your warcraft-logs allstar's for your main",
+								Required:    false,
+							},
+							{
+								Type:        discordgo.ApplicationCommandOptionString,
+								Name:        "date",
+								Description: "See stats from a specific raid, parse date e.g. 17-04-2025",
+								Required:    false,
 							},
 						},
-						/*
+					},
+					/*
 						{
 							Name:        "playerinfo",
 							Description: "Use the 'playerinfo' command to see a sub-menu of options related to you",
@@ -590,15 +592,15 @@ var (
 								},
 							},
 						},*/
-					},
-				},
-				Responses: map[string]applicationResponse{
-					"overallinformation": {},
 				},
 			},
+			Responses: map[string]applicationResponse{
+				"overallinformation": {},
+			},
+		},
 		"howto": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "howto",
+				Name:        "howto",
 				Description: "Get help about how to use the bot",
 			},
 		},
@@ -616,20 +618,20 @@ var (
 		},
 		"myreminder": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "myreminder",
+				Name:        "myreminder",
 				Description: "Create an alert - The bot will notify you, once the time is up!",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
-						Name: "title",
-						Required: true,
+						Name:        "title",
+						Required:    true,
 						Description: "What would you like to be reminded of?",
-						Type: discordgo.ApplicationCommandOptionString,
+						Type:        discordgo.ApplicationCommandOptionString,
 					},
 					{
-						Name: "time",
-						Required: true,
+						Name:        "time",
+						Required:    true,
 						Description: "When would you like to be alerted? In format: `1h30m15s` (Countdown) or `23:59:59` (Servertime)",
-						Type: discordgo.ApplicationCommandOptionString,
+						Type:        discordgo.ApplicationCommandOptionString,
 					},
 				},
 			},
@@ -646,11 +648,11 @@ var (
 									Color: blueColor,
 									Fields: []*discordgo.MessageEmbedField{
 										{
-											Name: "If you want a clock format (Remember it will be server time)",
+											Name:  "If you want a clock format (Remember it will be server time)",
 											Value: "`11:00:00`\n`13:55:27`\n`12:01:00`\n(You **must** add hours, minutes & seconds)",
 										},
 										{
-											Name: "If you want countdown format",
+											Name:  "If you want countdown format",
 											Value: "`1h30m15s`\n`1h30m`\n`1h`\n`30m10s`\n`15m`\n`50s`",
 										},
 									},
@@ -663,86 +665,86 @@ var (
 		},
 
 		/*
-		"mynewmain": {
-			Template: &discordgo.ApplicationCommand{
-				Name:        "mynewmain",
-				Description: "Define your new main, this command must be accepted by an officer",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Name:        "oldmainname",
-						Description: "Type name with same symbols, e.g. Wyzzlò",
-						Type:        discordgo.ApplicationCommandOptionString,
-						Required:    true,
+			"mynewmain": {
+				Template: &discordgo.ApplicationCommand{
+					Name:        "mynewmain",
+					Description: "Define your new main, this command must be accepted by an officer",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "oldmainname",
+							Description: "Type name with same symbols, e.g. Wyzzlò",
+							Type:        discordgo.ApplicationCommandOptionString,
+							Required:    true,
+						},
 					},
 				},
 			},
-		},
 		*/
 		"myraiderperformance": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "myraiderperformance",
+				Name:        "myraiderperformance",
 				Description: fmt.Sprintf("See general information about your mains raid-performance in %s", guildName),
 			},
 		},
 		"hi": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "hi",
+				Name:        "hi",
 				Description: "Say hi to the bot from any channel to can type in!",
 			},
 		},
 		"joke": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "joke",
+				Name:        "joke",
 				Description: "Make the bot do a joke in your current channel",
 			},
 		},
 		"feedback": {
-    Template: &discordgo.ApplicationCommand{
-        Name:        "feedback",
-        Description: "Send feedback directly to the officer team. This is GREATLY appriciated",
-        Options: []*discordgo.ApplicationCommandOption{
-            {
-                Name:        "subject",
-                Description: "What is the subject of the matter?",
-                Type:        discordgo.ApplicationCommandOptionString,
-                Required:    true,
-                Choices:     DefineFeedbackOptionsForTemplate(), // Depends on feedbackSubjectsSlice
-            },
-            {
-                Name:        "anonymous",
-                Description: "Do you want this feedback to be anonymous? Set to true",
-                Type:        discordgo.ApplicationCommandOptionBoolean,
-                Required:    true,
-            },
-        },
-    },
-    Responses: map[string]applicationResponse{
-        "description": {
-		Response: &discordgo.InteractionResponse{
-            Type: discordgo.InteractionResponseModal,
-            Data: &discordgo.InteractionResponseData{
-                CustomID: "feedback_modal",
-                Title:    "Submit Feedback",
-                Components: []discordgo.MessageComponent{
-                    discordgo.ActionsRow{
-                        Components: []discordgo.MessageComponent{
-                            &discordgo.TextInput{
-                                CustomID:    "feedback_description",
-                                Label:       "Describe your feedback",
-                                Style:       discordgo.TextInputParagraph, // multi-line
-                                Placeholder: "What do you want to tell the officer team?",
-                                Required:    true,
-                                MinLength:   10,
-                                MaxLength:   4000, // enough for 300+ words
-                            },
-                       		 },
-                    	},
-                	},
-            	},
-        	},
-    	},
-	},
-	}}
+			Template: &discordgo.ApplicationCommand{
+				Name:        "feedback",
+				Description: "Send feedback directly to the officer team. This is GREATLY appriciated",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "subject",
+						Description: "What is the subject of the matter?",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required:    true,
+						Choices:     DefineFeedbackOptionsForTemplate(), // Depends on feedbackSubjectsSlice
+					},
+					{
+						Name:        "anonymous",
+						Description: "Do you want this feedback to be anonymous? Set to true",
+						Type:        discordgo.ApplicationCommandOptionBoolean,
+						Required:    true,
+					},
+				},
+			},
+			Responses: map[string]applicationResponse{
+				"description": {
+					Response: &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseModal,
+						Data: &discordgo.InteractionResponseData{
+							CustomID: "feedback_modal",
+							Title:    "Submit Feedback",
+							Components: []discordgo.MessageComponent{
+								discordgo.ActionsRow{
+									Components: []discordgo.MessageComponent{
+										&discordgo.TextInput{
+											CustomID:    "feedback_description",
+											Label:       "Describe your feedback",
+											Style:       discordgo.TextInputParagraph, // multi-line
+											Placeholder: "What do you want to tell the officer team?",
+											Required:    true,
+											MinLength:   10,
+											MaxLength:   4000, // enough for 300+ words
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}}
 
 	slashCommandAdminUserOptions = map[string]*discordgo.ApplicationCommandOption{
 		"playername": {
@@ -756,19 +758,19 @@ var (
 	slashCommandAdminCenter = map[string]applicationCommand{
 		"announcebot": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "announcebot",
+				Name:        "announcebot",
 				Description: "Run the raidautomator announcement program",
 			},
 		},
 		"deletebotchannel": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "deletebotchannel",
+				Name:        "deletebotchannel",
 				Description: "Force the bot to refresh its own bot-channel",
 			},
 		},
 		"benchreason": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "benchreason",
+				Name:        "benchreason",
 				Description: "All benched players are automatically added but with this command, you can add a `reason`",
 			},
 			Responses: map[string]applicationResponse{
@@ -777,7 +779,7 @@ var (
 						Type: discordgo.InteractionResponseModal,
 						Data: &discordgo.InteractionResponseData{
 							CustomID: "bench_modal",
-							Title: "Define specific bench reasons",
+							Title:    "Define specific bench reasons",
 							Components: []discordgo.MessageComponent{
 								discordgo.ActionsRow{
 									Components: []discordgo.MessageComponent{
@@ -788,22 +790,22 @@ var (
 											Placeholder: "General bench reason",
 											Required:    true,
 											MaxLength:   100,
-											MinLength: 10,
+											MinLength:   10,
 										},
 									},
 								},
-							discordgo.ActionsRow{
-								Components: []discordgo.MessageComponent{
-									&discordgo.TextInput{
-										CustomID:    "specific_reason",
-										Label:       "Specific reasons (one per line)",
-										Style:       discordgo.TextInputParagraph,
-										Placeholder: "name=reason (one per line)",
-										Required:    false,
-										MaxLength:   4000,
+								discordgo.ActionsRow{
+									Components: []discordgo.MessageComponent{
+										&discordgo.TextInput{
+											CustomID:    "specific_reason",
+											Label:       "Specific reasons (one per line)",
+											Style:       discordgo.TextInputParagraph,
+											Placeholder: "name=reason (one per line)",
+											Required:    false,
+											MaxLength:   4000,
+										},
 									},
 								},
-							},
 							},
 						},
 					},
@@ -955,7 +957,7 @@ var (
 			Template: &discordgo.ApplicationCommand{
 				Name:        "seeraiderattendance",
 				Description: "Get a full overview over all raiders attendance",
-				Options: slashCommandAdminUserOptions["playername"].Options,
+				Options:     slashCommandAdminUserOptions["playername"].Options,
 			},
 		},
 		"seeraidermissedraids": {
@@ -974,30 +976,30 @@ var (
 		},
 		"seebench": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "seebench",
+				Name:        "seebench",
 				Description: "See an overview of all stats related to raiders being benched from raids the last week",
 
 				Options: []*discordgo.ApplicationCommandOption{
 					{
-						Name: "period",
-						Required: true,
+						Name:        "period",
+						Required:    true,
 						Description: "Choose the period from the list",
-						Type: discordgo.ApplicationCommandOptionString,
+						Type:        discordgo.ApplicationCommandOptionString,
 						Choices: []*discordgo.ApplicationCommandOptionChoice{
 							{
-								Name: "Last week",
+								Name:  "Last week",
 								Value: "lastWeek",
 							},
 							{
-								Name: "Last 4 weeks",
+								Name:  "Last 4 weeks",
 								Value: "oneMonth",
 							},
 							{
-								Name: "Last 3 months",
+								Name:  "Last 3 months",
 								Value: "threeMonth",
 							},
 							{
-								Name: "Since guild startet",
+								Name:  "Since guild startet",
 								Value: "start",
 							},
 						},
@@ -1008,7 +1010,7 @@ var (
 		},
 		"updateweeklyattendance": {
 			Template: &discordgo.ApplicationCommand{
-				Name: "updateweeklyattendance",
+				Name:        "updateweeklyattendance",
 				Description: "Manually update the weekly attendance for raiders, cracked will automatically do it fridays at 12:00",
 			},
 		},
@@ -1032,9 +1034,9 @@ var (
 				Description: "Sync all raiders into specific category roles takes several minutes",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
-						Name: "fullsync",
-						Required: true,
-						Type: discordgo.ApplicationCommandOptionBoolean,
+						Name:        "fullsync",
+						Required:    true,
+						Type:        discordgo.ApplicationCommandOptionBoolean,
 						Description: "Perform a full sync of all raiders - will take several minutes to complete...",
 					},
 				},
@@ -1145,7 +1147,7 @@ var (
 			}`,
 			"variables": map[string]any{
 				"guildID": warcraftLogsGuildID, // Replace with the actual Guild ID from Step 1
-				"page": 1,
+				"page":    1,
 			},
 		},
 		"allFightIDsForRaid": {
@@ -1295,12 +1297,12 @@ var (
 	}
 
 	mapOfConstantOfficers = map[string]string{
-		"officerGMArlissa":  officerGMArlissa,
-		"officerPriest":  officerPriest,
-		"officerRogue":   officerRogue,
-		"officerWarrior": officerWarrior,
-		"officerMage": officerMage,
-		"officerDruid": officerDruid,
+		"officerGMArlissa": officerGMArlissa,
+		"officerPriest":    officerPriest,
+		"officerRogue":     officerRogue,
+		"officerWarrior":   officerWarrior,
+		"officerMage":      officerMage,
+		"officerDruid":     officerDruid,
 	}
 
 	mapOfLoggers = map[string]string{
@@ -1326,7 +1328,7 @@ var (
 	classesPath             = baseCachePath + "classes.json"
 	keyvaultPath            = baseCachePath + "keyvault.json"
 	emojiesPath             = baseCachePath + "emojies.json"
-	configPath 				= baseCachePath + "config.json"
+	configPath              = baseCachePath + "config.json"
 	raidHelperEventsPath    = baseCachePath + "raid_helper_events.json"
 	belowRaidersCachePath   = baseCachePath + "cache_trials_pugs.json"
 	raidersCachePath        = baseCachePath + "cache_raiders.json"
@@ -1336,15 +1338,15 @@ var (
 	raidAllDataPath         = baseCachePath + "cache_raid_all_data.json"
 	informationLogPath      = baseCachePath + "information_log.json" // Will grow over time
 	//errorLogPathWarcraftLogs = baseCachePath + "warcraft_logs_query_errors.json" // Will grow over time
-	errorLogPath             = baseCachePath + "error_log.json" // Will grow over time
-	customSchedulePath       = baseCachePath + "custom_schedules.json"
+	errorLogPath       = baseCachePath + "error_log.json" // Will grow over time
+	customSchedulePath = baseCachePath + "custom_schedules.json"
 
 	ScheduledEvents = []schedule{ //NIL
 		{
-			Name: "updateweeklyattendance",
+			Name:       "updateweeklyattendance",
 			HourMinute: "12:00",
-			Weekday: time.Friday,
-			Interval: 7,
+			Weekday:    time.Friday,
+			Interval:   7,
 		},
 		/*
 			{
@@ -1424,9 +1426,9 @@ var (
 		17626: "Flask of the Titans",
 	}
 
-	mapOfMergedGroups = map[string]SyncGroupScema {
-		"Melee": { 
-			ColorOfRole: GetIntPointer(0x553A46),	
+	mapOfMergedGroups = map[string]SyncGroupScema{
+		"Melee": {
+			ColorOfRole: GetIntPointer(0x553A46),
 			GroupNames: []string{
 				"Warrior",
 				"Rogue",
@@ -1435,8 +1437,8 @@ var (
 				"Paladin",
 			},
 		},
-		"Ranged": { 
-			ColorOfRole: GetIntPointer(0x3498db),	
+		"Ranged": {
+			ColorOfRole: GetIntPointer(0x3498db),
 			GroupNames: []string{
 				"Mage",
 				"Warlock",
@@ -1446,7 +1448,7 @@ var (
 			},
 		},
 		"Healer": {
-			ColorOfRole: GetIntPointer(0x979c9f),	
+			ColorOfRole: GetIntPointer(0x979c9f),
 			GroupNames: []string{
 				"Druid",
 				"Priest",
@@ -1455,7 +1457,7 @@ var (
 			},
 		},
 		"Tank": {
-			ColorOfRole: GetIntPointer(0x422f04),	
+			ColorOfRole: GetIntPointer(0x422f04),
 			GroupNames: []string{
 				"Druid",
 				"Warrior",
@@ -1480,33 +1482,33 @@ var (
 	redColor    = 0xFF0000 // Pure Red
 	blueColor   = 0x0000FF // Pure Blue
 
-	raiderCacheMutex          sync.Mutex
-	raidHelperCascheMutex 	  sync.Mutex
-	errorLogMutex             sync.Mutex
-	configCacheMutex          sync.Mutex
+	raiderCacheMutex       sync.Mutex
+	raidHelperCascheMutex  sync.Mutex
+	errorLogMutex          sync.Mutex
+	configCacheMutex       sync.Mutex
 	MapOfUserDefinedAlerts sync.Map
 
 	GuildStartTime time.Time
 )
 
 const (
-	serverID           = "630793944632131594"
+	serverID            = "630793944632131594"
 	warcraftLogsGuildID = 773986
-	botName            = "raid-automater"
-	guildName 		   = "Hardened"
-	channelInfo        = "1308521695564402899"
-	channelFeedback    = "1441245331214958625"
-	channelLog         = "1318700380900823103"
-	channelGeneral     = "1308521052036530291"
-	channelGearCheck   = "1396200186208063608"
-	channelVoting      = "1316379489906855936"
-	channelSignUp      = "1346922479951675483" 
-	channelSignUpPug   = "1334949433208606791"
+	botName             = "raid-automater"
+	guildName           = "Hardened"
+	channelInfo         = "1308521695564402899"
+	channelFeedback     = "1441245331214958625"
+	channelLog          = "1318700380900823103"
+	channelGeneral      = "1308521052036530291"
+	channelGearCheck    = "1396200186208063608"
+	channelVoting       = "1316379489906855936"
+	channelSignUp       = "1346922479951675483"
+	channelSignUpPug    = "1334949433208606791"
 	channelSignUpNaxx   = "1418598263782899832"
-	channelWelcome     = "1309312094822203402"
-	channelBot         = "1336098468615426189"
-	channelServerRules = "1312791528267186216"
-	channelOfficer     = "1308522605065539714"
+	channelWelcome      = "1309312094822203402"
+	channelBot          = "1336098468615426189"
+	channelServerRules  = "1312791528267186216"
+	channelOfficer      = "1308522605065539714"
 
 	channelNameAnnouncement = "bot-assistance-🤖"
 
@@ -1530,7 +1532,7 @@ const (
 	mc                 = "<:mc:1355865300951892008>"
 	bwl                = "<:bwl:1355867897431593000>"
 
-	categoryBot = "1336097759073140920"
+	categoryBot        = "1336097759073140920"
 	categoryAssistance = "1465470731893866526"
 
 	roleTemp        = "1335442062459535371"
@@ -1547,15 +1549,15 @@ const (
 	roleDruid       = "1314533133688897577"
 	rolePriest      = "1314533393614241832"
 
-	roleOfficer = "1309512897612746752"
+	roleOfficer    = "1309512897612746752"
 	roleRaidLeader = "1308525656031625317"
 
-	officerGMArlissa      = "346353264461217795/Arlissa"
-	officerPriest         = "812709542554370098/Throyn"
-	officerRogue          = "655113437327917065/Akasuna"
-	officerWarrior        = "626123398681985054/Joebaldo"
-	officerMage           = "232480016854679553/Dumblydore"
-	officerDruid 		  = "231066682842415105/Sleepybear"
+	officerGMArlissa = "346353264461217795/Arlissa"
+	officerPriest    = "812709542554370098/Throyn"
+	officerRogue     = "655113437327917065/Akasuna"
+	officerWarrior   = "626123398681985054/Joebaldo"
+	officerMage      = "232480016854679553/Dumblydore"
+	officerDruid     = "231066682842415105/Sleepybear"
 
 	officialLogger1 = "276387587155820544" //Zyrtek
 
@@ -1569,8 +1571,8 @@ const (
 	permissionReadMessages   = int64(1 << 11) // 2048
 	permissionManageMessages = int64(1 << 13) // 8192
 
-	timeLayout     = "January 2, 2006 15:04:05"
-	timeLayoutLogs = "02-01-2006 15:04:05"
+	timeLayout      = "January 2, 2006 15:04:05"
+	timeLayoutLogs  = "02-01-2006 15:04:05"
 	timeLayOutShort = "02-01-2006"
 
 	warcraftLogsAppID      = "a09d4ea0-ff4f-4d30-8d8b-f25f30303c8d"
@@ -1580,8 +1582,8 @@ const (
 
 	azureStorageURI = "raiderbuild.blob.core.windows.net"
 
-	logWarningsName = "information_log.json"
-	logErrorName = "error_log.json"
+	logWarningsName    = "information_log.json"
+	logErrorName       = "error_log.json"
 	azureContainerName = "logs"
 )
 
@@ -1600,25 +1602,25 @@ func CheckRuntime() {
 		log.Fatalf("An error occured while trying to create file %s Please make sure the program has write access to the folder, error is: %s", logErrorName, err)
 	}
 	time.Sleep(5 * time.Second)
-	
+
 	ImportKeyvaultConfig()
 	WriteInformationLog("Keyvault config successfully imported during start-up", "Import Keyvault config")
 	ImportEmojies()
 	WriteInformationLog("Emojie config successfully imported during start-up", "Import Emojie config")
 	ImportClasses()
 	WriteInformationLog("Class config successfully imported during start-up", "Import Class config")
-	
+
 	azCred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
 		WriteErrorLog("An error occured while trying to retrieve the default system assigned managed identity: Inside function CheckRuntime", err.Error())
 	} else {
 		WriteInformationLog("Default system assigned identity successfully retrieved during start-up", "Import Identity")
 	}
-	
-	azKeyvaultClient, err := azsecrets.NewClient(KeyvaultConfig.URI, azCred, nil)
+
+	azKeyvaultClient, err := azsecrets.NewClient(KeyvaultConfig.Name, azCred, nil)
 
 	if err != nil {
-		WriteErrorLog(fmt.Sprintf("An error occured while trying to start a new key vault client to: %s", KeyvaultConfig.URI), err.Error())
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to start a new key vault client to: %s", KeyvaultConfig.Name), err.Error())
 	} else {
 		WriteInformationLog("Keyvault client successfully established during start-up", "Import Keyvault client")
 	}
@@ -1631,6 +1633,7 @@ func CheckRuntime() {
 			mapOfTokens[tokenConfig.Name] = *secret.Value
 		}
 	}
+
 	marshal := GetHttpResponseData("POST", "", "https://www.warcraftlogs.com/oauth/token", nil, true)
 	if mapOfToken, ok := marshal.(map[string]any); ok {
 		for attributeName, value := range mapOfToken {
@@ -1639,7 +1642,7 @@ func CheckRuntime() {
 			}
 		}
 	}
-	
+
 	if _, ok := mapOfTokens["warcraftLogsRefreshToken"]; !ok {
 		log.Fatalf("The warcraftlogs token could not be obtained and therefor the application must stop. See the error log at %s during startup", errorLogPath)
 	}
@@ -1698,12 +1701,11 @@ func main() {
 	//UseSlashCommand(BotSessionMain) //Contains go-routines
 	//DeleteOldSlashCommand(BotSessionMain)
 	//CalculateRaidWeightsProcent()
-	go AutoAnnounceTracker(5 * time.Second, BotSessionMain)
+	go AutoAnnounceTracker(5*time.Second, BotSessionMain)
 
 	AutoUpdateRaidLogCache(BotSessionMain, []string{})
 	//go DeleteOldBotChannels(1, 30, BotSessionMain)
-	
-	
+
 	if profiles := ReadWriteRaiderProfiles(nil, true); len(profiles) == 0 {
 		InitializeDiscordProfiles(InitializeRaiderProfiles(), BotSessionMain, true) //Retrieve ALL raiders from ANY time since the guild startet logging
 	}
@@ -1733,13 +1735,14 @@ func main() {
 	for x, taskSchedule := range ScheduledEvents {
 		fmt.Println(x, " -- ", "Task:", taskSchedule, "Time", taskSchedule.HourMinute, "Day", taskSchedule.Weekday.String())
 		switch taskSchedule.Name {
-		case "updateweeklyattendance": {
-			RunAtSpecificTime(func() {
-				WriteInformationLog(AddWeeklyRaiderAttendance(), "Updating weekly attendance")
-			}, taskSchedule, false)
+		case "updateweeklyattendance":
+			{
+				RunAtSpecificTime(func() {
+					WriteInformationLog(AddWeeklyRaiderAttendance(), "Updating weekly attendance")
+				}, taskSchedule, false)
+			}
 		}
 	}
-}
 	//fmt.Println(len(GetAllWarcraftLogsRaidData(false, true)))
 	//Since we are running inside a PaaS service, we will never stop unless forced
 	stop := make(chan os.Signal, 1)
@@ -1778,7 +1781,7 @@ func DefineFeedbackOptionsForTemplate() []*discordgo.ApplicationCommandOptionCho
 	returnCommandOptionChoice := []*discordgo.ApplicationCommandOptionChoice{}
 	for _, subject := range feedbackSubjectsSlice {
 		choice := &discordgo.ApplicationCommandOptionChoice{
-			Name: subject,
+			Name:  subject,
 			Value: subject,
 		}
 		returnCommandOptionChoice = append(returnCommandOptionChoice, choice)
@@ -1814,30 +1817,30 @@ func ManageMergedGroups(session *discordgo.Session, syncType string) []string {
 	if syncType == "full" {
 		lookbackDuration = 30 * 24 * time.Hour
 		for _, mergedGroupName := range rootRoleNames {
-		roleID := mapOfRoles[mergedGroupName]
-		if roleID != "" && !mapOfDeletedRoles[mergedGroupName] {
-			err := session.GuildRoleDelete(serverID, roleID)
-			if err != nil {
-				WriteErrorLog(fmt.Sprintf("An error occured while trying to delete channel %s, during the function ManageMergedGroups()", mergedGroupName), err.Error())
-				return []string{fmt.Sprintf("An internal error occured - Please contact %s", )}
-			}
-			mentionable := true
-			newRole, err := session.GuildRoleCreate(serverID, &discordgo.RoleParams{
-				Name: mergedGroupName,
-				Mentionable: &mentionable,
-				Color: mapOfMergedGroups[mergedGroupName].ColorOfRole,
-			})
-			if err != nil {
-				WriteErrorLog(fmt.Sprintf("An error occured while trying to create channel %s, during the function ManageMergedGroups()", mergedGroupName), err.Error())
-				return []string{fmt.Sprintf("An internal error occured - Please contact %s", SplitOfficerName(officerGMArlissa)["Name"])}
-			}
-			WriteInformationLog(fmt.Sprintf("The channel %s has been successfully created, during the function ManageMergedGroups()", mergedGroupName), "Successfully creating discord channel")
-			mapOfDeletedRoles[mergedGroupName] = true
-			mapOfRoles[mergedGroupName] = newRole.ID
+			roleID := mapOfRoles[mergedGroupName]
+			if roleID != "" && !mapOfDeletedRoles[mergedGroupName] {
+				err := session.GuildRoleDelete(serverID, roleID)
+				if err != nil {
+					WriteErrorLog(fmt.Sprintf("An error occured while trying to delete channel %s, during the function ManageMergedGroups()", mergedGroupName), err.Error())
+					return []string{fmt.Sprintf("An internal error occured - Please contact %s")}
+				}
+				mentionable := true
+				newRole, err := session.GuildRoleCreate(serverID, &discordgo.RoleParams{
+					Name:        mergedGroupName,
+					Mentionable: &mentionable,
+					Color:       mapOfMergedGroups[mergedGroupName].ColorOfRole,
+				})
+				if err != nil {
+					WriteErrorLog(fmt.Sprintf("An error occured while trying to create channel %s, during the function ManageMergedGroups()", mergedGroupName), err.Error())
+					return []string{fmt.Sprintf("An internal error occured - Please contact %s", SplitOfficerName(officerGMArlissa)["Name"])}
+				}
+				WriteInformationLog(fmt.Sprintf("The channel %s has been successfully created, during the function ManageMergedGroups()", mergedGroupName), "Successfully creating discord channel")
+				mapOfDeletedRoles[mergedGroupName] = true
+				mapOfRoles[mergedGroupName] = newRole.ID
 			}
 		}
 	}
-	
+
 	raidMembers := RetrieveUsersInRole([]string{roleRaider, roleTrial}, session) //SLICE OF IDS
 
 	raidCache, err := ReadRaidDataCache((time.Now().Add(-lookbackDuration)), true)
@@ -1847,7 +1850,7 @@ func ManageMergedGroups(session *discordgo.Session, syncType string) []string {
 	}
 	for _, log := range raidCache {
 		for _, player := range log.Players {
-			 if !mapOfPlayers[player.Name] {
+			if !mapOfPlayers[player.Name] {
 				raider := false
 				raiderDiscordID := ResolvePlayerName(player.Name, session)
 				if slices.Contains(raidMembers, raiderDiscordID) {
@@ -1869,14 +1872,14 @@ func ManageMergedGroups(session *discordgo.Session, syncType string) []string {
 							WriteErrorLog(fmt.Sprintf("An error occured while trying to add player: %s to group %s, during the function ManageMergedGroups()", player.Name, spec.TypeRole), err.Error())
 							continue
 						}
-						WriteInformationLog(fmt.Sprintf("Player: %s has been successfully added to merged group %s", player.Name, spec.TypeRole), "Successfully added player to group")	
+						WriteInformationLog(fmt.Sprintf("Player: %s has been successfully added to merged group %s", player.Name, spec.TypeRole), "Successfully added player to group")
 					}
 				}
 				mapOfPlayers[player.Name] = true
-			 }
+			}
 		}
 	}
-	
+
 	var returnString strings.Builder
 	returnString.WriteString("```\n")
 	returnString.WriteString("Player           | Raider |\n")
@@ -1918,10 +1921,10 @@ func DeleteOldBotChannels(timeInMinutes int, maxAwaitInMinutes int, session *dis
 		timeNow := time.Now()
 		for _, channel := range botChannels {
 			if strings.Contains(channel.Name, "automatic-") {
-				allChannelMessages, _  := session.ChannelMessages(channel.ID, 100, "", "", "")
+				allChannelMessages, _ := session.ChannelMessages(channel.ID, 100, "", "", "")
 				timeLastMessage := allChannelMessages[0].Timestamp
 				timeDuration := timeNow.Sub(timeLastMessage)
-				if timeDuration > time.Duration(maxAwaitInMinutes) *time.Minute {
+				if timeDuration > time.Duration(maxAwaitInMinutes)*time.Minute {
 					_, err := session.ChannelDelete(channel.ID)
 					if err != nil {
 						WriteErrorLog(fmt.Sprintf("An error occured while trying to delete channel %s %s, during the function DeleteOldBotChannels()", channel.ID, channel.Name), err.Error())
@@ -1929,7 +1932,7 @@ func DeleteOldBotChannels(timeInMinutes int, maxAwaitInMinutes int, session *dis
 					}
 					WriteInformationLog(fmt.Sprintf("The bot channel was successfully deleted - %s %s, during the function DeleteOldBotChannels()", channel.ID, channel.Name), "Successfully deleted channel")
 					regexID := regexp.MustCompile(`<@(\d+)>`)
-					messageContent := allChannelMessages[len(allChannelMessages) -2].Content //The last element in the array is empty - Second last is the actual message
+					messageContent := allChannelMessages[len(allChannelMessages)-2].Content //The last element in the array is empty - Second last is the actual message
 					playerIDSlice := regexID.FindStringSubmatch(messageContent)
 					if len(playerIDSlice) < 1 {
 						WriteErrorLog(fmt.Sprintf("No player ID was found in the first message from the bot, so the user cannot be deleted - Message %s, during the function DeleteOldBotChannels()", messageContent), err.Error())
@@ -1964,12 +1967,12 @@ func NewInteractionResponseToSpecificCommand(logType int, data string, discordTy
 		return discordgo.InteractionResponse{}
 	}
 
-	if len(discordType) == 0 { 
+	if len(discordType) == 0 {
 		templateCopy.Type = discordgo.InteractionResponseChannelMessageWithSource
 	} else {
 		templateCopy.Type = discordType[0]
 		if templateCopy.Data == nil {
-    		templateCopy.Data = &discordgo.InteractionResponseData{}
+			templateCopy.Data = &discordgo.InteractionResponseData{}
 		}
 		templateCopy.Data.Flags |= discordgo.MessageFlagsEphemeral
 		return templateCopy
@@ -2034,15 +2037,15 @@ func NewInteractionResponseToSpecificCommand(logType int, data string, discordTy
 			}
 			templateCopy.Data = messageSuccessResponse
 		}
-	case 3: 
+	case 3:
 		{
 			templateCopy = *slashCommandGeneralResponses["buttonMessage"].Response
 			messageButtonRespond := &discordgo.InteractionResponseData{
 				Flags: discordgo.MessageFlagsEphemeral,
 				Embeds: []*discordgo.MessageEmbed{
 					{
-						Color: blueColor,
-						Title: messageSlice[0],
+						Color:       blueColor,
+						Title:       messageSlice[0],
 						Description: messageSlice[1],
 					},
 				},
@@ -2081,14 +2084,14 @@ func GetAllWarcraftLogsRaidData(inMem bool, newestOne bool, logCode string, botI
 	x := 1
 	for {
 		pageQuerie := mapOfWarcaftLogsQueries["guildLogsRaidIDs"]
-		if x != 1 || newestOne{
+		if x != 1 || newestOne {
 			pageQuerie = SetWarcraftLogQueryVariables(mapOfWarcaftLogsQueries["guildLogsRaidIDs"], x)[0]
 		}
 		if logs, ok := GetWarcraftLogsData(pageQuerie)["logs"].([]logsBase); ok {
 			if len(logs) == 0 {
 				break
 			}
-			allLogsBase = append(allLogsBase, logs...) 
+			allLogsBase = append(allLogsBase, logs...)
 		}
 		x++
 	}
@@ -2114,11 +2117,11 @@ func GetAllWarcraftLogsRaidData(inMem bool, newestOne bool, logCode string, botI
 	logsOfAllRaids := []logAllData{}
 	for x, query := range quriesToRun {
 		if doStatus {
-			interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Progess on job|**Completed %.1f%% so far**", float64(x) / float64(len(quriesToRun)) * 100))
+			interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Progess on job|**Completed %.1f%% so far**", float64(x)/float64(len(quriesToRun))*100))
 			_, err := innerSession.InteractionResponseEdit(event, &discordgo.WebhookEdit{
 				Embeds: &interactionResponse.Data.Embeds,
-		})
-		if err != nil {
+			})
+			if err != nil {
 				WriteErrorLog("An error occured while trying to sent status message to user during the function GetAllWarcraftLogsRaidData()", err.Error())
 			}
 		}
@@ -2246,8 +2249,6 @@ func RetrieveSpecificEncounterLog(encounterID map[string]int64) []map[string]any
 }
 
 func UnwrapFullWarcraftLogRaid(mapToUnwrap map[string]any, warcraftLogsQuery map[string]any) (logAllData, []int) {
-	test, _ := json.MarshalIndent(mapToUnwrap, "", " ")
-	os.WriteFile("testsaasd.json", test, 0644)
 	playerLogs := []logPlayer{}
 	mapSemiUnwrapped := map[string]any{} //mapToUnwrap["logs"].(map[string]any)["data"].(map[string]any)["reportData"].(map[string]any)["report"]
 	returnBeforeCleaning := logAllData{}
@@ -2323,7 +2324,7 @@ func UnwrapFullWarcraftLogRaid(mapToUnwrap map[string]any, warcraftLogsQuery map
 
 				if !strings.Contains(playerInfo["name"].(string), " ") {
 					playerLog := logPlayer{
-						Name:             playerInfo["name"].(string),
+						Name: playerInfo["name"].(string),
 						//DiscordID: ResolvePlayerID(),
 						WarcraftLogsGUID: int64(playerInfo["guid"].(float64)),
 						Specs:            playerSpecs,
@@ -2600,22 +2601,22 @@ func UpdateClassSpec(logs []logAllData) []logAllData {
 	for x, log := range logs {
 		for y, player := range log.Players {
 			for z, spec := range player.Specs {
-				if spec.TypeRole == "tank" || spec.TypeRole == "healer"  {
+				if spec.TypeRole == "tank" || spec.TypeRole == "healer" {
 					logs[x].Players[y].Specs[z].TypeRole = CapitalizeFirst(spec.TypeRole)
 					mapOfPlayers[player.Name] = true
 					break
 				}
 			}
 		}
-	for x, log := range logs {
-		for y, player := range log.Players {
-			for z, spec := range player.Specs {
-				if (spec.Name == "Elemental" || spec.Name == "Shadow" || spec.Name == "Balance" || player.ClassName == "Mage" || player.ClassName == "Warlock" || player.ClassName == "Hunter") && spec.TypeRole != "Tank" && spec.TypeRole != "Healer" && spec.MainSpec  {
-					logs[x].Players[y].Specs[z].TypeRole = "Ranged"
-					break
-				} else if (spec.Name == "Enhancement" || spec.Name == "Feral" || player.ClassName == "Warrior" || player.ClassName == "Rogue" || spec.Name == "Retribution") && spec.TypeRole != "Tank" && spec.TypeRole != "Healer" && spec.MainSpec {
-					logs[x].Players[y].Specs[z].TypeRole =  "Melee"
-					break
+		for x, log := range logs {
+			for y, player := range log.Players {
+				for z, spec := range player.Specs {
+					if (spec.Name == "Elemental" || spec.Name == "Shadow" || spec.Name == "Balance" || player.ClassName == "Mage" || player.ClassName == "Warlock" || player.ClassName == "Hunter") && spec.TypeRole != "Tank" && spec.TypeRole != "Healer" && spec.MainSpec {
+						logs[x].Players[y].Specs[z].TypeRole = "Ranged"
+						break
+					} else if (spec.Name == "Enhancement" || spec.Name == "Feral" || player.ClassName == "Warrior" || player.ClassName == "Rogue" || spec.Name == "Retribution") && spec.TypeRole != "Tank" && spec.TypeRole != "Healer" && spec.MainSpec {
+						logs[x].Players[y].Specs[z].TypeRole = "Melee"
+						break
 					}
 				}
 			}
@@ -2741,11 +2742,11 @@ func NewSlashCommand(session *discordgo.Session) {
 
 func DeleteOldSlashCommand(session *discordgo.Session) {
 	mapOfApplicationCommandsToKeep := make(map[string]bool)
-	for nameOfUserCommand, _ := range slashCommandAllUsers {
+	for nameOfUserCommand := range slashCommandAllUsers {
 		mapOfApplicationCommandsToKeep[nameOfUserCommand] = false //Initalize keys basically
 	}
 
-	for nameOfAdminCommand, _ := range slashCommandAdminCenter {
+	for nameOfAdminCommand := range slashCommandAdminCenter {
 		mapOfApplicationCommandsToKeep[nameOfAdminCommand] = false //Initalize keys basically
 	}
 	botID := session.State.User.ID
@@ -2990,25 +2991,6 @@ Average player-count: **%s**
 
 }
 
-/*
-	Average raid time in hrs/minutes/seconds: **%s**
-
-Average deaths per raid: **%s**
-
-Average item level: **%s**
-
-Average player count: **%s**
-
-%% Increase/Decrease in average item level: **%s%%**
-
-%% Increase/Decrease in average player count: **%s%%**
-
-%% Increase/Decrease in average deaths: **%s%%**
-%% Increase/Drecrease in average raid clear time: **%s%%**
-
-
-*/
-
 func FormatSecondsToStringFormat(seconds int64) string {
 	hours := seconds / 3600
 	minutes := (seconds % 3600) / 60
@@ -3043,8 +3025,6 @@ func SummarizeRaidLogMeta(dataLogged logAllData) string {
 	Raid average item level: **%.2f**
 	`, dataLogged.RaidStartTimeString, dataLogged.MetaData.Code, dataLogged.PlayersCount, dataLogged.TotalDeaths, dataLogged.RaidTimeString, strings.Join(dataLogged.RaidNames, " & "), dataLogged.RaidAverageItemLevel)
 }
-
-//func Determine
 
 func CreateMessageEmbedsLargeLogData(allLogData []logAllData) []*discordgo.MessageEmbed {
 	var embeds []*discordgo.MessageEmbed
@@ -3347,57 +3327,57 @@ func GetDiscordUser(event *discordgo.InteractionCreate) *discordgo.User {
 	return event.Member.User
 }
 
-
 func UseSlashCommand(session *discordgo.Session) {
 	session.AddHandler(func(innerSession *discordgo.Session, event *discordgo.InteractionCreate) {
 		userID := GetDiscordUser(event).ID
-		
+
 		if event.Type == discordgo.InteractionMessageComponent {
 			innerSession.ChannelMessageDelete(event.ChannelID, event.Message.ID)
 			switch event.MessageComponentData().CustomID {
-			case "general": {
-					interactionResponse := NewInteractionResponseToSpecificCommand(3, fmt.Sprintf("Bot categories %s (NOT ALL COMMANDS)|",crackedBuiltin))
+			case "general":
+				{
+					interactionResponse := NewInteractionResponseToSpecificCommand(3, fmt.Sprintf("Bot categories %s (NOT ALL COMMANDS)|", crackedBuiltin))
 					fields := []discordgo.MessageEmbedField{
-							{
-								Name:   "✋ Say `hi` from any channel",
-								Value:  "\u200B",
-								Inline: true,
-							},
-							{
-								Name:   "✍ Say `feedback` from any channel",
-								Value:  "\u200B",
-								Inline: true,
-							},
-							{
-								Name:   "⏰ Say `myreminder` from any channel",
-								Value:  "\u200B",
-								Inline: true,
-							},
-							{
-								Name:   "\u200B",
-								Value:  "Run `/hi` to greet the bot and get a response",
-								Inline: true,
-							},
-							{
-								Name:   "\u200B",
-								Value:  "Run `/feedback` to see sub-categories. This will notify the officer team",
-								Inline: true,
-							},
-							{
-								Name:   "\u200B",
-								Value:  fmt.Sprintf("Run `/myreminder` to make custom alerts for ANYTHING you need\nYou can even create more alerts at once %s", crackedBuiltin),
-								Inline: true,
-							},
-							{
-								Name:   "\u200B",
-								Value:  "Run `/joke` to see what happens 👀",
-								Inline: false,
-							},
+						{
+							Name:   "✋ Say `hi` from any channel",
+							Value:  "\u200B",
+							Inline: true,
+						},
+						{
+							Name:   "✍ Say `feedback` from any channel",
+							Value:  "\u200B",
+							Inline: true,
+						},
+						{
+							Name:   "⏰ Say `myreminder` from any channel",
+							Value:  "\u200B",
+							Inline: true,
+						},
+						{
+							Name:   "\u200B",
+							Value:  "Run `/hi` to greet the bot and get a response",
+							Inline: true,
+						},
+						{
+							Name:   "\u200B",
+							Value:  "Run `/feedback` to see sub-categories. This will notify the officer team",
+							Inline: true,
+						},
+						{
+							Name:   "\u200B",
+							Value:  fmt.Sprintf("Run `/myreminder` to make custom alerts for ANYTHING you need\nYou can even create more alerts at once %s", crackedBuiltin),
+							Inline: true,
+						},
+						{
+							Name:   "\u200B",
+							Value:  "Run `/joke` to see what happens 👀",
+							Inline: false,
+						},
 					}
 					pointerFields := make([]*discordgo.MessageEmbedField, len(fields))
 					for i := range fields {
-   						 pointerFields[i] = &fields[i]
-					}	
+						pointerFields[i] = &fields[i]
+					}
 					interactionResponse.Data.Embeds[0].Fields = pointerFields
 					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 					if err != nil {
@@ -3410,25 +3390,25 @@ func UseSlashCommand(session *discordgo.Session) {
 					}
 					return
 				}
-			case "stats": {
+			case "stats":
+				{
 					interactionResponse := NewInteractionResponseToSpecificCommand(3, fmt.Sprintf("Bot commands related to raiding %s|", crackedBuiltin))
 					fields := []*discordgo.MessageEmbedField{
 						{
-							Name: fmt.Sprintf("Type `/my` See simple raid-stats about YOU %s", crackedBuiltin),
-							Value: "`/myattendance` => (See your attendance since you joined)\n\n`/myraiderperformance` => (See average raid stats about you)\n\n`/mymissedraids` => (Get a list of specific raids u have missed)\n\n",
+							Name:   fmt.Sprintf("Type `/my` See simple raid-stats about YOU %s", crackedBuiltin),
+							Value:  "`/myattendance` => (See your attendance since you joined)\n\n`/myraiderperformance` => (See average raid stats about you)\n\n`/mymissedraids` => (Get a list of specific raids u have missed)\n\n",
 							Inline: true,
 						},
 						{
-							Name: "\u200B",
-							Value: "\u200B",
+							Name:   "\u200B",
+							Value:  "\u200B",
 							Inline: false,
 						},
 						{
-							Name: fmt.Sprintf("Type `/aboutme` See a more detailed view of your raid-performance %s\n", crackedBuiltin),
-							Value: "⚠️`/aboutme logs` => (See log-specific data about you)⚠️\n\n⚠️`/aboutme playerinfo` => (See general data about your main)⚠️",
+							Name:   fmt.Sprintf("Type `/aboutme` See a more detailed view of your raid-performance %s\n", crackedBuiltin),
+							Value:  "⚠️`/aboutme logs` => (See log-specific data about you)⚠️\n\n⚠️`/aboutme playerinfo` => (See general data about your main)⚠️",
 							Inline: false,
 						},
-						
 					}
 					interactionResponse.Data.Embeds[0].Fields = fields
 					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
@@ -3449,54 +3429,9 @@ func UseSlashCommand(session *discordgo.Session) {
 				}
 				return
 			}
-			/*
-				"benchreason": {
-			Template: &discordgo.ApplicationCommand{
-				Name: "benchreason",
-				Description: "All benched players are automatically added but with this command, you can add a `reason`",
-			},
-			Responses: map[string]applicationResponse{
-				"reason": {
-					Response: &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseModal,
-						Data: &discordgo.InteractionResponseData{
-							CustomID: "bench_modal",
-							Title: "Define specific bench reasons",
-							Components: []discordgo.MessageComponent{
-								discordgo.ActionsRow{
-									Components: []discordgo.MessageComponent{
-										&discordgo.TextInput{
-											CustomID:    "general_reason",
-											Label:       "General reason for benching this week",
-											Style:       discordgo.TextInputShort,
-											Placeholder: "General bench reason",
-											Required:    true,
-											MaxLength:   100,
-											MinLength: 10,
-										},
-									},
-								},
-							discordgo.ActionsRow{
-								Components: []discordgo.MessageComponent{
-									&discordgo.TextInput{
-										CustomID:    "specific_reason",
-										Label:       "Specific reasons (one per line)",
-										Style:       discordgo.TextInputParagraph,
-										Placeholder: "name=reason (one per line)",
-										Required:    false,
-										MaxLength:   4000,
-									},
-								},
-							},
-							},
-						},
-					},
-				},
-			},
-		},
-			*/
 			switch customIDSplit[0] {
-			case "benchreason": {
+			case "benchreason":
+				{
 					raidName := customIDSplit[1] //Will be safe as we check for len(2)
 					trackedRaids := make(map[string]trackRaid)
 					messageID := ""
@@ -3536,13 +3471,13 @@ func UseSlashCommand(session *discordgo.Session) {
 							specificBenchReasonRaiderSlice = append(specificBenchReasonRaiderSlice, fmt.Sprintf("\n%s=", raiderName))
 						}
 						benchReasonCopy := cloneBenchReasonResponse(slashCommandAdminCenter["benchreason"].Responses["reason"])
-						benchReasonCopy.Response.Data.CustomID = fmt.Sprintf("%s/%s", benchReasonCopy.Response.Data.CustomID, messageID) 
+						benchReasonCopy.Response.Data.CustomID = fmt.Sprintf("%s/%s", benchReasonCopy.Response.Data.CustomID, messageID)
 						for x, component := range benchReasonCopy.Response.Data.Components {
 							row, ok := component.(discordgo.ActionsRow)
-								if !ok {
+							if !ok {
 								continue
 							}
-							for _, inner := range row.Components {	
+							for _, inner := range row.Components {
 								input, ok := inner.(*discordgo.TextInput)
 								if !ok {
 									continue
@@ -3553,7 +3488,7 @@ func UseSlashCommand(session *discordgo.Session) {
 									input.Required = true
 								}
 							}
-						benchReasonCopy.Response.Data.Components[x] = row
+							benchReasonCopy.Response.Data.Components[x] = row
 						}
 						err = innerSession.InteractionRespond(event.Interaction, benchReasonCopy.Response)
 						if err != nil {
@@ -3571,7 +3506,8 @@ func UseSlashCommand(session *discordgo.Session) {
 			modolarData := event.ModalSubmitData()
 			customIDSlice := strings.Split(modolarData.CustomID, "/")
 			switch customIDSlice[0] {
-				case "feedback_modal": {
+			case "feedback_modal":
+				{
 					feedbackDescription := ""
 					content := ""
 					for _, component := range modolarData.Components {
@@ -3599,11 +3535,11 @@ func UseSlashCommand(session *discordgo.Session) {
 					} else {
 						playerName = "Anonymous"
 					}
-					content = fmt.Sprintf("%s\n\n**Raider:** %s\n\n**Category:** %s\n\n**Description:** %s\n\n**############# FEEDBACK END #############**", content, playerName, customIDSlice[1],feedbackDescription)
+					content = fmt.Sprintf("%s\n\n**Raider:** %s\n\n**Category:** %s\n\n**Description:** %s\n\n**############# FEEDBACK END #############**", content, playerName, customIDSlice[1], feedbackDescription)
 					threadName := fmt.Sprintf("Topic: %s - From: %s", customIDSlice[1], playerName)
 					thread, err := innerSession.ThreadStart(channelFeedback, threadName, discordgo.ChannelTypeGuildPublicThread, 10080)
 					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to create new thread %s in channel %s, using slash command /feedback, during the function UseSlashCommand()", threadName) , err.Error())
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to create new thread %s in channel %s, using slash command /feedback, during the function UseSlashCommand()", threadName), err.Error())
 					} else {
 						WriteInformationLog(fmt.Sprintf("The new thread %s has been successfully created for feedback given by player: %s, using the slash command /feedback, during the function UseSlashCommand()", threadName, playerName), "Creating thread")
 					}
@@ -3612,16 +3548,18 @@ func UseSlashCommand(session *discordgo.Session) {
 						WriteErrorLog(fmt.Sprintf("An error occured while trying to send feedback to the thread with name %s and ID: %s, using slash command /feedback, during the function UseSlashCommand()", threadName, thread.ID), err.Error())
 					}
 				}
-				case "bench_modal": {
-					generalBenchReason :=""
+			case "bench_modal":
+				{
+					generalBenchReason := ""
 					messageID := customIDSlice[1]
 					mapOfSpecificReason := make(map[string]string)
 					for _, component := range modolarData.Components {
 						if row, ok := component.(*discordgo.ActionsRow); ok {
 							for _, anyType := range row.Components {
-								if component, ok := anyType.(*discordgo.TextInput); ok{
+								if component, ok := anyType.(*discordgo.TextInput); ok {
 									switch component.CustomID {
-									case "specific_reason": {
+									case "specific_reason":
+										{
 											sliceOfSpecificPlayersNotCleaned := strings.Split(component.Value, "\n")
 											for _, playerLine := range sliceOfSpecificPlayersNotCleaned {
 												playerLineSlice := strings.Split(playerLine, "=")
@@ -3636,7 +3574,8 @@ func UseSlashCommand(session *discordgo.Session) {
 												}
 											}
 										}
-									default: {
+									default:
+										{
 											generalBenchReason = component.Value
 										}
 									}
@@ -3695,12 +3634,12 @@ func UseSlashCommand(session *discordgo.Session) {
 					return
 				}
 			}
-			
+
 			interactionResponse = NewInteractionResponseToSpecificCommand(1, "submit feedback|Message success", discordgo.InteractionResponseDeferredChannelMessageWithSource)
 			innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-			_, err = innerSession.FollowupMessageCreate(event.Interaction,true,  &discordgo.WebhookParams{
+			_, err = innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
 				Content: "Thank you - Your feedback is **HIGHLY** appriciated. ALL officers has just recieved this information",
-				Flags: discordgo.MessageFlagsEphemeral,
+				Flags:   discordgo.MessageFlagsEphemeral,
 			})
 			if err != nil {
 				WriteErrorLog("An error occured while trying to respond to slash command /feedback and the users final message, during the function UshSlashCommand()", err.Error())
@@ -3718,112 +3657,115 @@ func UseSlashCommand(session *discordgo.Session) {
 			//userNam e := user.Username
 			if len(interactionData.Options) == 0 {
 				switch interactionData.Name {
-				case "announcebot": {
-					/*
-					interactionResponse := NewInteractionResponseToSpecificCommand(0, "Starting the announcement...|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
-					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent initial response to user %s, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-						return
-					}
-					guild, err := innerSession.Guild(serverID)
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve guild %s, which is required by the command /announcebot, during the function UseSlashCommand()", serverID), err.Error())
-						return
-					}
-					CheckForExistingCache(path)
-					*/
-				}
-				case "deletebotchannel": {
-					interactionResponse := NewInteractionResponseToSpecificCommand(1, "Running command...|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
-					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured during the initial defered response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-						return
-					}
-					channels, err := innerSession.GuildChannels(serverID)
-					for _, channel := range channels {
-						if channel.Name == channelNameAnnouncement {
-							_, err = innerSession.ChannelDelete(channel.ID)
+				case "announcebot":
+					{
+						/*
+							interactionResponse := NewInteractionResponseToSpecificCommand(0, "Starting the announcement...|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+							err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 							if err != nil {
-								WriteErrorLog(fmt.Sprintf("An error occured while trying to delete channel with ID %s, using slash command /deletebotchannel, during the function UseSlashCommand()", channel.ID), err.Error())
-								interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("deletebotchannel|It was not possible to delete channel with ID: %s, please let %s know", channel.Name, SplitOfficerName(officerGMArlissa)["Name"]))
-								_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-									Embeds: &interactionResponse.Data.Embeds,
-								})
-								if err != nil {
-									WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-								}
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent initial response to user %s, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
 								return
 							}
+							guild, err := innerSession.Guild(serverID)
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve guild %s, which is required by the command /announcebot, during the function UseSlashCommand()", serverID), err.Error())
+								return
+							}
+							CheckForExistingCache(path)
+						*/
+					}
+				case "deletebotchannel":
+					{
+						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Running command...|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured during the initial defered response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							return
 						}
-					}
-					interactionResponse = NewInteractionResponseToSpecificCommand(2, "deletebotchannel|Bot channel(s) deleted.. Please give the bot a moment to recreate it...")
-					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-						Embeds: &interactionResponse.Data.Embeds,
-					})
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while truing to sent success response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-					}
-				}
-				case "benchreason": {
-					interactionResponse := NewInteractionResponseToSpecificCommand(1, "Initiating benching|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
-					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured during the initial defered response to user %s, using slash command /benchreason, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-						return
-					}
-					cacheRaidHelper := CheckForExistingCache(raidHelperCachePath)
-					if len(cacheRaidHelper) == 0 {
-						interactionResponse = NewInteractionResponseToSpecificCommand(1, "benchreason|No raids found... Please make sure to have created the actual raid-signup using raid-helper, before using this command")
+						channels, err := innerSession.GuildChannels(serverID)
+						for _, channel := range channels {
+							if channel.Name == channelNameAnnouncement {
+								_, err = innerSession.ChannelDelete(channel.ID)
+								if err != nil {
+									WriteErrorLog(fmt.Sprintf("An error occured while trying to delete channel with ID %s, using slash command /deletebotchannel, during the function UseSlashCommand()", channel.ID), err.Error())
+									interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("deletebotchannel|It was not possible to delete channel with ID: %s, please let %s know", channel.Name, SplitOfficerName(officerGMArlissa)["Name"]))
+									_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+										Embeds: &interactionResponse.Data.Embeds,
+									})
+									if err != nil {
+										WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+									}
+									return
+								}
+							}
+						}
+						interactionResponse = NewInteractionResponseToSpecificCommand(2, "deletebotchannel|Bot channel(s) deleted.. Please give the bot a moment to recreate it...")
 						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 							Embeds: &interactionResponse.Data.Embeds,
 						})
 						if err != nil {
-							WriteErrorLog(fmt.Sprintf("An error occured while trying to tell user %s that no current raids are active using slash command /benchreason, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							WriteErrorLog(fmt.Sprintf("An error occured while truing to sent success response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
 						}
-						return
 					}
-					raidCacheMap := make(map[string]trackRaid)
-					err = json.Unmarshal(cacheRaidHelper, &raidCacheMap)
-					if err != nil {
-						interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("benchreason|An error occured inside the bot when trying to convert raid-helper bytes to struct - Please contact %s", ResolvePlayerID(SplitOfficerName(officerGMArlissa)["name"], innerSession)))
+				case "benchreason":
+					{
+						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Initiating benching|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured during the initial defered response to user %s, using slash command /benchreason, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							return
+						}
+						cacheRaidHelper := CheckForExistingCache(raidHelperCachePath)
+						if len(cacheRaidHelper) == 0 {
+							interactionResponse = NewInteractionResponseToSpecificCommand(1, "benchreason|No raids found... Please make sure to have created the actual raid-signup using raid-helper, before using this command")
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to tell user %s that no current raids are active using slash command /benchreason, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}
+						raidCacheMap := make(map[string]trackRaid)
+						err = json.Unmarshal(cacheRaidHelper, &raidCacheMap)
+						if err != nil {
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("benchreason|An error occured inside the bot when trying to convert raid-helper bytes to struct - Please contact %s", ResolvePlayerID(SplitOfficerName(officerGMArlissa)["name"], innerSession)))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s using slash command /benchreason, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}
+
+						buttonsOfRaids := []discordgo.Button{}
+						for _, raid := range raidCacheMap {
+							raidTitle := raid.RaidDiscordTitle
+							button := discordgo.Button{
+								Label:    raidTitle,
+								Style:    discordgo.PrimaryButton,
+								CustomID: fmt.Sprintf("benchreason/%s", raidTitle),
+							}
+							buttonsOfRaids = append(buttonsOfRaids, button)
+						}
+						interactionResponse = NewInteractionResponseToSpecificCommand(1, "Raid selection|Please press the raid, where you want to give reasons for benching raiders")
+						row := discordgo.ActionsRow{}
+						for _, button := range buttonsOfRaids {
+							row.Components = append(row.Components, button)
+						}
+						interactionResponse.Data.Components = []discordgo.MessageComponent{
+							row,
+						}
+
 						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-							Embeds: &interactionResponse.Data.Embeds,
+							Content:    GetStringPointer("`Select raid below`"),
+							Components: &interactionResponse.Data.Components,
 						})
 						if err != nil {
-							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s using slash command /benchreason, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a length of %d buttons using slash command /benchreason, during the function UseSlashCommand()", len(row.Components)), err.Error())
 						}
-						return
 					}
-
-					buttonsOfRaids := []discordgo.Button{}
-					for _, raid := range raidCacheMap {
-						raidTitle := raid.RaidDiscordTitle
-						button := discordgo.Button{
-							Label: raidTitle,
-							Style: discordgo.PrimaryButton,
-							CustomID: fmt.Sprintf("benchreason/%s", raidTitle),
-						}
-						buttonsOfRaids = append(buttonsOfRaids, button)
-					}
-					interactionResponse = NewInteractionResponseToSpecificCommand(1, "Raid selection|Please press the raid, where you want to give reasons for benching raiders")
-					row := discordgo.ActionsRow{}
-					for _, button := range buttonsOfRaids {
-						row.Components = append(row.Components, button)
-					}
-					interactionResponse.Data.Components = []discordgo.MessageComponent{
-						row,
-					}
-
-					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-						Content: GetStringPointer("`Select raid below`"),
-						Components: &interactionResponse.Data.Components,
-					})
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a length of %d buttons using slash command /benchreason, during the function UseSlashCommand()", len(row.Components)), err.Error())
-					}
-				}
 				case "resetraidcache":
 					{
 						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Starting full reset of raiding cache|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
@@ -3864,7 +3806,7 @@ func UseSlashCommand(session *discordgo.Session) {
 					}
 				case "deletechannelcontent":
 					{
-						interactionResponse := NewInteractionResponseToSpecificCommand(1 , "Deleting channel content|Please wait...", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Deleting channel content|Please wait...", discordgo.InteractionResponseDeferredChannelMessageWithSource)
 						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 						if err != nil {
 							WriteErrorLog("An error occured while trying to sent initial response to user %s using slash command /deletechannelcontent, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession))
@@ -3872,7 +3814,7 @@ func UseSlashCommand(session *discordgo.Session) {
 						DeleteMessagesInBulk(event.ChannelID, innerSession)
 						if err != nil {
 							WriteErrorLog("An error occured while trying to delete messages", err.Error())
-							
+
 						}
 						interactionResponse = NewInteractionResponseToSpecificCommand(2, fmt.Sprintf("deletechannelcontent|Deletion complete... %s", crackedBuiltin))
 						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
@@ -3882,7 +3824,7 @@ func UseSlashCommand(session *discordgo.Session) {
 							WriteErrorLog("An error occured while making a final response to user using slash command /deletechannelcontent, during function UseSlashCommand()", err.Error())
 						}
 					}
-				case "updateweeklyattendance": 
+				case "updateweeklyattendance":
 					{
 						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Starting work on attendance update|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
 						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
@@ -3916,7 +3858,8 @@ func UseSlashCommand(session *discordgo.Session) {
 							WriteErrorLog("An error occured while trying to sent error response to user %s with slash command updateweekyattendance 2, during the function UseSlashCommand()", err.Error())
 						}
 					}
-				case "seeraiderattendance": {
+				case "seeraiderattendance":
+					{
 						currentRaidersBytes := CheckForExistingCache(raiderProfilesCachePath)
 						if len(currentRaidersBytes) == 0 {
 							interactionResponse := NewInteractionResponseToSpecificCommand(0, "seeraiderattendance|No raider-profiles found... Please contact Arlissa")
@@ -3942,7 +3885,7 @@ func UseSlashCommand(session *discordgo.Session) {
 						})
 						for _, raider := range raiderStruct.Raiders {
 							if strings.Contains(strings.Join(raider.DiscordRoles, ","), roleRaider) {
-								totalOGPoints := math.Floor(float64(10 * raider.AttendanceInfo["guildStart"].RaidCount) * (100 / raider.AttendanceInfo["guildStart"].RaidProcent + 1))
+								totalOGPoints := math.Floor(float64(10*raider.AttendanceInfo["guildStart"].RaidCount) * (100/raider.AttendanceInfo["guildStart"].RaidProcent + 1))
 								onlyCurrentRaiders = append(onlyCurrentRaiders, fmt.Sprintf("%s => %.0f => %.0f", raider.MainCharName, raider.AttendanceInfo["guildStart"].RaidProcent, totalOGPoints))
 							}
 						}
@@ -4161,27 +4104,33 @@ func UseSlashCommand(session *discordgo.Session) {
 							WriteErrorLog(fmt.Sprintf("It was not possible to convert the value %s to string, this is crucial for this slash command, will break early...", interactionData.Options[0].Value), "During function UseSlashCommand()")
 						}
 					}
-				case "seebench": {
-					options := interactionData.Options
-					raiderDiscordID := ""
-					period := ""
-					singleRaider := false
-					for _, option := range options {
-						if option.Name == "playername" {
-							singleRaider = true
-							raiderDiscordID = option.StringValue()
-						} else if option.Name == "period" {
-							period = option.StringValue()
-						} 
-					}
-					
-					interactionResponse := NewInteractionResponseToSpecificCommand(1, "seebench|Running command")
-					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-					if err != nil {
-						WriteErrorLog("An error occured while trying to send initial defered response to the user %s, using slash command /seebench, during the function UseSlashCommand()", err.Error())
-						break
-					}
-					if singleRaider && len(strings.Split(raiderDiscordID, "@")) != 2 && raiderDiscordID != "" {
+				case "seebench":
+					{
+						options := interactionData.Options
+						raiderDiscordID := ""
+						period := ""
+						singleRaider := false
+						for _, option := range options {
+							switch option.Name {
+							case "playername":
+								{
+									singleRaider = true
+									raiderDiscordID = option.StringValue()
+								}
+							case "period":
+								{
+									period = option.StringValue()
+								}
+							}
+						}
+
+						interactionResponse := NewInteractionResponseToSpecificCommand(1, "seebench|Running command")
+						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						if err != nil {
+							WriteErrorLog("An error occured while trying to send initial defered response to the user %s, using slash command /seebench, during the function UseSlashCommand()", err.Error())
+							break
+						}
+						if singleRaider && len(strings.Split(raiderDiscordID, "@")) != 2 && raiderDiscordID != "" {
 							fmt.Println("VALUES:", singleRaider, len(strings.Split(raiderDiscordID, "@")), raiderDiscordID)
 							interactionResponse := NewInteractionResponseToSpecificCommand(0, "seebench|Format incorrect - Must be @<playername>, e.g. @Arlissa")
 							_, err := innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
@@ -4191,16 +4140,16 @@ func UseSlashCommand(session *discordgo.Session) {
 								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent response to user %s and command playername during the function UseSlashCommand()", userID), err.Error())
 							}
 							break
-					}
-					raiderProfiles := []raiderProfile{}
-					if raiderDiscordID == "" {
-						raiderProfiles = GetRaiderProfiles()
-					} else {
-						profile, _ := GetRaiderProfile(FormatRaiderID(raiderDiscordID))
-						raiderProfiles = append(raiderProfiles, profile)
-					}
-					switch len(raiderProfiles) {
-						case 0: 
+						}
+						raiderProfiles := []raiderProfile{}
+						if raiderDiscordID == "" {
+							raiderProfiles = GetRaiderProfiles()
+						} else {
+							profile, _ := GetRaiderProfile(FormatRaiderID(raiderDiscordID))
+							raiderProfiles = append(raiderProfiles, profile)
+						}
+						switch len(raiderProfiles) {
+						case 0:
 							{
 								interactionResponse := NewInteractionResponseToSpecificCommand(0, "seebench|No raider profiles found... Please run bot command `/resetraidcache` Then run this command again")
 								err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
@@ -4209,11 +4158,11 @@ func UseSlashCommand(session *discordgo.Session) {
 								}
 								break
 							}
-					default: 
+						default:
 							{
 								returnString := NewRaidProfileBenchSummaries(raiderProfiles, period)
-								
-								interactionResponse = NewInteractionResponseToSpecificCommand(2, fmt.Sprintf("`seebench` For period: **%s**|%s", period,returnString))
+
+								interactionResponse = NewInteractionResponseToSpecificCommand(2, fmt.Sprintf("`seebench` For period: **%s**|%s", period, returnString))
 								_, err = session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 									Embeds: &interactionResponse.Data.Embeds,
 								})
@@ -4298,10 +4247,10 @@ func UseSlashCommand(session *discordgo.Session) {
 							}
 						}
 					}
-					case "syncdiscordroles": 
+				case "syncdiscordroles":
 					{
 						if !interactionData.Options[0].BoolValue() {
-						interactionResponse := NewInteractionResponseToSpecificCommand(1, "syncdiscordroles|Delta sync is not enabled yet... Please set fullsync to true")
+							interactionResponse := NewInteractionResponseToSpecificCommand(1, "syncdiscordroles|Delta sync is not enabled yet... Please set fullsync to true")
 							err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 							if err != nil {
 								WriteErrorLog("An error occured while trying to sent respond to the user with command syncdiscordroles, during the function UseSlashCommand()", err.Error())
@@ -4314,7 +4263,7 @@ func UseSlashCommand(session *discordgo.Session) {
 							break
 						}
 						returnAnswer := ManageMergedGroups(innerSession, "full")
-						
+
 						if len(returnAnswer) == 1 {
 							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("syncdiscordroles|%s", returnAnswer[0]))
 							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
@@ -4334,89 +4283,20 @@ func UseSlashCommand(session *discordgo.Session) {
 							WriteErrorLog("An error occured while trying to sent respond to the user with command syncdiscordroles, during the function UseSlashCommand()", err.Error())
 						}
 					}
-				case "aboutme": {
-					fmt.Println("WE DONT REACH HERE?")
-					interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("aboutme|This feature is not out yet 🚧 please contact <@%s> for more information", SplitOfficerName(officerGMArlissa)["ID"]))
-					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-					if err != nil {
-						WriteErrorLog("An error occured while trying to reply to user %s using slash command /aboutme, during function UseSlashCommand()", err.Error())
+				case "aboutme":
+					{
+						fmt.Println("WE DONT REACH HERE?")
+						interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("aboutme|This feature is not out yet 🚧 please contact <@%s> for more information", SplitOfficerName(officerGMArlissa)["ID"]))
+						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						if err != nil {
+							WriteErrorLog("An error occured while trying to reply to user %s using slash command /aboutme, during function UseSlashCommand()", err.Error())
+						}
 					}
-				}
-					/*
-						case "aboutme":
-							{
-								switch interactionData.Options[0].Name {
-								case "logs":
-									{
-										if len(interactionData.Options[0].Options) > 1 {
-											interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("aboutme logs/Please do not provide more than 1 argument at a time %s", antiCrackedBuiltin))
-											err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-											if err != nil {
-												WriteErrorLog("An error occured while trying to sent an error message as interaction response using slash command 'aboutme logs' Inside of function UseSlashCommand()", err.Error())
-											}
-											break
-										}
-										subOptionName := ""
-										if interactionData.Options[0].Options == nil {
-											subOptionName = "newest"
-										} else {
-											subOptionName = interactionData.Options[0].Options[0].Name
-										}
-
-										switch subOptionName {
-										case "newest":
-											{
-												currentLogs, err := CapturePointInTimeRaidLogData("", true)
-												if err != nil {
-													errorString := ""
-													if err.Error() == "unexpected end of JSON input" {
-														errorString = "No data found, please ask an officer to run command 'resetraidcache'"
-													} else {
-														errorString = err.Error()
-													}
-													interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("aboutme logs newest/%s", errorString))
-													err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-													if err != nil {
-														WriteErrorLog("An error occured while trying to sent an error message as interaction response using slash command 'aboutme logs newest' Inside of function UseSlashCommand()", err.Error())
-													}
-													break
-												}
-
-												if len(currentLogs) < 1 {
-													interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("aboutme logs newest/%s", "No data found - Please ask an officer to run /resetraidcache"))
-													err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-													if err != nil {
-														WriteErrorLog("An error occured while trying to sent an error message as interaction response using slash command 'aboutme logs newest' Inside of function UseSlashCommand()", err.Error())
-													}
-													break
-												}
-												logsInScope := logAllData{}
-												newestDate, err := time.Parse(timeLayout, currentLogs[0].RaidStartTimeString)
-												if err != nil {
-													WriteErrorLog(fmt.Sprintf("An error occured while trying to parse the string to time during the slash command aboutme logs newest from user %s", userID), err.Error())
-													break
-												}
-												fmt.Println("CURRENT TIME_", newestDate)
-												for _, log := range currentLogs {
-													logTime, _ := time.Parse(timeLayout, log.RaidStartTimeString)
-													fmt.Println("NEW LOG TIME:", logTime, log.RaidStartTimeString)
-													if logTime.After(newestDate) {
-														fmt.Println("NEW LOG FOUND TO USE:", log.RaidStartTimeString)
-														logsInScope = log
-													}
-												}
-												fmt.Println("LOG TO GO WITH:", logsInScope.RaidTitle)
-											}
-										}
-									}
-								}
-							}
-					*/
 				}
 			}
 		}
 		if CheckForRaiderRank(userID, innerSession) && strings.Contains("myattendance,mymissedraids,mynewmain,myraiderperformance,myreminder,hi,howto,joke,feedback", interactionData.Name) {
-			newRaiderProfile, _:= GetRaiderProfile(userID)
+			newRaiderProfile, _ := GetRaiderProfile(userID)
 			switch interactionData.Name {
 			case "myattendance":
 				{
@@ -4510,414 +4390,422 @@ func UseSlashCommand(session *discordgo.Session) {
 						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a complex message in the officer channel from the use of command /mynewmain from raider %s, during the function UseSlashCommand()", newRaiderProfile.MainCharName), err.Error())
 					}
 				}
-			case "myraiderperformance": {
-				raider := raiderProfile{}
-				interactionResponse := NewInteractionResponseToSpecificCommand(1, "Calculating performance|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
-				err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-				if err != nil {
-					WriteErrorLog("An error occured while trying to sent initial response to the user %s, using the slash command /myraiderperformance, during the function UseSlashCommand()", err.Error())
-					return
-				}
-				raiderProfiles := ReadWriteRaiderProfiles([]raiderProfile{}, false)
-				if len(raiderProfiles) == 0 {
-					interactionResponse = NewInteractionResponseToSpecificCommand(1, "No raider-profiles found|Please ask an officer to run command `resetraidcache`")
-					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-						Embeds: &interactionResponse.Data.Embeds,
-					})
+			case "myraiderperformance":
+				{
+					raider := raiderProfile{}
+					interactionResponse := NewInteractionResponseToSpecificCommand(1, "Calculating performance|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 					if err != nil {
-						WriteErrorLog("An error ocurred while trying to send error response to user %s, using slash command /myraiderperformance, during the function UseSlashCommand", err.Error())
+						WriteErrorLog("An error occured while trying to sent initial response to the user %s, using the slash command /myraiderperformance, during the function UseSlashCommand()", err.Error())
+						return
 					}
-					return
-				}
-				currentRaiderProfileMap := map[string]raiderProfile{}
-				for _, raider := range raiderProfiles {
-					if raider.ID == userID {
-						currentRaiderProfileMap[raider.ID] = raider
-					}
-				}
-				if _, ok := currentRaiderProfileMap[userID]; !ok {
-					interactionResponse = NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Raider not found|Please contact %s as this seems to be a bug", SplitOfficerName(officerGMArlissa)["name"]))
-					WriteErrorLog("An error ocurred while trying to send error response to user 2 %s , using slash command /myraiderperformance, during the function UseSlashCommand", "User not found")
-					return
-				}
-				timeRaidDataLastUpdated, _:= time.Parse(timeLayoutLogs, currentRaiderProfileMap[userID].RaidData.TimeOfData)
-				fmt.Println(CheckForLaterThanDuration(timeRaidDataLastUpdated, 7), "IS THE RESULT", timeRaidDataLastUpdated.String())
-				isDataOld := CheckForLaterThanDuration(timeRaidDataLastUpdated, 7)
-				if isDataOld {
-					logsLastThreeMonth, err := ReadRaidDataCache(time.Now().AddDate(0, -3, 0), true)
-					logsToKeep := []logAllData{}
-					if err != nil {
-						interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myraiderperformance|%s", err.Error()))
+					raiderProfiles := ReadWriteRaiderProfiles([]raiderProfile{}, false)
+					if len(raiderProfiles) == 0 {
+						interactionResponse = NewInteractionResponseToSpecificCommand(1, "No raider-profiles found|Please ask an officer to run command `resetraidcache`")
 						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 							Embeds: &interactionResponse.Data.Embeds,
 						})
 						if err != nil {
-							WriteErrorLog("An error occured while trying to send an error message to the user, the message is %s, using slash command /myraiderperformance, during the function UseSlashCommand()", err.Error())
+							WriteErrorLog("An error ocurred while trying to send error response to user %s, using slash command /myraiderperformance, during the function UseSlashCommand", err.Error())
 						}
 						return
 					}
-					for x, log := range logsLastThreeMonth {
-						mapOfPlayers := make(map[string]logPlayer)
-						interactionResponse = NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("myraiderperformance|Retrieving Warcraftlogs data - **%.1f%% so far**", float64(x)/float64(len(logsLastThreeMonth))*100)) //interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Progess on job|**Completed %.1f%% so far**", float64(x) / float64(len(quriesToRun)) * 100))
+					currentRaiderProfileMap := map[string]raiderProfile{}
+					for _, raider := range raiderProfiles {
+						if raider.ID == userID {
+							currentRaiderProfileMap[raider.ID] = raider
+						}
+					}
+					if _, ok := currentRaiderProfileMap[userID]; !ok {
+						interactionResponse = NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Raider not found|Please contact %s as this seems to be a bug", SplitOfficerName(officerGMArlissa)["name"]))
+						WriteErrorLog("An error ocurred while trying to send error response to user 2 %s , using slash command /myraiderperformance, during the function UseSlashCommand", "User not found")
+						return
+					}
+					timeRaidDataLastUpdated, _ := time.Parse(timeLayoutLogs, currentRaiderProfileMap[userID].RaidData.TimeOfData)
+					fmt.Println(CheckForLaterThanDuration(timeRaidDataLastUpdated, 7), "IS THE RESULT", timeRaidDataLastUpdated.String())
+					isDataOld := CheckForLaterThanDuration(timeRaidDataLastUpdated, 7)
+					if isDataOld {
+						logsLastThreeMonth, err := ReadRaidDataCache(time.Now().AddDate(0, -3, 0), true)
+						logsToKeep := []logAllData{}
+						if err != nil {
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myraiderperformance|%s", err.Error()))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog("An error occured while trying to send an error message to the user, the message is %s, using slash command /myraiderperformance, during the function UseSlashCommand()", err.Error())
+							}
+							return
+						}
+						for x, log := range logsLastThreeMonth {
+							mapOfPlayers := make(map[string]logPlayer)
+							interactionResponse = NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("myraiderperformance|Retrieving Warcraftlogs data - **%.1f%% so far**", float64(x)/float64(len(logsLastThreeMonth))*100)) //interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Progess on job|**Completed %.1f%% so far**", float64(x) / float64(len(quriesToRun)) * 100))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							for _, player := range log.Players {
+								mapOfPlayers[player.Name] = player
+							}
+							raiderName := ResolvePlayerID(userID, innerSession)
+							if _, ok := mapOfPlayers[raiderName]; ok {
+								logsToKeep = append(logsToKeep, log)
+							}
+						}
+						interactionResponse = NewInteractionResponseToSpecificCommand(1, "myraiderperformance|Calculating your raid-data, please wait...")
 						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-						Embeds: &interactionResponse.Data.Embeds,
+							Embeds: &interactionResponse.Data.Embeds,
 						})
-						for _, player := range log.Players {
-							mapOfPlayers[player.Name] = player
-						}
-						raiderName := ResolvePlayerID(userID, innerSession)
-						if _, ok := mapOfPlayers[raiderName]; ok {
-							logsToKeep = append(logsToKeep, log)
-						}	
-					}
-					interactionResponse = NewInteractionResponseToSpecificCommand(1, "myraiderperformance|Calculating your raid-data, please wait...")
-					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-						Embeds: &interactionResponse.Data.Embeds,
-					})
-					if err != nil {
-						WriteErrorLog("An error occured while trying to sent initial response to the user %s, using the slash command /myraiderperformance 2, during the function UseSlashCommand()", err.Error())
-						break
-					}
-					time.Sleep(time.Second * 2)
-					messageGIF, err := innerSession.FollowupMessageCreate(event.Interaction, true, NewWebhookParamGIF("the-calculator.gif", yellowColor))
-					fmt.Println("WHO IS THIS GUY", currentRaiderProfileMap[userID], userID, len(logsToKeep))
-					raider = CalculateRaiderPerformance(currentRaiderProfileMap[userID], logsToKeep)
-					if err != nil {
-						WriteErrorLog("An error occured while trying to clear last FollowUpMessageCreate using slash command /myraiderperformance, during the function UseSlashCommand()", err.Error())
-					}
-					err = innerSession.FollowupMessageDelete(event.Interaction, messageGIF.ID)
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to delete a follow up message from user %s using slash command /myraiderperformance, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-					}
-				} else {
-					raider = currentRaiderProfileMap[userID] 
-				}
-				if len(raider.RaidData.LastRaid.Specs) == 0 {
-					WriteErrorLog(fmt.Sprintf("The raider %s does not have any calculcated raider performance, please see any earlier error... during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), "Missing data")
-					interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myraiderperformance|Raidata could not be calculated\nPlease consult %s for help!", SplitOfficerName(officerGMArlissa)["Name"]))
-					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-						Embeds: &interactionResponse.Data.Embeds,
-					})
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s using slash command /myraiderperformance", ResolvePlayerID(userID, innerSession)), err.Error())
-					}
-					return
-				}
-				//rowBreak := &discordgo.MessageEmbedField{Name: "\u200B", Value: "\u200B", Inline: false}
-				statLineBestBoss := &discordgo.MessageEmbedField{}
-				statLineWorseBoss := &discordgo.MessageEmbedField{}
-				topLine := &discordgo.MessageEmbedField{}
-				statLineBestBoss.Inline = true
-				statLineWorseBoss.Inline = true
-				if raider.RaidData.LastRaid.HealingDone > raider.RaidData.LastRaid.DamageDone {
-					statLineBestBoss.Name = "HPS"
-					statLineWorseBoss.Name = "HPS"
-					statLineBestBoss.Value = fmt.Sprintf("`%.f`", raider.RaidData.Parses.BestBoss.HPS)
-					statLineWorseBoss.Value = fmt.Sprintf("`%.f`", raider.RaidData.Parses.WorstBoss.HPS)
-				} else {
-					statLineBestBoss.Name = "DPS"
-					statLineWorseBoss.Name = "DPS"
-					statLineBestBoss.Value = fmt.Sprintf("`⚔ %.2f`", raider.RaidData.Parses.BestBoss.DPS)
-					statLineWorseBoss.Value = fmt.Sprintf("`⚔ %.2f`", raider.RaidData.Parses.WorstBoss.DPS)
-				}
-
-				topString := ""
-				switch {
-					case raider.RaidData.Parses.Top1: {
-						topString = "#1 🥇"
-					}
-					case raider.RaidData.Parses.Top2: {
-						topString = "#2 🥈"
-					}
-					case raider.RaidData.Parses.Top3: {
-						topString = "#3 🥉"
-					}
-					case raider.RaidData.Parses.Top5: {
-						topString = "#5"
-					}
-					default: {
-						topString = "Around top 5" //Safegaurd
-					}
-				}
-				topLine = &discordgo.MessageEmbedField{Name: "Rank in class", Value: fmt.Sprintf("`%s`", topString), Inline: true}
-				
-				fieldsRaiderPerformance := []*discordgo.MessageEmbedField{
-					{Name: "**▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒**\r", Value: "\u200B", Inline: false},
-					topLine,
-					{Name: "From top 1", Value: fmt.Sprintf("`%.f%%`", raider.RaidData.Parses.RelativeToTop), Inline: true},
-					{Name: "Δ vs last week", Value: fmt.Sprintf("`%.f%%`", raider.RaidData.Parses.Deviation), Inline: true},
-				}
-				scalingOrdered := SortFloat64FromMap(false, mapOfPointScaleProcent)
-				weightStringSlice := []string{}
-				mapOfUniqueWeightNames := make(map[string]bool)
-				for _, scaling := range scalingOrdered {
-					for weightName, weightProcent := range mapOfPointScaleProcent {
-						if scaling == weightProcent && !mapOfUniqueWeightNames[weightName] {
-							weightStringSlice = append(weightStringSlice, fmt.Sprintf("↳ %s → `%.f%%`", strings.Split(weightName, "/")[1], weightProcent))
-							mapOfUniqueWeightNames[weightName] = true
-						}
-					}
-				}
-				specName := ""
-				if len(raider.RaidData.LastRaid.Specs) > 0 {
-					specName = raider.RaidData.LastRaid.Specs[0].Name
-				} else {
-					specName = "Not detected..."
-				}
-				embedRaiderPerformance := &discordgo.MessageEmbed{
-					Title: fmt.Sprintf("LINK TO WARCRAFTLOGS PROFILE %s", crackedBuiltin),
-					URL:   raider.RaidData.URL,
-					Description: strings.Join([]string{
-						"**📊 Calculations (last 3 months) 📊**",
-						"\u200B",
-						fmt.Sprintf("**Raid tier:** `%s`", raider.RaidData.Parses.RaidTier),
-						"\u200B",
-						fmt.Sprintf("**Raider name:** `%s`", raider.MainCharName),
-						"\u200B",
-						fmt.Sprintf("**Raider spec:** `%s`", specName),
-						"\u200B",
-						fmt.Sprintf("**Count of raiders in calculation:** `%d`", raider.RaidData.CountOfRaidersInCalculation),
-						"\u200B",
-						"**How this works**",
-						"• Bot collects data from `all raiders` over the last 3 months",
-						"• Only raiders of the `same class` are compared",
-						"• Raiders must be present in `≥ 50%` of raids to be included",
-						"• Eligible raiders are added to the `compare pool`",
-						"• Points are now calculated for each raider in the current `compare pool`",
-						"\u200B",
-						strings.Join(weightStringSlice, "\n"),
-						"↳ Sums to 100% — higher % = higher value in calculation / more points",
-						"↳ Metrics are subject to change, and `feedback` can be given using the bot!",
-						"\u200B",
-						"• The `metrics` defined above is used to calculate the following:",
-						"↳ `Rank in class` → In terms of total points, where do you stand?",
-						"↳ `From top 1 in %` → How far performance wise, are you from top 1?",
-						"↳ `Δ vs last week` → What is your performance difference (delta) compared to the week before?",
-					}, "\n"),
-					Fields: fieldsRaiderPerformance,
-					Footer: &discordgo.MessageEmbedFooter{
-						Text: fmt.Sprintf("Source: https://fresh.warcraftlogs.com/guild/id/%d", warcraftLogsGuildID),
-					},
-				}
-				_, err = innerSession.FollowupMessageCreate(event.Interaction, false, &discordgo.WebhookParams{
-					Embeds: []*discordgo.MessageEmbed{embedRaiderPerformance},
-					Flags: discordgo.MessageFlagsEphemeral,
-				})
-				if err != nil {
-					WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a result message to user %s using slash command /myraiderperformance, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-				}
-				splitBestBossName := strings.Split(raider.RaidData.Parses.BestBoss.Name, " ")
-				splitWorstBossName := strings.Split(raider.RaidData.Parses.WorstBoss.Name, " ")
-				bestBossNameFinal := ""
-				worstBossNameFinal := ""
-				if len(splitBestBossName) >= 2 {
-					if strings.ToLower(splitBestBossName[1]) == "the" {
-						bestBossNameFinal = splitBestBossName[0]
-					} else {
-						bestBossNameFinal = strings.Join(splitBestBossName[:2], " ")
-					}
-				} else {
-					bestBossNameFinal = raider.RaidData.Parses.BestBoss.Name
-				}
-				if len(splitWorstBossName) >= 2 {
-					if strings.ToLower(splitWorstBossName[1]) == "the" {
-						worstBossNameFinal = splitWorstBossName[0]
-					} else {
-						worstBossNameFinal = strings.Join(splitWorstBossName[:2], " ")
-					}
-				} else {
-					worstBossNameFinal = raider.RaidData.Parses.WorstBoss.Name
-				}
-				if isDataOld {
-					time.Sleep(time.Second * 5)
-				}
-				fieldsRankings := []*discordgo.MessageEmbedField{
-					{Name: "\u200B", Value: "**┌────────────────\u2003Rankings\u2003──────────────┐**", Inline: false},
-					{Name: "World", Value: fmt.Sprintf("`#%.f`", raider.RaidData.Parses.RankWorld), Inline: true},
-					{Name: "Region", Value: fmt.Sprintf("`#%.f`", raider.RaidData.Parses.RankRegion), Inline: true},
-					{Name: "Server", Value: fmt.Sprintf("`#%.f`", raider.RaidData.Parses.RankServer), Inline: true},
-					// ── Highlights bosses ──
-					{Name: "\u200B", Value: "**┌────────────────\u2003Bosses\u2003────────────────┐**", Inline: false},
-					{Name: "Best", Value: fmt.Sprintf("`%s`", bestBossNameFinal), Inline: true},
-					statLineBestBoss,
-					{Name: "Kill time", Value: fmt.Sprintf("`⏱ %s`", raider.RaidData.Parses.BestBoss.KillTime), Inline: true},
-					{Name: "Worst", Value: fmt.Sprintf("`%s`", worstBossNameFinal), Inline: true},
-					statLineWorseBoss,
-					{Name: "Kill time", Value: fmt.Sprintf("`⏱ %s`", raider.RaidData.Parses.WorstBoss.KillTime), Inline: true},
-					{Name: "\u200B", Value: "**┌────────────────\u2003Parses\u2003────────────────┐**", Inline: false},
-					{Name: "Best avg", Value: fmt.Sprintf("`%.2f`", raider.RaidData.Parses.Parse["bestAverage"]), Inline: true},
-					{Name: "Highest", Value: fmt.Sprintf("`%.2f`", raider.RaidData.Parses.Parse["highest"]), Inline: true},
-					{Name: "Lowest", Value: fmt.Sprintf("`%.2f`", raider.RaidData.Parses.Parse["lowest"]), Inline: true},
-				}
-
-				embedRankings := &discordgo.MessageEmbed{
-					Title: fmt.Sprintf("LINK TO WARCRAFTLOGS PROFILE %s", crackedBuiltin),
-					URL:   raider.RaidData.URL,
-					Description: strings.Join([]string{
-						"**🏆 Warcraftlogs rankings and bosses 🏆**",
-						"\u200B",
-						"**• Please see the following sections:**",
-						"\u200B",
-						"↳ Where do you place in the world?",
-						"↳ Which boss is best, which is worst?",
-						"↳ What does your raw parses look like?",
-					}, "\n"),
-					Fields: fieldsRankings,
-					Footer: &discordgo.MessageEmbedFooter{
-						Text: fmt.Sprintf("Source: https://fresh.warcraftlogs.com/guild/id/%d", warcraftLogsGuildID),
-					},
-				}
-				_, err = innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
-					Embeds: []*discordgo.MessageEmbed{embedRankings},
-					Flags: discordgo.MessageFlagsEphemeral,
-				})
-				if err != nil {
-					WriteErrorLog(fmt.Sprintf("An error occured while trying to sent ranking data to user %s, using slash command /myraiderperformance, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-				}
-			}	
-			case "myreminder": {
-				var err error
-				raiderName := ResolvePlayerID(userID, innerSession)
-				timesToNotify := 5
-				waitBeforeDeleteChannel := time.Minute * 2
-				title := interactionData.Options[0].Value.(string)
-				err = innerSession.InteractionRespond(event.Interaction, slashCommandAllUsers["myreminder"].Responses["examples"].Response)
-				if err != nil {
-					WriteErrorLog(fmt.Sprintf("An error occured while trying to sent initial response to user %s using slash command /myreminder, during the function UseSlashCommand()",raiderName), err.Error())
-					return
-				}
-				_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-					Embeds: &slashCommandAllUsers["myreminder"].Responses["examples"].Response.Data.Embeds,
-				})
-				if err != nil {
-					WriteErrorLog("An error occured while trying to sent examples response using slash command /myreminder, during the function UseSlashCommand()", err.Error())
-					return
-				}
-				timeNoneFiltered := strings.ToLower(strings.TrimSpace(interactionData.Options[1].Value.(string)))
-				duration := time.Duration(0)
-				hitError := false
-				patternDigitalClock := regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
-				patternCountdown := regexp.MustCompile(`^(?:\d+h(?:\d+m(?:\d+s)?)?|\d+m(?:\d+s)?|\d+s)$`)
-				if patternDigitalClock.MatchString(timeNoneFiltered) {
-					timePartsSlice := strings.Split(timeNoneFiltered, ":")
-					if len(timePartsSlice) != 3 {
-						WriteErrorLog("The time provided is invalid, value of %s cannot be used in slash command /myreminder, during the function UseSlashCommand()", err.Error())
-						hitError = true
-					}
-					hours, err := strconv.Atoi(timePartsSlice[0])
-					if err != nil {
-						WriteErrorLog("An eror occured while trying to perform string to int convert on value %s using the slash command /myreminder 1, during the function UseSlashCommand()", err.Error())
-						hitError = true
-					}
-
-					minutes, err := strconv.Atoi(timePartsSlice[1])
-					if err != nil {
-						WriteErrorLog("An eror occured while trying to perform string to int convert on value %s using the slash command /myreminder 2, during the function UseSlashCommand()", err.Error())
-						hitError = true	
-					}
-					seconds, err := strconv.Atoi(timePartsSlice[2])
-					if err != nil {
-						WriteErrorLog("An eror occured while trying to perform string to int convert on value %s using the slash command /myreminder 3, during the function UseSlashCommand()", err.Error())
-						hitError = true	
-					}
-					if hitError {
-						interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|An internal bot error occured, please contact <@%s>", SplitOfficerName(officerGMArlissa)["ID"]))
-						err = innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 						if err != nil {
-							WriteErrorLog("An error occured while trying to send an error message to the user %s using the slash command /myreminder, during the function UseSlashCommand()", err.Error())
-							return
+							WriteErrorLog("An error occured while trying to sent initial response to the user %s, using the slash command /myraiderperformance 2, during the function UseSlashCommand()", err.Error())
+							break
 						}
-					}
-					duration = time.Hour * time.Duration(hours) + time.Minute * time.Duration(minutes) + time.Second * time.Duration(seconds)
-				} else if patternCountdown.MatchString(timeNoneFiltered) {
-					duration, err = time.ParseDuration(timeNoneFiltered)
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to convert time string %s to time.Duration using slash command /myreminder, during the function UseSlashCommand()", timeNoneFiltered), err.Error())
-						interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|An internal bot error occured, please contact <@%s>", SplitOfficerName(officerGMArlissa)["ID"]))
-						err = innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						time.Sleep(time.Second * 2)
+						messageGIF, err := innerSession.FollowupMessageCreate(event.Interaction, true, NewWebhookParamGIF("the-calculator.gif", yellowColor))
+						fmt.Println("WHO IS THIS GUY", currentRaiderProfileMap[userID], userID, len(logsToKeep))
+						raider = CalculateRaiderPerformance(currentRaiderProfileMap[userID], logsToKeep)
 						if err != nil {
-							WriteErrorLog("An error occured while trying to send error message to user %s using the slash command /myreminder, during the function UseSlashCommand()", err.Error())
-							return
+							WriteErrorLog("An error occured while trying to clear last FollowUpMessageCreate using slash command /myraiderperformance, during the function UseSlashCommand()", err.Error())
 						}
+						err = innerSession.FollowupMessageDelete(event.Interaction, messageGIF.ID)
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to delete a follow up message from user %s using slash command /myraiderperformance, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+						}
+					} else {
+						raider = currentRaiderProfileMap[userID]
 					}
-				} else {
-					interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|Your time of `%s` is not valid. Please see the examples for help.", timeNoneFiltered))
-					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-					if err != nil {
-						WriteErrorLog("An error occured while trying to send initial response to user %s using the slash command /myreminder 2, during the function UseSlashCommand()", err.Error())
-					}
-					return
-				}
-				convertTime := time.Now().Local().Add(duration).Format(timeLayoutLogs)
-				interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Alert for %s|**The bot will attempt to contact you at: %s**", title, convertTime))
-				_, err = innerSession.FollowupMessageCreate(event.Interaction,false,  &discordgo.WebhookParams{
-					Flags: discordgo.MessageFlagsEphemeral,
-					Embeds: interactionResponse.Data.Embeds,
-				})
-				if err != nil {
-					WriteErrorLog(fmt.Sprintf("An error occured while trying to notify the user %s for last message using the slash command /myreminder, during the function UseSlashCommand()", raiderName), err.Error())
-					return
-				}
-				WriteInformationLog(fmt.Sprintf("User %s has requested a thread to sleep for %s due to a userdefined alert being set using the slash command /myreminder, during the function UseSlashCommand()", raiderName, duration.String()), "Sleeping thread")
-				time.Sleep(duration)
-				userChannel, err := session.UserChannelCreate(userID)
-				failed := false
-				if err != nil {
-					WriteErrorLog(fmt.Sprintf("An error occured when trying to create a DM channel to the user %s", raiderName), err.Error())
-					failed = true
-				}
-				if !failed {
-					for x := range(timesToNotify) {
-					x++
-					_, err := innerSession.ChannelMessageSend(userChannel.ID, fmt.Sprintf("**%s** REMINDER!\n\nMESSAGE WILL REPEAT %d/%d more times!", title, x, timesToNotify))
-					if err != nil {
-						failed = true
-						break
-					}
-					time.Sleep(time.Second * 3)
-					}
-				}
-
-				if failed {
-					newChannel, err := innerSession.GuildChannelCreateComplex(serverID, discordgo.GuildChannelCreateData{
-					Name: fmt.Sprintf("alert-%s-%s", event.ID, duration.String()),
-					Type: discordgo.ChannelTypeGuildText,
-					Topic: "This channel will close in 2min",
-					PermissionOverwrites: []*discordgo.PermissionOverwrite{
-						{
-							ID: serverID,
-							Type: discordgo.PermissionOverwriteTypeMember,
-							Deny: permissionViewChannel,
-						},
-						{
-							ID: userID,
-							Type: discordgo.PermissionOverwriteTypeMember,
-							Allow: permissionViewChannel,
-						},
-					},
-				})
-				if err != nil {
-					WriteErrorLog(fmt.Sprintf("An error occured while trying to create channel: %s for user %s using slash command /myreminder, during the function UseSlashCommand()", newChannel.Name, raiderName), err.Error())
-					return
-				}
-				for x := range(timesToNotify) {
-					x++
-					_, err = innerSession.ChannelMessageSend(newChannel.ID, fmt.Sprintf("Hi <@%s> THIS IS YOUR REMINDER FOR: %s\n\nMESSAGE WILL REPEAT %d/%d more times!", userID, title, x, timesToNotify))
-					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a message in new channel created to alert user %s about a user specified alert, using the slash command /myreminder during the function UseSlashCommand()", raiderName), err.Error())
+					if len(raider.RaidData.LastRaid.Specs) == 0 {
+						WriteErrorLog(fmt.Sprintf("The raider %s does not have any calculcated raider performance, please see any earlier error... during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), "Missing data")
+						interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myraiderperformance|Raidata could not be calculated\nPlease consult %s for help!", SplitOfficerName(officerGMArlissa)["Name"]))
+						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+							Embeds: &interactionResponse.Data.Embeds,
+						})
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s using slash command /myraiderperformance", ResolvePlayerID(userID, innerSession)), err.Error())
+						}
 						return
 					}
-					time.Sleep(time.Second * 3)
+					//rowBreak := &discordgo.MessageEmbedField{Name: "\u200B", Value: "\u200B", Inline: false}
+					statLineBestBoss := &discordgo.MessageEmbedField{}
+					statLineWorseBoss := &discordgo.MessageEmbedField{}
+					topLine := &discordgo.MessageEmbedField{}
+					statLineBestBoss.Inline = true
+					statLineWorseBoss.Inline = true
+					if raider.RaidData.LastRaid.HealingDone > raider.RaidData.LastRaid.DamageDone {
+						statLineBestBoss.Name = "HPS"
+						statLineWorseBoss.Name = "HPS"
+						statLineBestBoss.Value = fmt.Sprintf("`%.f`", raider.RaidData.Parses.BestBoss.HPS)
+						statLineWorseBoss.Value = fmt.Sprintf("`%.f`", raider.RaidData.Parses.WorstBoss.HPS)
+					} else {
+						statLineBestBoss.Name = "DPS"
+						statLineWorseBoss.Name = "DPS"
+						statLineBestBoss.Value = fmt.Sprintf("`⚔ %.2f`", raider.RaidData.Parses.BestBoss.DPS)
+						statLineWorseBoss.Value = fmt.Sprintf("`⚔ %.2f`", raider.RaidData.Parses.WorstBoss.DPS)
+					}
+
+					topString := ""
+					switch {
+					case raider.RaidData.Parses.Top1:
+						{
+							topString = "#1 🥇"
+						}
+					case raider.RaidData.Parses.Top2:
+						{
+							topString = "#2 🥈"
+						}
+					case raider.RaidData.Parses.Top3:
+						{
+							topString = "#3 🥉"
+						}
+					case raider.RaidData.Parses.Top5:
+						{
+							topString = "#5"
+						}
+					default:
+						{
+							topString = "Around top 5" //Safegaurd
+						}
+					}
+					topLine = &discordgo.MessageEmbedField{Name: "Rank in class", Value: fmt.Sprintf("`%s`", topString), Inline: true}
+
+					fieldsRaiderPerformance := []*discordgo.MessageEmbedField{
+						{Name: "**▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒**\r", Value: "\u200B", Inline: false},
+						topLine,
+						{Name: "From top 1", Value: fmt.Sprintf("`%.f%%`", raider.RaidData.Parses.RelativeToTop), Inline: true},
+						{Name: "Δ vs last week", Value: fmt.Sprintf("`%.f%%`", raider.RaidData.Parses.Deviation), Inline: true},
+					}
+					scalingOrdered := SortFloat64FromMap(false, mapOfPointScaleProcent)
+					weightStringSlice := []string{}
+					mapOfUniqueWeightNames := make(map[string]bool)
+					for _, scaling := range scalingOrdered {
+						for weightName, weightProcent := range mapOfPointScaleProcent {
+							if scaling == weightProcent && !mapOfUniqueWeightNames[weightName] {
+								weightStringSlice = append(weightStringSlice, fmt.Sprintf("↳ %s → `%.f%%`", strings.Split(weightName, "/")[1], weightProcent))
+								mapOfUniqueWeightNames[weightName] = true
+							}
+						}
+					}
+					specName := ""
+					if len(raider.RaidData.LastRaid.Specs) > 0 {
+						specName = raider.RaidData.LastRaid.Specs[0].Name
+					} else {
+						specName = "Not detected..."
+					}
+					embedRaiderPerformance := &discordgo.MessageEmbed{
+						Title: fmt.Sprintf("LINK TO WARCRAFTLOGS PROFILE %s", crackedBuiltin),
+						URL:   raider.RaidData.URL,
+						Description: strings.Join([]string{
+							"**📊 Calculations (last 3 months) 📊**",
+							"\u200B",
+							fmt.Sprintf("**Raid tier:** `%s`", raider.RaidData.Parses.RaidTier),
+							"\u200B",
+							fmt.Sprintf("**Raider name:** `%s`", raider.MainCharName),
+							"\u200B",
+							fmt.Sprintf("**Raider spec:** `%s`", specName),
+							"\u200B",
+							fmt.Sprintf("**Count of raiders in calculation:** `%d`", raider.RaidData.CountOfRaidersInCalculation),
+							"\u200B",
+							"**How this works**",
+							"• Bot collects data from `all raiders` over the last 3 months",
+							"• Only raiders of the `same class` are compared",
+							"• Raiders must be present in `≥ 50%` of raids to be included",
+							"• Eligible raiders are added to the `compare pool`",
+							"• Points are now calculated for each raider in the current `compare pool`",
+							"\u200B",
+							strings.Join(weightStringSlice, "\n"),
+							"↳ Sums to 100% — higher % = higher value in calculation / more points",
+							"↳ Metrics are subject to change, and `feedback` can be given using the bot!",
+							"\u200B",
+							"• The `metrics` defined above is used to calculate the following:",
+							"↳ `Rank in class` → In terms of total points, where do you stand?",
+							"↳ `From top 1 in %` → How far performance wise, are you from top 1?",
+							"↳ `Δ vs last week` → What is your performance difference (delta) compared to the week before?",
+						}, "\n"),
+						Fields: fieldsRaiderPerformance,
+						Footer: &discordgo.MessageEmbedFooter{
+							Text: fmt.Sprintf("Source: https://fresh.warcraftlogs.com/guild/id/%d", warcraftLogsGuildID),
+						},
+					}
+					_, err = innerSession.FollowupMessageCreate(event.Interaction, false, &discordgo.WebhookParams{
+						Embeds: []*discordgo.MessageEmbed{embedRaiderPerformance},
+						Flags:  discordgo.MessageFlagsEphemeral,
+					})
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a result message to user %s using slash command /myraiderperformance, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+					}
+					splitBestBossName := strings.Split(raider.RaidData.Parses.BestBoss.Name, " ")
+					splitWorstBossName := strings.Split(raider.RaidData.Parses.WorstBoss.Name, " ")
+					bestBossNameFinal := ""
+					worstBossNameFinal := ""
+					if len(splitBestBossName) >= 2 {
+						if strings.ToLower(splitBestBossName[1]) == "the" {
+							bestBossNameFinal = splitBestBossName[0]
+						} else {
+							bestBossNameFinal = strings.Join(splitBestBossName[:2], " ")
+						}
+					} else {
+						bestBossNameFinal = raider.RaidData.Parses.BestBoss.Name
+					}
+					if len(splitWorstBossName) >= 2 {
+						if strings.ToLower(splitWorstBossName[1]) == "the" {
+							worstBossNameFinal = splitWorstBossName[0]
+						} else {
+							worstBossNameFinal = strings.Join(splitWorstBossName[:2], " ")
+						}
+					} else {
+						worstBossNameFinal = raider.RaidData.Parses.WorstBoss.Name
+					}
+					if isDataOld {
+						time.Sleep(time.Second * 5)
+					}
+					fieldsRankings := []*discordgo.MessageEmbedField{
+						{Name: "\u200B", Value: "**┌────────────────\u2003Rankings\u2003──────────────┐**", Inline: false},
+						{Name: "World", Value: fmt.Sprintf("`#%.f`", raider.RaidData.Parses.RankWorld), Inline: true},
+						{Name: "Region", Value: fmt.Sprintf("`#%.f`", raider.RaidData.Parses.RankRegion), Inline: true},
+						{Name: "Server", Value: fmt.Sprintf("`#%.f`", raider.RaidData.Parses.RankServer), Inline: true},
+						// ── Highlights bosses ──
+						{Name: "\u200B", Value: "**┌────────────────\u2003Bosses\u2003────────────────┐**", Inline: false},
+						{Name: "Best", Value: fmt.Sprintf("`%s`", bestBossNameFinal), Inline: true},
+						statLineBestBoss,
+						{Name: "Kill time", Value: fmt.Sprintf("`⏱ %s`", raider.RaidData.Parses.BestBoss.KillTime), Inline: true},
+						{Name: "Worst", Value: fmt.Sprintf("`%s`", worstBossNameFinal), Inline: true},
+						statLineWorseBoss,
+						{Name: "Kill time", Value: fmt.Sprintf("`⏱ %s`", raider.RaidData.Parses.WorstBoss.KillTime), Inline: true},
+						{Name: "\u200B", Value: "**┌────────────────\u2003Parses\u2003────────────────┐**", Inline: false},
+						{Name: "Best avg", Value: fmt.Sprintf("`%.2f`", raider.RaidData.Parses.Parse["bestAverage"]), Inline: true},
+						{Name: "Highest", Value: fmt.Sprintf("`%.2f`", raider.RaidData.Parses.Parse["highest"]), Inline: true},
+						{Name: "Lowest", Value: fmt.Sprintf("`%.2f`", raider.RaidData.Parses.Parse["lowest"]), Inline: true},
+					}
+
+					embedRankings := &discordgo.MessageEmbed{
+						Title: fmt.Sprintf("LINK TO WARCRAFTLOGS PROFILE %s", crackedBuiltin),
+						URL:   raider.RaidData.URL,
+						Description: strings.Join([]string{
+							"**🏆 Warcraftlogs rankings and bosses 🏆**",
+							"\u200B",
+							"**• Please see the following sections:**",
+							"\u200B",
+							"↳ Where do you place in the world?",
+							"↳ Which boss is best, which is worst?",
+							"↳ What does your raw parses look like?",
+						}, "\n"),
+						Fields: fieldsRankings,
+						Footer: &discordgo.MessageEmbedFooter{
+							Text: fmt.Sprintf("Source: https://fresh.warcraftlogs.com/guild/id/%d", warcraftLogsGuildID),
+						},
+					}
+					_, err = innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
+						Embeds: []*discordgo.MessageEmbed{embedRankings},
+						Flags:  discordgo.MessageFlagsEphemeral,
+					})
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent ranking data to user %s, using slash command /myraiderperformance, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+					}
 				}
-				WriteInformationLog(fmt.Sprintf("Waiting 2min before deleting the channel that the bot had to create, because it could not create or sent a direct channel to the user %s, using slash command /myreminder during the function UseSlashCommand()", raiderName), "Sleeping thread")
-				time.Sleep(waitBeforeDeleteChannel)
-				_, err = innerSession.ChannelDelete(newChannel.ID)
-				if err != nil {
-					WriteErrorLog("An error occured while trying to delete channel with name %s and ID %s, using slash command /myreminder, during the function UseSlashCommand()", err.Error())
+			case "myreminder":
+				{
+					var err error
+					raiderName := ResolvePlayerID(userID, innerSession)
+					timesToNotify := 5
+					waitBeforeDeleteChannel := time.Minute * 2
+					title := interactionData.Options[0].Value.(string)
+					err = innerSession.InteractionRespond(event.Interaction, slashCommandAllUsers["myreminder"].Responses["examples"].Response)
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent initial response to user %s using slash command /myreminder, during the function UseSlashCommand()", raiderName), err.Error())
+						return
+					}
+					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+						Embeds: &slashCommandAllUsers["myreminder"].Responses["examples"].Response.Data.Embeds,
+					})
+					if err != nil {
+						WriteErrorLog("An error occured while trying to sent examples response using slash command /myreminder, during the function UseSlashCommand()", err.Error())
+						return
+					}
+					timeNoneFiltered := strings.ToLower(strings.TrimSpace(interactionData.Options[1].Value.(string)))
+					duration := time.Duration(0)
+					hitError := false
+					patternDigitalClock := regexp.MustCompile(`^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$`)
+					patternCountdown := regexp.MustCompile(`^(?:\d+h(?:\d+m(?:\d+s)?)?|\d+m(?:\d+s)?|\d+s)$`)
+					if patternDigitalClock.MatchString(timeNoneFiltered) {
+						timePartsSlice := strings.Split(timeNoneFiltered, ":")
+						if len(timePartsSlice) != 3 {
+							WriteErrorLog("The time provided is invalid, value of %s cannot be used in slash command /myreminder, during the function UseSlashCommand()", err.Error())
+							hitError = true
+						}
+						hours, err := strconv.Atoi(timePartsSlice[0])
+						if err != nil {
+							WriteErrorLog("An eror occured while trying to perform string to int convert on value %s using the slash command /myreminder 1, during the function UseSlashCommand()", err.Error())
+							hitError = true
+						}
+
+						minutes, err := strconv.Atoi(timePartsSlice[1])
+						if err != nil {
+							WriteErrorLog("An eror occured while trying to perform string to int convert on value %s using the slash command /myreminder 2, during the function UseSlashCommand()", err.Error())
+							hitError = true
+						}
+						seconds, err := strconv.Atoi(timePartsSlice[2])
+						if err != nil {
+							WriteErrorLog("An eror occured while trying to perform string to int convert on value %s using the slash command /myreminder 3, during the function UseSlashCommand()", err.Error())
+							hitError = true
+						}
+						if hitError {
+							interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|An internal bot error occured, please contact <@%s>", SplitOfficerName(officerGMArlissa)["ID"]))
+							err = innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+							if err != nil {
+								WriteErrorLog("An error occured while trying to send an error message to the user %s using the slash command /myreminder, during the function UseSlashCommand()", err.Error())
+								return
+							}
+						}
+						duration = time.Hour*time.Duration(hours) + time.Minute*time.Duration(minutes) + time.Second*time.Duration(seconds)
+					} else if patternCountdown.MatchString(timeNoneFiltered) {
+						duration, err = time.ParseDuration(timeNoneFiltered)
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to convert time string %s to time.Duration using slash command /myreminder, during the function UseSlashCommand()", timeNoneFiltered), err.Error())
+							interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|An internal bot error occured, please contact <@%s>", SplitOfficerName(officerGMArlissa)["ID"]))
+							err = innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+							if err != nil {
+								WriteErrorLog("An error occured while trying to send error message to user %s using the slash command /myreminder, during the function UseSlashCommand()", err.Error())
+								return
+							}
+						}
+					} else {
+						interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|Your time of `%s` is not valid. Please see the examples for help.", timeNoneFiltered))
+						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						if err != nil {
+							WriteErrorLog("An error occured while trying to send initial response to user %s using the slash command /myreminder 2, during the function UseSlashCommand()", err.Error())
+						}
+						return
+					}
+					convertTime := time.Now().Local().Add(duration).Format(timeLayoutLogs)
+					interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Alert for %s|**The bot will attempt to contact you at: %s**", title, convertTime))
+					_, err = innerSession.FollowupMessageCreate(event.Interaction, false, &discordgo.WebhookParams{
+						Flags:  discordgo.MessageFlagsEphemeral,
+						Embeds: interactionResponse.Data.Embeds,
+					})
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to notify the user %s for last message using the slash command /myreminder, during the function UseSlashCommand()", raiderName), err.Error())
+						return
+					}
+					WriteInformationLog(fmt.Sprintf("User %s has requested a thread to sleep for %s due to a userdefined alert being set using the slash command /myreminder, during the function UseSlashCommand()", raiderName, duration.String()), "Sleeping thread")
+					time.Sleep(duration)
+					userChannel, err := session.UserChannelCreate(userID)
+					failed := false
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured when trying to create a DM channel to the user %s", raiderName), err.Error())
+						failed = true
+					}
+					if !failed {
+						for x := range timesToNotify {
+							x++
+							_, err := innerSession.ChannelMessageSend(userChannel.ID, fmt.Sprintf("**%s** REMINDER!\n\nMESSAGE WILL REPEAT %d/%d more times!", title, x, timesToNotify))
+							if err != nil {
+								failed = true
+								break
+							}
+							time.Sleep(time.Second * 3)
+						}
+					}
+
+					if failed {
+						newChannel, err := innerSession.GuildChannelCreateComplex(serverID, discordgo.GuildChannelCreateData{
+							Name:  fmt.Sprintf("alert-%s-%s", event.ID, duration.String()),
+							Type:  discordgo.ChannelTypeGuildText,
+							Topic: "This channel will close in 2min",
+							PermissionOverwrites: []*discordgo.PermissionOverwrite{
+								{
+									ID:   serverID,
+									Type: discordgo.PermissionOverwriteTypeMember,
+									Deny: permissionViewChannel,
+								},
+								{
+									ID:    userID,
+									Type:  discordgo.PermissionOverwriteTypeMember,
+									Allow: permissionViewChannel,
+								},
+							},
+						})
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to create channel: %s for user %s using slash command /myreminder, during the function UseSlashCommand()", newChannel.Name, raiderName), err.Error())
+							return
+						}
+						for x := range timesToNotify {
+							x++
+							_, err = innerSession.ChannelMessageSend(newChannel.ID, fmt.Sprintf("Hi <@%s> THIS IS YOUR REMINDER FOR: %s\n\nMESSAGE WILL REPEAT %d/%d more times!", userID, title, x, timesToNotify))
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent a message in new channel created to alert user %s about a user specified alert, using the slash command /myreminder during the function UseSlashCommand()", raiderName), err.Error())
+								return
+							}
+							time.Sleep(time.Second * 3)
+						}
+						WriteInformationLog(fmt.Sprintf("Waiting 2min before deleting the channel that the bot had to create, because it could not create or sent a direct channel to the user %s, using slash command /myreminder during the function UseSlashCommand()", raiderName), "Sleeping thread")
+						time.Sleep(waitBeforeDeleteChannel)
+						_, err = innerSession.ChannelDelete(newChannel.ID)
+						if err != nil {
+							WriteErrorLog("An error occured while trying to delete channel with name %s and ID %s, using slash command /myreminder, during the function UseSlashCommand()", err.Error())
+						}
+					}
 				}
-				}
-			}
-			case "howto": {
+			case "howto":
+				{
 					interactionResponse := NewInteractionResponseToSpecificCommand(3, "Information about how to use the bot|Please select one of the buttons below:")
 					interactionResponse.Data.Components = []discordgo.MessageComponent{
 						discordgo.ActionsRow{
@@ -4937,7 +4825,8 @@ func UseSlashCommand(session *discordgo.Session) {
 					}
 					innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 				}
-				case "hi": {
+			case "hi":
+				{
 					responseString := ""
 					playerID := event.Member.User.ID
 					interactionResponse := NewInteractionResponseToSpecificCommand(3, "Saying hi|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
@@ -4952,7 +4841,7 @@ func UseSlashCommand(session *discordgo.Session) {
 						responseString = fmt.Sprintf("Hi %s - Good to meet you!", playerName)
 					}
 					_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-							Content: GetStringPointer(responseString),
+						Content: GetStringPointer(responseString),
 					})
 					if err != nil {
 						WriteErrorLog("An error occured while trying to sent error response to user %s with slash command hi, during the function UseSlashCommand()", err.Error())
@@ -4960,7 +4849,8 @@ func UseSlashCommand(session *discordgo.Session) {
 					}
 					WriteInformationLog(fmt.Sprintf("The user %s has said hi to the bot", playerName), "Success interaction")
 				}
-				case "joke": {
+			case "joke":
+				{
 					interactionResponse := NewInteractionResponseToSpecificCommand(3, "Incomming joke|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
 					interactionResponse.Data.Flags &^= discordgo.MessageFlagsEphemeral
 					innerSession.InteractionRespond(event.Interaction, &interactionResponse)
@@ -4977,12 +4867,12 @@ func UseSlashCommand(session *discordgo.Session) {
 						if flags, ok := data["flags"].(map[string]any); ok {
 							if racistFlag, ok := flags["racist"]; ok && racistFlag.(bool) {
 								_, err := innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-								Content: GetStringPointer(fmt.Sprintf("Wuuuuupsi..... I cannot tell this joke as it would get me in trouble! %s", antiCrackedBuiltin)),
-							})
-							if err != nil {
+									Content: GetStringPointer(fmt.Sprintf("Wuuuuupsi..... I cannot tell this joke as it would get me in trouble! %s", antiCrackedBuiltin)),
+								})
+								if err != nil {
 									WriteErrorLog("An error occured while trying to sent error response to user %s with slash command jokes, during the function UseSlashCommand()", err.Error())
 								}
-							break
+								break
 							} else if darkFlag, ok := data["category"].(string); ok && darkFlag == "Dark" {
 								_, err := innerSession.ChannelMessageSend(event.ChannelID, fmt.Sprintf("This one is going to be spicy... I apologize in advance <@%s> %s", userID, antiCrackedBuiltin))
 								if err != nil {
@@ -5017,7 +4907,8 @@ func UseSlashCommand(session *discordgo.Session) {
 						}
 					}
 				}
-			case "feedback": {
+			case "feedback":
+				{
 					optionsCount := len(interactionData.Options)
 					if optionsCount < 2 {
 						interactionResponse := NewInteractionResponseToSpecificCommand(0, "feedback|There is an issue with the feedback service at this time")
@@ -5030,14 +4921,15 @@ func UseSlashCommand(session *discordgo.Session) {
 					deepCopy := *slashCommandAllUsers["feedback"].Responses["description"].Response
 					dataCopy := *deepCopy.Data
 					deepCopy.Data = &dataCopy
-					deepCopy.Data.CustomID = fmt.Sprintf("%s/%s/%s/%v", deepCopy.Data.CustomID, interactionData.Options[0].StringValue(),userID, interactionData.Options[1].BoolValue())
+					deepCopy.Data.CustomID = fmt.Sprintf("%s/%s/%s/%v", deepCopy.Data.CustomID, interactionData.Options[0].StringValue(), userID, interactionData.Options[1].BoolValue())
 					err := innerSession.InteractionRespond(event.Interaction, &deepCopy)
 					if err != nil {
 						fmt.Println("ID:", deepCopy.Data.CustomID)
 						WriteErrorLog("An error occured while trying to respond to slash command /feedback and the users welcome message, during the function UshSlashCommand()", err.Error())
 					}
 				}
-			case "aboutme": {
+			case "aboutme":
+				{
 					fmt.Println("WE DONT REACH HERE?")
 					interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("aboutme|This feature is not out yet 🚧 please contact <@%s> for more information", SplitOfficerName(officerGMArlissa)["ID"]))
 					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
@@ -5046,15 +4938,15 @@ func UseSlashCommand(session *discordgo.Session) {
 					}
 				}
 			}
-		} 
+		}
 	})
 }
 
 func CheckForLaterThanDuration(timeToCheck time.Time, days int) bool {
-    return time.Since(timeToCheck) > time.Duration(days)*24*time.Hour
+	return time.Since(timeToCheck) > time.Duration(days)*24*time.Hour
 }
 
-func NewWebhookParamGIF (fileName string, color ...int) *discordgo.WebhookParams  {
+func NewWebhookParamGIF(fileName string, color ...int) *discordgo.WebhookParams {
 	fileGIF, err := os.Open(fileName)
 	currentColor := 0
 	if len(color) == 0 {
@@ -5065,7 +4957,7 @@ func NewWebhookParamGIF (fileName string, color ...int) *discordgo.WebhookParams
 	if err != nil {
 		WriteErrorLog(fmt.Sprintf("An error occured while trying to open GIF file using the slash command /%s, during the function UseSlashCommand()", fileName), err.Error())
 	}
-	return  &discordgo.WebhookParams{
+	return &discordgo.WebhookParams{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Image: &discordgo.MessageEmbedImage{
@@ -5077,7 +4969,7 @@ func NewWebhookParamGIF (fileName string, color ...int) *discordgo.WebhookParams
 		Files: []*discordgo.File{
 			{
 				Reader: fileGIF,
-				Name: fileName,
+				Name:   fileName,
 			},
 		},
 		Flags: discordgo.MessageFlagsEphemeral,
@@ -5176,8 +5068,8 @@ func ReadWriteConfig(currentConfig ...config) config {
 	updated := false
 	var err error
 	if bytes := CheckForExistingCache(configPath); len(bytes) != 0 {
-	   err = json.Unmarshal(bytes, &configCache)
-	   if err != nil {
+		err = json.Unmarshal(bytes, &configCache)
+		if err != nil {
 			WriteErrorLog(fmt.Sprintf("The config retrieved from path %s could not be unmarshalled, returning early, during the function ReadWriteConfig()", configPath), err.Error())
 			return configCurrent
 		}
@@ -5190,7 +5082,7 @@ func ReadWriteConfig(currentConfig ...config) config {
 			return configCache
 		}
 	}
-	
+
 	if configCache.Announce == nil {
 		configCache.Announce = make(map[string]topic)
 	}
@@ -5273,7 +5165,7 @@ func ReadWriteRaiderProfiles(raiders []raiderProfile, initial bool) []raiderProf
 			if raider.MainCharName == cachedRaider.MainCharName {
 				mapOfMissingProfiles[raider.MainCharName] = true
 				//fmt.Println("DO WE GET HERE?", "RAIDER NAME", raider.MainCharName, "CACHED:", cachedRaider.AttendanceInfo["oneMonth"].RaidCount, cachedRaider.AttendanceInfo["twoMonth"].RaidCount, cachedRaider.AttendanceInfo["threeMonth"].RaidCount, cachedRaider.AttendanceInfo["guildStart"].RaidCount, "NEW",  raider.AttendanceInfo["oneMonth"].RaidCount, raider.AttendanceInfo["twoMonth"].RaidCount, raider.AttendanceInfo["threeMonth"].RaidCount, raider.AttendanceInfo["guildStart"].RaidCount,)
-				if cachedRaider.AttendanceInfo["oneMonth"].RaidCount != raider.AttendanceInfo["oneMonth"].RaidCount || cachedRaider.AttendanceInfo["guildStart"].RaidCount != raider.AttendanceInfo["guildStart"].RaidCount || len(cachedRaider.AttendanceInfo["oneMonth"].RaidsMissed) != len(raider.AttendanceInfo["oneMonth"].RaidsMissed) || len(cachedRaider.AttendanceInfo["twoMonth"].RaidsMissed) != len(raider.AttendanceInfo["twoMonth"].RaidsMissed) || len(cachedRaider.AttendanceInfo["threeMonth"].RaidsMissed) != len(raider.AttendanceInfo["threeMonth"].RaidsMissed)   {
+				if cachedRaider.AttendanceInfo["oneMonth"].RaidCount != raider.AttendanceInfo["oneMonth"].RaidCount || cachedRaider.AttendanceInfo["guildStart"].RaidCount != raider.AttendanceInfo["guildStart"].RaidCount || len(cachedRaider.AttendanceInfo["oneMonth"].RaidsMissed) != len(raider.AttendanceInfo["oneMonth"].RaidsMissed) || len(cachedRaider.AttendanceInfo["twoMonth"].RaidsMissed) != len(raider.AttendanceInfo["twoMonth"].RaidsMissed) || len(cachedRaider.AttendanceInfo["threeMonth"].RaidsMissed) != len(raider.AttendanceInfo["threeMonth"].RaidsMissed) {
 					WriteInformationLog("The raider: %s 's attendance will be updated, during the function ReadWriteRaiderCache()", "Updating RaiderProfile Attendance")
 					cachedRaiderProfiles.Raiders[x].AttendanceInfo = raider.AttendanceInfo
 				}
@@ -5290,24 +5182,24 @@ func ReadWriteRaiderProfiles(raiders []raiderProfile, initial bool) []raiderProf
 					}
 					if len(cachedRaiderProfiles.Raiders[x].BenchInfo) == 0 {
 						cachedRaiderProfiles.Raiders[x].BenchInfo["lastWeek"] = raider.BenchInfo["lastWeek"]
-						mapOfTakenBenches[raider.BenchInfo["lastWeek"][0].DateString] = true 
-					} 
+						mapOfTakenBenches[raider.BenchInfo["lastWeek"][0].DateString] = true
+					}
 					timeBefore, err := time.Parse(timeLayOutShort, cachedRaiderProfiles.Raiders[x].BenchInfo["lastWeek"][0].DateString)
 					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to update raider: %s weekly bench info, during the function ReadWriteRaiderProfiles()",raider.MainCharName), err.Error())
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to update raider: %s weekly bench info, during the function ReadWriteRaiderProfiles()", raider.MainCharName), err.Error())
 						continue
 					}
 					timeAfter, err := time.Parse(timeLayOutShort, raider.BenchInfo["lastWeek"][0].DateString)
 					if err != nil {
-						WriteErrorLog(fmt.Sprintf("An error occured while trying to update raider: %s weekly bench info 2, during the function ReadWriteRaiderProfiles()",raider.MainCharName), err.Error())
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to update raider: %s weekly bench info 2, during the function ReadWriteRaiderProfiles()", raider.MainCharName), err.Error())
 						continue
 					}
 					fmt.Println("TIME BNEFORE_:", timeBefore.String(), "TIME AFTER:", timeAfter.String())
 					if timeAfter.After(timeBefore) || timeAfter.Equal(timeBefore) {
 						fmt.Println("DO WE GET HERE??33")
 						timeNow := time.Now()
-						oneMonthBack   := timeNow.AddDate(0, 0, -31)
-						twoMonthBack   := timeNow.AddDate(0, 0, -60)
+						oneMonthBack := timeNow.AddDate(0, 0, -31)
+						twoMonthBack := timeNow.AddDate(0, 0, -60)
 						threeMonthBack := timeNow.AddDate(0, 0, -90)
 						oneMonthBenches := []bench{}
 						twoMonthBenches := []bench{}
@@ -5358,7 +5250,7 @@ func ReadWriteRaiderProfiles(raiders []raiderProfile, initial bool) []raiderProf
 								cachedRaiderProfiles.Raiders[x].BenchInfo["oneMonth"] = oneMonthBenches
 								WriteInformationLog(fmt.Sprintf("The raider %s has had his one month bench information updated, during the function ReadWriteRaiderProfiles()", raider.MainCharName), "Updating bench info")
 								continue
-							} 
+							}
 
 							if len(twoMonthBenches) > 0 {
 								cachedRaiderProfiles.Raiders[x].BenchInfo["twoMonth"] = twoMonthBenches
@@ -5443,7 +5335,7 @@ func ReadWriteRaiderProfiles(raiders []raiderProfile, initial bool) []raiderProf
 					cachedRaiderProfiles.Raiders[x].RaidData = raider.RaidData
 				}
 				break
- 			}
+			}
 		}
 		if !mapOfMissingProfiles[raider.MainCharName] {
 			WriteInformationLog("Raider Profile with name %s was not found in cache and will be added, during the function ReadWriteRaiderProfiles()", "Adding Raider Profile to cache")
@@ -5480,7 +5372,7 @@ func NewRaidProfileBenchSummaries(raiders []raiderProfile, periodKey string) str
 		lastWeek = true
 	}
 	oneRaider := false
-	
+
 	mapOfBenchedRaiders := make(map[string]map[string][]bench)
 	for _, raider := range raiders {
 		if len(raider.BenchInfo) == 0 {
@@ -5509,7 +5401,7 @@ func NewRaidProfileBenchSummaries(raiders []raiderProfile, periodKey string) str
 		),
 	)
 
-		headerLabel := "Reason"
+	headerLabel := "Reason"
 	if !lastWeek && len(mapOfBenchedRaiders[periodKey]) != 1 {
 		headerLabel = "Count"
 	}
@@ -5521,7 +5413,7 @@ func NewRaidProfileBenchSummaries(raiders []raiderProfile, periodKey string) str
 		))
 		oneRaider = true
 	}
-	
+
 	// header
 	returnStringWriter.WriteString(
 		fmt.Sprintf("/ %-20s / %-25s /\n", "Player Name", headerLabel),
@@ -5536,7 +5428,7 @@ func NewRaidProfileBenchSummaries(raiders []raiderProfile, periodKey string) str
 			for _, bench := range benchSlice {
 				if len(benchSlice) == 1 {
 					returnStringWriter.WriteString(
-					fmt.Sprintf("/ %-20s / %-25s /\n", playerName, bench.Reason),
+						fmt.Sprintf("/ %-20s / %-25s /\n", playerName, bench.Reason),
 					)
 					break
 				}
@@ -5557,7 +5449,7 @@ func NewRaidProfileBenchSummaries(raiders []raiderProfile, periodKey string) str
 		}
 	}
 
-	returnStringWriter.WriteString("```")	
+	returnStringWriter.WriteString("```")
 	return returnStringWriter.String()
 }
 
@@ -5577,7 +5469,7 @@ func ResolvePlayerID(playerID string, innerSession *discordgo.Session) string {
 }
 
 func ResolvePlayerName(playerName string, session *discordgo.Session) string {
-	returnID:= ""
+	returnID := ""
 	users, err := session.GuildMembers(serverID, "", 1000)
 	if err != nil {
 		WriteErrorLog(fmt.Sprintf("An error occured while trying to retrive all discord users on server: %s, during the function ResolvePlayerName()", serverID), err.Error())
@@ -5612,7 +5504,7 @@ func ResolveRoleIDs(session *discordgo.Session, roleIDs ...string) []string {
 			fmt.Println("NOT OK!", roleID, "ROLE IDS", roleIDs, len(roleIDs), len(mapOfAllRoles))
 		}
 	}
-	 fmt.Println("RETURN SLICE:", returnStringSlice)
+	fmt.Println("RETURN SLICE:", returnStringSlice)
 	return returnStringSlice
 }
 
@@ -5741,8 +5633,7 @@ func InitializeDiscordProfiles(raiders []raiderProfile, innerSession *discordgo.
 	return allRaiders
 }
 
-
-func AddWeeklyRaiderAttendance(botInfo ...any) string{
+func AddWeeklyRaiderAttendance(botInfo ...any) string {
 	currentRaiders := raiderProfiles{}
 	currentRaids := []logAllData{}
 	raiderCacheBytes := CheckForExistingCache(raiderProfilesCachePath)
@@ -5751,7 +5642,7 @@ func AddWeeklyRaiderAttendance(botInfo ...any) string{
 		return "The raider-profiles cache is nil"
 	}
 	logsCacheBytes := CheckForExistingCache(raidAllDataPath)
-		if logsCacheBytes == nil {
+	if logsCacheBytes == nil {
 		WriteErrorLog("The raid cache is nil, which causes this function to fail, during the function AddWeeklyReaiderAttendance", "Raid cache is nil")
 		return "The raid cache is nil"
 	}
@@ -5794,7 +5685,7 @@ func SortOnlyMainRaids(timePeriod time.Duration, raids []logAllData, mergedRaids
 			}
 		}
 	}
-		
+
 	return nil
 }
 
@@ -5825,18 +5716,18 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 			}
 		}
 	}
-	
+
 	for raider := range playersOfSameClass {
 		for _, raiderProfile := range raiderProfiles {
 			if raiderProfile.MainCharName == raider && slices.Contains(raiderProfile.DiscordRoles, roleRaider) {
-				if IsRaiderTank(raiderProfile.RaidData.AverageRaid["lastWeek"]) && !isCurrentTank{
-					WriteInformationLog(fmt.Sprintf("The player %s has been skipped due to the raider asking for performance is NOT a tank, but the player in scope, is, during the function CalculateRaiderPerformance()", raider, ), "Player skipped")	
+				if IsRaiderTank(raiderProfile.RaidData.AverageRaid["lastWeek"]) && !isCurrentTank {
+					WriteInformationLog(fmt.Sprintf("The player %s has been skipped due to the raider asking for performance is NOT a tank, but the player in scope, is, during the function CalculateRaiderPerformance()", raider), "Player skipped")
 					continue
 				}
 				playersInScope[raider] = true
 				currentRaiderProfiles = append(currentRaiderProfiles, raiderProfile)
 				continue
-			}	
+			}
 		}
 	}
 	fmt.Println("len of raider profiles", len(currentRaiderProfiles), playersInScope)
@@ -5856,13 +5747,14 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		}
 		containsProcentPlayers := float64(len(mapOfUniquePlayers)) / float64(len(currentRaiderProfiles)) * 100
 		fmt.Println("LEN OF UNIQUE PLAYERS", len(mapOfUniquePlayers), len(currentRaiderProfiles), containsProcentPlayers)
-		if containsProcentPlayers >= 50{
+		if containsProcentPlayers >= 50 {
 			logsToAnalyze = append(logsToAnalyze, log)
 			fmt.Println("THE LOG:", log.RaidTitle, "HAS ALL RAIDERS IN", len(currentRaiderProfiles), len(mapOfUniquePlayers))
 		}
 	}
-	switch  {
-		case len(logsToAnalyze) < 3: {
+	switch {
+	case len(logsToAnalyze) < 3:
+		{
 			WriteInformationLog(fmt.Sprintf("The amount of logs found for raider %s is %d and therefor less than 4 - Will return early, during the function CalculateRaiderPerformance()", raider.MainCharName, len(logsToAnalyze)), "Returning early")
 			return (raiderProfile{})
 		}
@@ -5905,12 +5797,14 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		countOfPlayersInCalculation++
 		for _, raid := range raids {
 			switch statType {
-				case "Healer": {
+			case "Healer":
+				{
 					mapOfStatCount[raiderName] += raid.HealingDone
 				}
-				default: {
+			default:
+				{
 					mapOfStatCount[raiderName] += raid.DamageDone
-				} 
+				}
 			}
 			mapOfDeathCount[raiderName] += len(raid.Deaths)
 			mapOfCPMCount[raiderName] += raid.MinuteAPM
@@ -5928,14 +5822,14 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 			for raiderName, count := range mapOfStatCount {
 				mapOfStatAverageCount[raiderName] = float64(count) / float64(len(raids))
 			}
- 		}
+		}
 	}
 
 	for _, raider := range currentRaiderProfiles {
 		mapOfParseHighAverage[raider.MainCharName] = raider.RaidData.Parses.Parse["bestAverage"]
 		mapOfParseLowAverage[raider.MainCharName] = raider.RaidData.Parses.Parse["mediumAverage"]
 	}
-	
+
 	sortedParseHighAverage := SortFloat64FromMap(false, mapOfParseHighAverage)
 	sortedParseLowAverage := SortFloat64FromMap(false, mapOfParseLowAverage)
 	sortedCPMAverage := SortFloat64FromMap(false, mapOfCPMAverageCount)
@@ -5957,7 +5851,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 			fmt.Println("NAME:", log.Name)
 		}
 		if len(playerLogs) == 0 {
-			WriteErrorLog(fmt.Sprintf("No playerLog data found for raider %s, this is an issue because this data is required to continue these calculations, during the function CalculateRaiderPerformance()",raider.MainCharName), "Missing data")
+			WriteErrorLog(fmt.Sprintf("No playerLog data found for raider %s, this is an issue because this data is required to continue these calculations, during the function CalculateRaiderPerformance()", raider.MainCharName), "Missing data")
 			continue
 		}
 		mapOfData := GetWarcraftLogsData(mapOfWarcraftLogsQuery[0])
@@ -5977,7 +5871,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		for y, cpm := range sortedCPMAverage {
 			if averageCPM == cpm {
 				if y == 0 {
-					pointsPlayers[raider.MainCharName] += 2 * float64(mapOfPointScale["pointScaleAPM/APM"]) + 1
+					pointsPlayers[raider.MainCharName] += 2*float64(mapOfPointScale["pointScaleAPM/APM"]) + 1
 				} else if y <= 2 {
 					pointsPlayers[raider.MainCharName] += float64(mapOfPointScale["pointScaleAPM/APM"]) + 1
 				} else if y <= 4 {
@@ -5989,7 +5883,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		for y, stat := range sortedStatAverage {
 			if averageStat == stat {
 				if y == 0 {
-					pointsPlayers[raider.MainCharName] += 2 * float64(mapOfPointScale["pointScaleStat/DPS & HPS"]) + 1
+					pointsPlayers[raider.MainCharName] += 2*float64(mapOfPointScale["pointScaleStat/DPS & HPS"]) + 1
 				} else if y <= 2 {
 					pointsPlayers[raider.MainCharName] += float64(mapOfPointScale["pointScaleStat/DPS & HPS"]) + 1
 				} else if y <= 4 {
@@ -6002,7 +5896,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		for y, death := range sortedDeathAverage {
 			if averageDeath == death {
 				if y == 0 {
-					pointsPlayers[raider.MainCharName] += 2 * float64(mapOfPointScale["pointScaleDeath/Death rate"]) + 1
+					pointsPlayers[raider.MainCharName] += 2*float64(mapOfPointScale["pointScaleDeath/Death rate"]) + 1
 				} else if y <= 2 {
 					pointsPlayers[raider.MainCharName] += float64(mapOfPointScale["pointScaleDeath/Death rate"]) + 1
 				} else if y <= 4 {
@@ -6015,7 +5909,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		for y, parse := range sortedParseHighAverage {
 			if averageHighParse == parse {
 				if y == 0 {
-					pointsPlayers[raider.MainCharName] += 2 * float64(mapOfPointScale["pointScaleParse/Parse low & high"]) + 1
+					pointsPlayers[raider.MainCharName] += 2*float64(mapOfPointScale["pointScaleParse/Parse low & high"]) + 1
 				} else if y <= 2 {
 					pointsPlayers[raider.MainCharName] += float64(mapOfPointScale["pointScaleParse/Parse low & high"]) + 1
 				} else if y <= 4 {
@@ -6028,7 +5922,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		for y, parse := range sortedParseLowAverage {
 			if averageLowParse == parse {
 				if y == 0 {
-					pointsPlayers[raider.MainCharName] += 2 * float64(mapOfPointScale["pointScaleParse/Parse low & high"]) + 1
+					pointsPlayers[raider.MainCharName] += 2*float64(mapOfPointScale["pointScaleParse/Parse low & high"]) + 1
 				} else if y <= 2 {
 					pointsPlayers[raider.MainCharName] += float64(mapOfPointScale["pointScaleParse/Parse low & high"]) + 1
 				} else if y <= 4 {
@@ -6037,7 +5931,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 			}
 		}
 
-		if x == len(raiders) - 1 {
+		if x == len(raiders)-1 {
 			pointsSorted = SortFloat64FromMap(false, pointsPlayers)
 		}
 	}
@@ -6048,19 +5942,23 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		for raiderName, points := range pointsPlayers {
 			for y, innerPoints := range pointsSorted {
 				if innerPoints == points && raiderName == raider.MainCharName {
-					switch  {
-					case y == 0: {
+					switch {
+					case y == 0:
+						{
 							maxPoints = innerPoints
 							raiders[x].RaidData.Parses.Top1 = true
 						}
-					case y == 1: {
+					case y == 1:
+						{
 							raiders[x].RaidData.Parses.Top2 = true
 						}
-					case y >= 2: {
-						raiders[x].RaidData.Parses.Top3 = true
-					}
-					case y <= 4: {
-						raiders[x].RaidData.Parses.Top5 = true
+					case y >= 2:
+						{
+							raiders[x].RaidData.Parses.Top3 = true
+						}
+					case y <= 4:
+						{
+							raiders[x].RaidData.Parses.Top5 = true
 						}
 					}
 					break
@@ -6091,65 +5989,65 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 	ReadWriteRaiderProfiles(raiders, false)
 
 	/*
-	mostDoneAbility := 0
-	mapOfMostDoneAbility := make(map[string]int)
-	//abilityNameToTrack := ""
-	//typeToTrack := ""
-	for _, raid := range playersOfSameClass[raider.MainCharName] { //Create template values and specific aggregated values for raider that was parsed
-		abilityName := ""
-		for x, ability := range raid.Abilities {
-			if ability.TotalCasts > mostDoneAbility {
-				mostDoneAbility = ability.TotalCasts
-				abilityName = ability.Name
-			}
-			if x == len(raid.Abilities) -1 {
-				mapOfMostDoneAbility[abilityName]++ 
-			}
-		}
-		if raid.HealingDone > raid.DamageDone {
-			//typeToTrack = "healing"
-		} 
-	}
-
-	biggestCount := 0
-	x = 0
-	for _, count := range mapOfMostDoneAbility {
-		if count > biggestCount {
-			biggestCount = count
-		}
-		x++
-		if x == len(mapOfMostDoneAbility) -1 {
-			//abilityNameToTrack = abilityName
-		}
-	}
-	/*
-	deathsToTrack := logPlayerDeath{} //Will contain the aggregated values from the entire period
-	mostDoneStat := 0
-
-	mapOfAveragePerformance := make(map[string]logPlayer)
-	for raiderName, raidLogs := range playersOfSameClass {
-		var totalCPM int64
-		totalDeaths := map[string][]logPlayerDeath{}
-		totalMostDoneStat := 0 //Will prioritize whether u did most dps, healed the most or took the most dmg (relative to urself only)
-		mostUsedAbility := logPlayerAbility{}
-		totalCasts := 0
-		for _, playerLog := range raidLogs {
-			totalCPM += playerLog.ActiveTimeMS
-
-			for _, death := range playerLog.Deaths {
-				if !death.PartOfWipe {
-					totalDeaths[raiderName] = append(totalDeaths[raiderName], death)
+		mostDoneAbility := 0
+		mapOfMostDoneAbility := make(map[string]int)
+		//abilityNameToTrack := ""
+		//typeToTrack := ""
+		for _, raid := range playersOfSameClass[raider.MainCharName] { //Create template values and specific aggregated values for raider that was parsed
+			abilityName := ""
+			for x, ability := range raid.Abilities {
+				if ability.TotalCasts > mostDoneAbility {
+					mostDoneAbility = ability.TotalCasts
+					abilityName = ability.Name
+				}
+				if x == len(raid.Abilities) -1 {
+					mapOfMostDoneAbility[abilityName]++
 				}
 			}
-			for _, ability := range playerLog.Abilities {
-				if ability.Name == abilityNameToTrack {
-					totalCasts += ability.TotalCasts
-				}
+			if raid.HealingDone > raid.DamageDone {
+				//typeToTrack = "healing"
 			}
-
 		}
-	}
-		*/
+
+		biggestCount := 0
+		x = 0
+		for _, count := range mapOfMostDoneAbility {
+			if count > biggestCount {
+				biggestCount = count
+			}
+			x++
+			if x == len(mapOfMostDoneAbility) -1 {
+				//abilityNameToTrack = abilityName
+			}
+		}
+		/*
+		deathsToTrack := logPlayerDeath{} //Will contain the aggregated values from the entire period
+		mostDoneStat := 0
+
+		mapOfAveragePerformance := make(map[string]logPlayer)
+		for raiderName, raidLogs := range playersOfSameClass {
+			var totalCPM int64
+			totalDeaths := map[string][]logPlayerDeath{}
+			totalMostDoneStat := 0 //Will prioritize whether u did most dps, healed the most or took the most dmg (relative to urself only)
+			mostUsedAbility := logPlayerAbility{}
+			totalCasts := 0
+			for _, playerLog := range raidLogs {
+				totalCPM += playerLog.ActiveTimeMS
+
+				for _, death := range playerLog.Deaths {
+					if !death.PartOfWipe {
+						totalDeaths[raiderName] = append(totalDeaths[raiderName], death)
+					}
+				}
+				for _, ability := range playerLog.Abilities {
+					if ability.Name == abilityNameToTrack {
+						totalCasts += ability.TotalCasts
+					}
+				}
+
+			}
+		}
+	*/
 	return returnRaiderProfile
 }
 
@@ -6207,7 +6105,7 @@ func CalculateAttendance(raiders []raiderProfile, raids []logAllData, botInfo ..
 			raidTitleSlice := strings.Split(raid.RaidTitle, " ")
 			timeParsed, _ := time.Parse(timeLayout, raid.RaidStartTimeString)
 			raidKey := timeParsed.Format(timeLayout)
-			if raidCurrentTime.After(raidTime) && !mapOfUniqueRaids[raidKey] && !strings.Contains("zg,ony,aq20", strings.ToLower(raidTitleSlice[0]))  {
+			if raidCurrentTime.After(raidTime) && !mapOfUniqueRaids[raidKey] && !strings.Contains("zg,ony,aq20", strings.ToLower(raidTitleSlice[0])) {
 				mainRaidsInPeriod = append(mainRaidsInPeriod, raid)
 				mapOfUniqueRaids[raidKey] = true
 			} else if raidCurrentTime.After(raidTime) && !mapOfUniqueRaids[raidKey] {
@@ -6272,7 +6170,7 @@ func CalculateAttendance(raiders []raiderProfile, raids []logAllData, botInfo ..
 	mapOfRaiders := make(map[string]bool)
 	for x, raider := range raiders {
 		match := false
-		for y := len(raids) -1; y >= 0; y-- {
+		for y := len(raids) - 1; y >= 0; y-- {
 			for _, player := range raids[y].Players {
 				if raider.MainCharName == player.Name && !mapOfRaiders[player.Name] {
 					raiders[x].DateJoinedGuild = raids[y].RaidStartTimeString
@@ -6288,7 +6186,7 @@ func CalculateAttendance(raiders []raiderProfile, raids []logAllData, botInfo ..
 	}
 	for x, raider := range raiders {
 		if doStatus {
-			interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Progess on job|**Completed %.1f%% so far**", float64(x) / float64(len(raiders)) * 100))
+			interactionResponse := NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Progess on job|**Completed %.1f%% so far**", float64(x)/float64(len(raiders))*100))
 			_, err := innerSession.InteractionResponseEdit(event, &discordgo.WebhookEdit{
 				Embeds: &interactionResponse.Data.Embeds,
 			})
@@ -6333,14 +6231,14 @@ func CalculateAttendance(raiders []raiderProfile, raids []logAllData, botInfo ..
 			}
 		}
 	}
-	
+
 	return raiders
 }
 
-func ConvertMissedRaidToTime (raidTitle string) (time.Time, error) {
+func ConvertMissedRaidToTime(raidTitle string) (time.Time, error) {
 	raidTimeWithTitle := strings.Split(raidTitle, "/")[0]
 	raidTimeTitleSlice := strings.Split(raidTimeWithTitle, " ")
-	raidTime, err := time.Parse(timeLayoutLogs, raidTimeTitleSlice[len(raidTimeTitleSlice)-1] + " 15:00:00")
+	raidTime, err := time.Parse(timeLayoutLogs, raidTimeTitleSlice[len(raidTimeTitleSlice)-1]+" 15:00:00")
 	if err != nil {
 		WriteErrorLog("An error occured while trying to translate raid title %s to time.Time, during the funcion ConvertMissedRaidToTime()", err.Error())
 	}
@@ -6354,7 +6252,7 @@ func InitializeRaiderProfiles() []raiderProfile {
 	if data := CheckForExistingCache(raidAllDataPath); len(data) == 0 {
 		allRaidLogs = GetAllWarcraftLogsRaidData(false, false, "")
 	} else {
-		err := json.Unmarshal(data,  &allRaidLogs)
+		err := json.Unmarshal(data, &allRaidLogs)
 		if err != nil {
 			WriteErrorLog(fmt.Sprintf("An error occured while trying to marshal json from file path %s, during the function InitializeRaiderProfiles()", raidAllDataPath), err.Error())
 			return nil
@@ -6373,7 +6271,7 @@ func InitializeRaiderProfiles() []raiderProfile {
 					ClassInfo: class{
 						IngameClass: raider.ClassName,
 						Name:        raider.Name,
-						ClassType: classType,
+						ClassType:   classType,
 					},
 				}
 				newRaiderProfiles = append(newRaiderProfiles, raiderProfile)
@@ -6791,7 +6689,7 @@ func GetWeeklyBench(event *discordgo.MessageUpdate) map[string]bench {
 	for _, slices := range matches {
 		if len(slices) > 1 {
 			benchRaidersSlice = append(benchRaidersSlice, slices[1])
-		}					
+		}
 	}
 
 	for _, benchedRaider := range benchRaidersSlice {
@@ -6801,7 +6699,7 @@ func GetWeeklyBench(event *discordgo.MessageUpdate) map[string]bench {
 		currentMap.DateString = raidTime
 		benchRaidersMap[benchedRaider] = currentMap
 	}
-	
+
 	return benchRaidersMap
 }
 
@@ -6830,13 +6728,12 @@ func ReadWriteRaidHelperCache(trackedRaids ...map[string]trackRaid) map[string]t
 			return make(map[string]trackRaid)
 		}
 		return trackedRaids[0]
-	} 
+	}
 	return raids
 }
 
 func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 	createChannel := false
-	channel := &discordgo.Channel{}
 	var err error
 
 	channels, err := botSession.GuildChannels(serverID)
@@ -6866,26 +6763,33 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 	}
 
 	if createChannel {
-		channel, err = botSession.GuildChannelCreateComplex(serverID, discordgo.GuildChannelCreateData{
-			Name: channelNameAnnouncement,
-			Type: discordgo.ChannelTypeGuildText,
+		automaticAnnounceDiscordChannel, err = botSession.GuildChannelCreateComplex(serverID, discordgo.GuildChannelCreateData{
+			Name:     channelNameAnnouncement,
+			Type:     discordgo.ChannelTypeGuildText,
 			ParentID: categoryAssistance,
 			PermissionOverwrites: []*discordgo.PermissionOverwrite{
 				{
-					ID: serverID,
+					ID:   "1335182970193051739",
+					Type: discordgo.PermissionOverwriteTypeMember,
+					Allow: discordgo.PermissionViewChannel |
+						discordgo.PermissionSendMessagesInThreads,
+					Deny: discordgo.PermissionSendMessages,
+				},
+				{
+					ID:   serverID, // @everyone
 					Type: discordgo.PermissionOverwriteTypeRole,
 					Deny: discordgo.PermissionViewChannel,
 				},
-		}})
+			}})
 	} else {
-		channel = sliceOfBotChannels[0]
+		automaticAnnounceDiscordChannel = sliceOfBotChannels[0]
 	}
-	configCurrent.ChannelID = channel.ID
-	ReadWriteConfig(configCurrent)	
+	configCurrent.ChannelID = automaticAnnounceDiscordChannel.ID
+	ReadWriteConfig(configCurrent)
 
 	threadList, err := botSession.GuildThreadsActive(serverID)
 	if err != nil {
-		WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve all threads active from server %s, returning early, during the function AutoChangeAnnounceChannel()",serverID), err.Error())
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve all threads active from server %s, returning early, during the function AutoChangeAnnounceChannel()", serverID), err.Error())
 		return
 	}
 	for _, thread := range threadList.Threads {
@@ -6919,7 +6823,7 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 				err = botSession.ChannelMessageDelete(thread.ID, tempMessage.ID)
 				if err != nil {
 					WriteErrorLog(fmt.Sprintf("An error occured while trying to delete a temp message to keep thread with name %s alive, during the function AutoChangeAnnounceChannel()", threadName), err.Error())
-					break	
+					break
 				}
 				break
 			}
@@ -6936,11 +6840,10 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 			WriteInformationLog(fmt.Sprintf("The thread with name %s shall be part of the main-thread and will be skipped to not make a stand-alone thread, during the function AutoChangeAnnounceChannel()", nameThread), "Skipping thread")
 			continue
 		}
-		topic := configCurrent.Announce[nameThread]
 		thread, err := botSession.ThreadStartComplex(configCurrent.ChannelID, &discordgo.ThreadStart{
-			Name: nameThread,
+			Name:                nameThread,
 			AutoArchiveDuration: 10080,
-			Type: discordgo.ChannelTypeGuildPrivateThread,
+			Type:                discordgo.ChannelTypeGuildPublicThread,
 		})
 		if err != nil {
 			WriteErrorLog(fmt.Sprintf("An error occured while trying to create new thread with name %s, during the function AutoChangeAnnounceChannel()", nameThread), err.Error())
@@ -6948,29 +6851,19 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 		}
 		editMainPost = true
 		mapOfThreads[thread.Name] = *thread
-		
-		embed := &discordgo.MessageEmbed{
-			Title: fmt.Sprintf("INFORMATION ABOUT %s %s", nameThread, crackedBuiltin),
-			Description: topic.Description,
+
+		responseMessage := &discordgo.MessageSend{}
+		responseMessage.Content = config.Description
+		if config.GIFLocalPath != "" {
+			responseMessage.Files = append(responseMessage.Files, NewWebhookParamGIF(config.GIFLocalPath).Files...)
+
 		}
-		_, err = botSession.ChannelMessageSendComplex(thread.ID, &discordgo.MessageSend{
-			Embeds: []*discordgo.MessageEmbed{embed},
-		})
+		_, err = botSession.ChannelMessageSendComplex(thread.ID, responseMessage)
 		if err != nil {
 			WriteErrorLog(fmt.Sprintf("An error occured while trying to sent the information message for the given thread %s, during the function AutoChangeAnnounceChannel()", nameThread), err.Error())
 			continue
 		}
-		if config.GIFLocalPath != "" {
-			embedGif := NewWebhookParamGIF(config.GIFLocalPath, greenColor)
-			_, err = botSession.ChannelMessageSendComplex(thread.ID, &discordgo.MessageSend{
-			Files: embedGif.Files,
-			Embeds: embedGif.Embeds,
-		})
-		if err != nil {
-				WriteErrorLog("An error occured while trying to sent GIF in channel", err.Error())
-		}
-	}
-		
+
 		WriteInformationLog(fmt.Sprintf("Thread with name %s has been created and its description has been added to the channel, during the function AutoChangeAnnounceChannel()", nameThread), "Created thread")
 	}
 
@@ -7000,11 +6893,11 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 				gif := NewWebhookParamGIF(topic.GIFLocalPath)
 				_, err := botSession.ChannelMessageSendComplex(configCurrent.ChannelID, &discordgo.MessageSend{
 					Content: topic.Description,
-					Files: gif.Files,
+					Files:   gif.Files,
 				})
 				if err != nil {
 					WriteErrorLog(fmt.Sprintf("An error occured while trying to sent index part of the main thread %d, where thread slice length is %d, during the function AutoChangeAnnounceChannel()", x, len(topicsOfMainThread)), err.Error())
-				}	
+				}
 			} else {
 				_, err := botSession.ChannelMessageSend(configCurrent.ChannelID, topic.Description)
 				if err != nil {
@@ -7016,7 +6909,7 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 				sliceToc := []string{}
 				for _, thread := range mapOfThreads {
 					x++
-					sliceToc = append(sliceToc, fmt.Sprintf("> **%d)** %s ➡ **For details see link <#%s>**", x, announceMap[thread.Name].ShortDescription,thread.ID))
+					sliceToc = append(sliceToc, fmt.Sprintf("> **%d)** %s ➡ **For details see link <#%s>**", x, announceMap[thread.Name].ShortDescription, thread.ID))
 				}
 				_, err := botSession.ChannelMessageSend(configCurrent.ChannelID, strings.Join(sliceToc, "\n"))
 				if err != nil {
@@ -7035,8 +6928,16 @@ func KeepThreadAlive(threadID string) {
 }
 
 func AutoAnnounceTracker(interval time.Duration, botSession *discordgo.Session) {
-	ticker := time.NewTicker(interval)
+	//Need to make a safeguard, because if the bot channel is created then the bot restarted, the channel var will be nil but channel will exist
 	staticConfig := configCurrent
+	botSession.AddHandler(func(innerSession *discordgo.Session, message *discordgo.MessageCreate) {
+		//fmt.Println("STATIC ID:", staticConfig.ChannelID, "AUTHOR ID", message.Author.ID, "session ID", innerSession.State.User.ID)
+		if automaticAnnounceDiscordChannel != nil && message.Author.ID != innerSession.State.User.ID && message != nil {
+			fmt.Println("IS THIS FROM A THREAD?", message.Thread.ID, message.Message.)
+		}
+	})
+
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for range ticker.C {
 		if bytes := CheckForExistingCache(configPath); len(bytes) == 0 {
@@ -7062,7 +6963,7 @@ func AutoTrackRaidEvents(session *discordgo.Session) {
 			messageID := event.Message.ID
 			raidTitle := ""
 
-			if raidMap, ok := raidHelperMap[messageID]; ok{
+			if raidMap, ok := raidHelperMap[messageID]; ok {
 				if mapInner, ok := raidMap.(map[string]any); ok {
 					if title, ok := mapInner["title"]; ok {
 						raidTitle = title.(string)
@@ -7071,9 +6972,9 @@ func AutoTrackRaidEvents(session *discordgo.Session) {
 			}
 			mapOfBenchedPlayers := GetWeeklyBench(event)
 			currentTrackRaid := trackRaid{
-				DiscordMessageID: messageID,
-				ChannelID: event.Message.ChannelID,
-				RaidDiscordTitle: raidTitle,
+				DiscordMessageID:      messageID,
+				ChannelID:             event.Message.ChannelID,
+				RaidDiscordTitle:      raidTitle,
 				PlayersAlreadyTracked: mapOfBenchedPlayers,
 			}
 			allTrackedRaids[currentTrackRaid.DiscordMessageID] = currentTrackRaid
@@ -7107,10 +7008,10 @@ func AutoTrackRaidEvents(session *discordgo.Session) {
 
 	session.AddHandler(func(session *discordgo.Session, event *discordgo.MessageDelete) {
 		messageID := event.ID //Must not use author or user struct on MessageDelete
-		
+
 		raidHelperCache := ReadWriteRaidHelperCache()
 		if len(raidHelperCache) == 0 {
-			WriteInformationLog(fmt.Sprintf("The following messageID %s was deleted by the raid-helper bot, but the raid-helper cache is len 0 and therefor nothing to remove, during the function AutoTrackRaidEvents()", messageID ), "Cache is len 0")
+			WriteInformationLog(fmt.Sprintf("The following messageID %s was deleted by the raid-helper bot, but the raid-helper cache is len 0 and therefor nothing to remove, during the function AutoTrackRaidEvents()", messageID), "Cache is len 0")
 			return
 		}
 
@@ -7250,12 +7151,12 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 				WriteErrorLog("An error occured while trying to retrieve the channel of which a message was sent from by user %s, during the function UseSlashCommand()", err.Error())
 				return
 			}
-			
-				*/
+
+			*/
 			fmt.Println("DO WE REACh", event.Content)
 			if event.Author.ID == session.State.User.ID {
 				if strings.Contains(event.Content, " VISIT ") {
-					patternUserID := regexp.MustCompile(`<@(\d+)>`)//strings.Contains(event.Content, " VISIT ") && 
+					patternUserID := regexp.MustCompile(`<@(\d+)>`) //strings.Contains(event.Content, " VISIT ") &&
 					patternChannelID := regexp.MustCompile(`<#(\d+)>`)
 					userID := patternUserID.FindStringSubmatch(event.Content)
 					channelID := patternChannelID.FindStringSubmatch(event.Content)
@@ -7272,11 +7173,11 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 					} else {
 						WriteInformationLog(fmt.Sprintf("Was not possible to find the userID of whom joined the server: %s", serverID), "During function NewPlayerJoin()")
 					}
-					return 
+					return
 				} else if strings.Contains(event.Content, "Please define the amount of time to set for the alarm") {
 					fmt.Println("YEP NOW WE HERE!")
 				}
-			} 
+			}
 			if currentClassSlice := strings.Split(event.Content, " "); len(currentClassSlice) > 2 && !strings.Contains(event.Content, stage3) && event.Author.ID == session.State.User.ID && !strings.Contains(event.Content, stage4) && !strings.Contains(event.Content, stage5) && !strings.Contains(event.Content, stage6) && !strings.Contains(event.Content, stage7) && !strings.Contains(event.Content, stage9) && !strings.Contains(event.Content, stage8a) {
 				raceEmojie := emojies{}
 				raceEmojieString := ""
@@ -7490,7 +7391,7 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 						botSession.MessageReactionAdd(event.ChannelID, event.ID, fmt.Sprintf("%s:%s", funEmojie.Name, funEmojie.ID))
 					}
 				}
-					
+
 				mapOfMessageReactions[event.ID] = true
 			} else if raiderIngameName := strings.Split(event.Content, " "); len(raiderIngameName) == 1 && !event.Author.Bot && !mapOfMessageReactions[event.ID] && event.ChannelID == mapOfNewUsers[event.ChannelID].ChannelID {
 				if mapOfNewUsers[event.ChannelID].Username != event.Content {
@@ -7527,7 +7428,7 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 				}
 				mapOfMessageReactions[event.ID] = true
 			} else if strings.Contains(event.Content, stage8a) && !mapOfMessageReactions[event.ID] {
-				
+
 				mapOfMessageReactions[event.ID] = true
 			}
 		}
@@ -7747,10 +7648,10 @@ func GetHttpResponseData(httpMethod string, token string, URL string, customHead
 	if OAuth2 {
 		OAuth2Body.Add("grant_type", "client_credentials")
 		httpRequest, err = http.NewRequest(
-        	httpMethod,
-        	URL,
-        	strings.NewReader(OAuth2Body.Encode()),
-    	)
+			httpMethod,
+			URL,
+			strings.NewReader(OAuth2Body.Encode()),
+		)
 		if err != nil {
 			WriteErrorLog("An error occured while trying to create a new http request with OAuth2, during the function GetHttpResponseData()", err.Error())
 			return nil
@@ -7759,8 +7660,8 @@ func GetHttpResponseData(httpMethod string, token string, URL string, customHead
 		httpRequest.SetBasicAuth(warcraftLogsAppID, mapOfTokens["raidHelperToken"])
 	} else {
 		httpRequest, err = http.NewRequest(
-			httpMethod, 
-			URL, 
+			httpMethod,
+			URL,
 			nil,
 		)
 		if err != nil {
@@ -7777,7 +7678,6 @@ func GetHttpResponseData(httpMethod string, token string, URL string, customHead
 		}
 		httpRequest.Header.Set(splitHeader[0], splitHeader[1])
 	}
-
 	if token != "" && !OAuth2 {
 		httpRequest.Header.Set("Authorization", "Bearer "+token)
 	}
@@ -7800,7 +7700,7 @@ func GetHttpResponseData(httpMethod string, token string, URL string, customHead
 		return nil
 	}
 	return returnJson
-	
+
 } //Only supports JSON data
 
 func GetWarcraftLogsData(query map[string]any) map[string]any {
@@ -7841,7 +7741,7 @@ func GetWarcraftLogsData(query map[string]any) map[string]any {
 	}
 	if errors, ok := returnMap["error"].(string); ok {
 		WriteErrorLog(fmt.Sprintf("The warcraftlogs query %s did present an error from return %s", query, errors), "During function GetWarcraftLogsData()")
-		fmt.Println("RESPONSE:", returnMap["error"], "MORE", )
+		fmt.Println("RESPONSE:", returnMap["error"], "MORE")
 		fmt.Println("header", req.Header.Get("Authorization"))
 		return nil
 	}
@@ -7874,6 +7774,7 @@ func GetWarcraftLogsData(query map[string]any) map[string]any {
 	}
 	return nil
 }
+
 /*
 func UnwrapBaseWarcraftLogRaids(mapToUnwrap map[string]any) []logsBase {
 	sliceOfLogs := []logsBase{}
@@ -7912,7 +7813,7 @@ func UnwrapBaseWarcraftLogRaids(mapToUnwrap map[string]any) []logsBase {
 
 	return sliceOfLogs
 }
-	*/
+*/
 
 func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderProfile, logs ...logPlayer) logsRaider {
 	raiderData := logsRaider{}
@@ -7963,8 +7864,8 @@ func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderPro
 	if raiderData.Parses.Parse == nil {
 		raiderData.Parses.Parse = make(map[string]float64)
 	}
-	raiderData.Parses.Parse["bestAverage"] = math.Round(zoneRankings["bestPerformanceAverage"].(float64) * 100) / 100
-	raiderData.Parses.Parse["mediumAverage"] = math.Round(zoneRankings["medianPerformanceAverage"].(float64) * 100) / 100
+	raiderData.Parses.Parse["bestAverage"] = math.Round(zoneRankings["bestPerformanceAverage"].(float64)*100) / 100
+	raiderData.Parses.Parse["mediumAverage"] = math.Round(zoneRankings["medianPerformanceAverage"].(float64)*100) / 100
 	raidTier, ok := zoneRankings["size"].(float64)
 	if !ok {
 		WriteInformationLog("The map parsed does not contain attribute 'size' and will return early, during the function UnwrapWarcraftLogRaiderRanking()", "Returning early")
@@ -8040,13 +7941,13 @@ func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderPro
 		if ranks, ok := rank.(map[string]any); !ok {
 			continue
 		} else {
-			mapOfRanks = ranks 
+			mapOfRanks = ranks
 		}
 		//fmt.Println("RANK:", rank)
 		//os.Exit(0)
 		rankPercent := mapOfRanks["rankPercent"].(float64)
 		if rankPercent != 0 {
-			rankPercent = math.Round(rankPercent * 100) / 100
+			rankPercent = math.Round(rankPercent*100) / 100
 		}
 		if rankPercent > maxRankPercent {
 			maxRankPercent = rankPercent
@@ -8062,8 +7963,8 @@ func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderPro
 		mapOfAllRanks[rankPercent] = rank.(map[string]any)
 	}
 	maxAndLowestPercent := make(map[string]float64)
-	maxAndLowestPercent["highest"] = math.Round(maxRankPercent * 100) / 100
-	maxAndLowestPercent["lowest"] = math.Round(lowestRankPercent * 100) / 100
+	maxAndLowestPercent["highest"] = math.Round(maxRankPercent*100) / 100
+	maxAndLowestPercent["lowest"] = math.Round(lowestRankPercent*100) / 100
 
 	for scale, percent := range maxAndLowestPercent {
 		encounter, ok := mapOfAllRanks[percent]["encounter"].(map[string]any)
@@ -8073,14 +7974,14 @@ func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderPro
 		}
 		if ok {
 			if high {
-				raiderData.Parses.BestBoss.Name  = encounter["name"].(string)	
+				raiderData.Parses.BestBoss.Name = encounter["name"].(string)
 			} else {
 				raiderData.Parses.WorstBoss.Name = encounter["name"].(string)
 			}
-			
+
 		} else {
 			WriteInformationLog(fmt.Sprintf("The map provided does not contain key %f, this means raider %s will not have the following scale calculated for bosses %s, during the function UnwrapWarcraftLogRaiderRanking()", percent, raiderData.LastRaid.Name, scale), "Missing map key")
-		}   
+		}
 		raiderData.Parses.Parse[scale] = maxAndLowestPercent[scale]
 		killInMS, ok := mapOfAllRanks[percent]["fastestKill"].(float64)
 		maxDamage := 0.0
@@ -8123,70 +8024,70 @@ func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderPro
 }
 
 func UnwrapBaseWarcraftLogRaids(mapToUnwrap map[string]any) []logsBase {
-    sliceOfLogs := []logsBase{}
-    dataMap, ok := mapToUnwrap["data"].(map[string]any)
-    if !ok {
-        return sliceOfLogs
-    }
+	sliceOfLogs := []logsBase{}
+	dataMap, ok := mapToUnwrap["data"].(map[string]any)
+	if !ok {
+		return sliceOfLogs
+	}
 
-    reportDataMap, ok := dataMap["reportData"].(map[string]any)
-    if !ok {
-        return sliceOfLogs
-    }
+	reportDataMap, ok := dataMap["reportData"].(map[string]any)
+	if !ok {
+		return sliceOfLogs
+	}
 
-    reportsMap, ok := reportDataMap["reports"].(map[string]any)
-    if !ok {
-        return sliceOfLogs
-    }
+	reportsMap, ok := reportDataMap["reports"].(map[string]any)
+	if !ok {
+		return sliceOfLogs
+	}
 
-    dataSlice, ok := reportsMap["data"].([]any)
-    if !ok {
-        return sliceOfLogs
-    }
+	dataSlice, ok := reportsMap["data"].([]any)
+	if !ok {
+		return sliceOfLogs
+	}
 
-    for _, item := range dataSlice {
-        report, ok := item.(map[string]any)
-        if !ok {
-            continue
-        }
+	for _, item := range dataSlice {
+		report, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
 
-        newLog := logsBase{}
+		newLog := logsBase{}
 
-        for name, value := range report {
-            switch name {
-            case "owner":
-                ownerMap, ok := value.(map[string]any)
-                if !ok {
-                    continue
-                }
-                ownerName, _ := ownerMap["name"].(string)
-                lowerName := strings.ToLower(ownerName)
-                if lowerName == "throyn1986" || lowerName == "shufflez26" || lowerName == "zyrtec" {
-                    newLog.LoggerName = ownerName
-                }
+		for name, value := range report {
+			switch name {
+			case "owner":
+				ownerMap, ok := value.(map[string]any)
+				if !ok {
+					continue
+				}
+				ownerName, _ := ownerMap["name"].(string)
+				lowerName := strings.ToLower(ownerName)
+				if lowerName == "throyn1986" || lowerName == "shufflez26" || lowerName == "zyrtec" {
+					newLog.LoggerName = ownerName
+				}
 
-            case "code":
-                if codeStr, ok := value.(string); ok {
-                    newLog.Code = codeStr
-                }
+			case "code":
+				if codeStr, ok := value.(string); ok {
+					newLog.Code = codeStr
+				}
 
-            case "startTime":
-                if ts, ok := value.(float64); ok {
-                    newLog.startTime = time.Unix(int64(ts)/1000, 0).Local()
-                }
+			case "startTime":
+				if ts, ok := value.(float64); ok {
+					newLog.startTime = time.Unix(int64(ts)/1000, 0).Local()
+				}
 
-            case "endTime":
-                if ts, ok := value.(float64); ok {
-                    newLog.endTime = time.Unix(int64(ts)/1000, 0).Local()
-                }
-            }
-        }
+			case "endTime":
+				if ts, ok := value.(float64); ok {
+					newLog.endTime = time.Unix(int64(ts)/1000, 0).Local()
+				}
+			}
+		}
 
-        if newLog.LoggerName != "" {
-            sliceOfLogs = append(sliceOfLogs, newLog)
-        }
-    }
-    return sliceOfLogs
+		if newLog.LoggerName != "" {
+			sliceOfLogs = append(sliceOfLogs, newLog)
+		}
+	}
+	return sliceOfLogs
 }
 
 func UnwrapBaseLogFightIDs(mapToUnwrap map[string]any) []int64 {
@@ -8433,70 +8334,71 @@ func NotifyPlayerRaidQuestion(template messageTemplate, session *discordgo.Sessi
 		}
 	})
 }
+
 /*
-func NotifyPlayerSignUp(notifyType string, session *discordgo.Session) {
-	currentRaiders := []string{}
-	mapOfMissingSignUp := make(map[string]bool)
-	mapOfPlayersToContact := make(map[string]bool)
-	embedMessageRaidReminder := messageTemplates["Signup_reminder"]
-	if strings.Contains(notifyType, "pug") {
-		currentRaiders = RetrieveUsersInRole([]string{roleTrial, rolePuggie, roleRaider}, session)
-	} else {
-		currentRaiders = RetrieveUsersInRole([]string{roleTrial, roleRaider}, session)
-	}
+	func NotifyPlayerSignUp(notifyType string, session *discordgo.Session) {
+		currentRaiders := []string{}
+		mapOfMissingSignUp := make(map[string]bool)
+		mapOfPlayersToContact := make(map[string]bool)
+		embedMessageRaidReminder := messageTemplates["Signup_reminder"]
+		if strings.Contains(notifyType, "pug") {
+			currentRaiders = RetrieveUsersInRole([]string{roleTrial, rolePuggie, roleRaider}, session)
+		} else {
+			currentRaiders = RetrieveUsersInRole([]string{roleTrial, roleRaider}, session)
+		}
 
-	signUpsAsInterface, eventLink, srLink := RetriveRaidHelperEvent(session, false)
+		signUpsAsInterface, eventLink, srLink := RetriveRaidHelperEvent(session, false)
 
-	for _, signUpsInterface := range signUpsAsInterface {
-		for propertyName, propertyValue := range signUpsInterface {
-			if propertyName == "userId" {
-				for _, currentRaider := range currentRaiders {
-					if strings.Split(currentRaider, "/")[0] == propertyValue.(string) {
-						mapOfMissingSignUp[propertyValue.(string)] = true
-						break
+		for _, signUpsInterface := range signUpsAsInterface {
+			for propertyName, propertyValue := range signUpsInterface {
+				if propertyName == "userId" {
+					for _, currentRaider := range currentRaiders {
+						if strings.Split(currentRaider, "/")[0] == propertyValue.(string) {
+							mapOfMissingSignUp[propertyValue.(string)] = true
+							break
+						}
 					}
 				}
 			}
 		}
-	}
 
-	for _, raiderName := range currentRaiders {
-		if !mapOfMissingSignUp[raiderName] {
-			mapOfPlayersToContact[raiderName] = true
-		}
-	}
-
-	for name, _ := range mapOfPlayersToContact {
-		dmChannel, err := session.UserChannelCreate(name)
-		if err != nil {
-			WriteErrorLog(fmt.Sprintf("An error occured while trying to create a private channel with user: %s inside function NotifyPlayerSignUp()", name), err.Error())
-		}
-		_, err = session.GuildMember(serverID, name)
-		if err != nil {
-			WriteErrorLog(fmt.Sprintf("An error occured while trying to retrive guild user info: %s inside function NotifyPlayerSignUp()", name), err.Error())
-		}
-		user, _ := session.GuildMember(serverID, name)
-
-		for x, _ := range embedMessageRaidReminder.Fields {
-			if x == 0 {
-				embedMessageRaidReminder.Fields[x].Value = fmt.Sprintf("Hi %s\n%s\n", user.Nick, embedMessageRaidReminder.Fields[x].Value)
-			} else if x == len(embedMessageRaidReminder.Fields)-2 {
-				embedMessageRaidReminder.Fields[x].Value = eventLink
-			} else if x == len(embedMessageRaidReminder.Fields)-1 {
-				embedMessageRaidReminder.Fields[x].Value = srLink
+		for _, raiderName := range currentRaiders {
+			if !mapOfMissingSignUp[raiderName] {
+				mapOfPlayersToContact[raiderName] = true
 			}
 		}
 
-		tagUser := discordgo.MessageEmbed{
-			Fields: embedMessageRaidReminder.Fields,
+		for name, _ := range mapOfPlayersToContact {
+			dmChannel, err := session.UserChannelCreate(name)
+			if err != nil {
+				WriteErrorLog(fmt.Sprintf("An error occured while trying to create a private channel with user: %s inside function NotifyPlayerSignUp()", name), err.Error())
+			}
+			_, err = session.GuildMember(serverID, name)
+			if err != nil {
+				WriteErrorLog(fmt.Sprintf("An error occured while trying to retrive guild user info: %s inside function NotifyPlayerSignUp()", name), err.Error())
+			}
+			user, _ := session.GuildMember(serverID, name)
+
+			for x, _ := range embedMessageRaidReminder.Fields {
+				if x == 0 {
+					embedMessageRaidReminder.Fields[x].Value = fmt.Sprintf("Hi %s\n%s\n", user.Nick, embedMessageRaidReminder.Fields[x].Value)
+				} else if x == len(embedMessageRaidReminder.Fields)-2 {
+					embedMessageRaidReminder.Fields[x].Value = eventLink
+				} else if x == len(embedMessageRaidReminder.Fields)-1 {
+					embedMessageRaidReminder.Fields[x].Value = srLink
+				}
+			}
+
+			tagUser := discordgo.MessageEmbed{
+				Fields: embedMessageRaidReminder.Fields,
+			}
+			_, err = session.ChannelMessageSendEmbed(dmChannel.ID, &tagUser)
+			if err != nil {
+				WriteErrorLog("An error occured while trying to create the embeded notify for user:", err.Error())
+			}
+			WriteInformationLog(fmt.Sprintf("Message reminder for raid successfully sent to: %s with name: %s", user.User.ID, user.User.Username), "Remind raider of signing up")
 		}
-		_, err = session.ChannelMessageSendEmbed(dmChannel.ID, &tagUser)
-		if err != nil {
-			WriteErrorLog("An error occured while trying to create the embeded notify for user:", err.Error())
-		}
-		WriteInformationLog(fmt.Sprintf("Message reminder for raid successfully sent to: %s with name: %s", user.User.ID, user.User.Username), "Remind raider of signing up")
 	}
-}
 */
 func CheckForOfficerRank(playerID string, botSession *discordgo.Session) bool {
 	playerRoles, err := botSession.GuildMember(serverID, playerID)
@@ -8527,17 +8429,17 @@ func CheckForRaiderRank(playerID string, botSession *discordgo.Session) bool {
 }
 
 /*
-func RetrieveSecondaryRaidTemplate() []raidHelperEvent {
-	customRaidTemplates := []raidHelperEvent{}
-	if customRaidTemplateBytes := CheckForExistingCache(customEventTemplatesPath); customRaidTemplateBytes != nil {
-		err := json.Unmarshal(customRaidTemplateBytes, &customRaidTemplates)
-		if err != nil {
-			WriteErrorLog("An error occured while trying to unmarshal json for custom event templates: Inside function RetrieveSecondaryRaidTemplate()", err.Error())
-			return nil
+	func RetrieveSecondaryRaidTemplate() []raidHelperEvent {
+		customRaidTemplates := []raidHelperEvent{}
+		if customRaidTemplateBytes := CheckForExistingCache(customEventTemplatesPath); customRaidTemplateBytes != nil {
+			err := json.Unmarshal(customRaidTemplateBytes, &customRaidTemplates)
+			if err != nil {
+				WriteErrorLog("An error occured while trying to unmarshal json for custom event templates: Inside function RetrieveSecondaryRaidTemplate()", err.Error())
+				return nil
+			}
 		}
+		return customRaidTemplates
 	}
-	return customRaidTemplates
-}
 */
 func DetermineNewLogger(commingRaids []commingRaid, session *discordgo.Session) {
 	mapOfSeenLoggers := make(map[string]bool)
@@ -8588,88 +8490,88 @@ func DetermineNewLogger(commingRaids []commingRaid, session *discordgo.Session) 
 }
 
 /*
-func NewSecondaryRaid(raidShortName string, dayOfTheWeek time.Weekday, session *discordgo.Session, cleanRaidChannel bool) {
-	// Define the request body
-	if cleanRaidChannel {
-		DeleteMessagesInBulk(channelSignUpPug, session)
-		WriteInformationLog(fmt.Sprintf("Deleted all messages in channel %s", channelSignUp), "Delete all messages from channel")
-		time.Sleep(2 * time.Second)
-	}
-
-	currentTime := time.Now().Local()
-	newCommingRaids := DetermineNextSecondaryRaid(session)
-	if len(newCommingRaids) == 0 {
-		WriteInformationLog("No raids to post before next main raid", "Skip posting signup")
-		return
-	}
-	fmt.Println("THIS IS THE DETERMINED RAIDS:", newCommingRaids)
-	newCommingRaid := commingRaid{}
-	for _, commingRaid := range newCommingRaids {
-		if commingRaid.Name == raidShortName {
-			newCommingRaid = commingRaid
+	func NewSecondaryRaid(raidShortName string, dayOfTheWeek time.Weekday, session *discordgo.Session, cleanRaidChannel bool) {
+		// Define the request body
+		if cleanRaidChannel {
+			DeleteMessagesInBulk(channelSignUpPug, session)
+			WriteInformationLog(fmt.Sprintf("Deleted all messages in channel %s", channelSignUp), "Delete all messages from channel")
+			time.Sleep(2 * time.Second)
 		}
-	}
-	daysUntilMainRaid := int(time.Thursday) - int(currentTime.Weekday()) //Change time.WeekDay from thursday if your main raid day is say Wednesday, e.g. time.Wednesday
-	if daysUntilMainRaid < 0 {
-		daysUntilMainRaid += 7
-	}
 
-	resetTimeOfSecondaryRaid, _ := time.ParseInLocation(timeLayout, newCommingRaid.NextReset, time.Local)
-	nextMainRaidDate := currentTime.AddDate(0, 0, daysUntilMainRaid)
-	if nextMainRaidDate.Before(resetTimeOfSecondaryRaid) {
-		WriteInformationLog(fmt.Sprintf("Not possible to run %s before main raid as it resets on: %s", resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), "Analyzing for an in-between raid")
-		return //We cannot run an extra raid between main-raids
-	}
+		currentTime := time.Now().Local()
+		newCommingRaids := DetermineNextSecondaryRaid(session)
+		if len(newCommingRaids) == 0 {
+			WriteInformationLog("No raids to post before next main raid", "Skip posting signup")
+			return
+		}
+		fmt.Println("THIS IS THE DETERMINED RAIDS:", newCommingRaids)
+		newCommingRaid := commingRaid{}
+		for _, commingRaid := range newCommingRaids {
+			if commingRaid.Name == raidShortName {
+				newCommingRaid = commingRaid
+			}
+		}
+		daysUntilMainRaid := int(time.Thursday) - int(currentTime.Weekday()) //Change time.WeekDay from thursday if your main raid day is say Wednesday, e.g. time.Wednesday
+		if daysUntilMainRaid < 0 {
+			daysUntilMainRaid += 7
+		}
 
-	customEvents := RetrieveSecondaryRaidTemplate()
-	if len(customEvents) == 0 {
-		WriteErrorLog("An error occured while trying to retrieve the custom event templates... Please define at-least 1 otherwise the bot cannot create mid-week pop-up raids", "During function NewSecondaryRaid()")
-		return
-	}
-	daysUntilSunday := (7 - int(currentTime.Weekday())) % 7 // Days to add to reach next Sunday
-	customEvents[0].Date = currentTime.AddDate(0, 0, daysUntilSunday).Format("02-January-2006")
-	customEvents[0].Time = "19:30"
-	customEvents[0].Title = fmt.Sprintf("%s %s", raidShortName, "BEFORE NEXT main raid")
-	customEvents[0].Softres.Instance = raidShortName
+		resetTimeOfSecondaryRaid, _ := time.ParseInLocation(timeLayout, newCommingRaid.NextReset, time.Local)
+		nextMainRaidDate := currentTime.AddDate(0, 0, daysUntilMainRaid)
+		if nextMainRaidDate.Before(resetTimeOfSecondaryRaid) {
+			WriteInformationLog(fmt.Sprintf("Not possible to run %s before main raid as it resets on: %s", resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), "Analyzing for an in-between raid")
+			return //We cannot run an extra raid between main-raids
+		}
 
-	// Marshal the data to JSON
-	jsonData, err := json.Marshal(customEvents[0])
-	if err != nil {
-		WriteErrorLog("Error marshalling JSON: Inside function NewSecondaryRaid()", err.Error())
-		return
-	}
+		customEvents := RetrieveSecondaryRaidTemplate()
+		if len(customEvents) == 0 {
+			WriteErrorLog("An error occured while trying to retrieve the custom event templates... Please define at-least 1 otherwise the bot cannot create mid-week pop-up raids", "During function NewSecondaryRaid()")
+			return
+		}
+		daysUntilSunday := (7 - int(currentTime.Weekday())) % 7 // Days to add to reach next Sunday
+		customEvents[0].Date = currentTime.AddDate(0, 0, daysUntilSunday).Format("02-January-2006")
+		customEvents[0].Time = "19:30"
+		customEvents[0].Title = fmt.Sprintf("%s %s", raidShortName, "BEFORE NEXT main raid")
+		customEvents[0].Softres.Instance = raidShortName
 
-	// Create the request
-	url := fmt.Sprintf("https://raid-helper.dev/api/v2/servers/%s/channels/%s/event", serverID, channelSignUpPug)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		WriteErrorLog("Error defining request to raid-helper inside function NewSecondaryRaid()", err.Error())
-		return
-	}
+		// Marshal the data to JSON
+		jsonData, err := json.Marshal(customEvents[0])
+		if err != nil {
+			WriteErrorLog("Error marshalling JSON: Inside function NewSecondaryRaid()", err.Error())
+			return
+		}
 
-	// Set headers
-	//req.Header.Set("Authorization", apiToken)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", mapOfTokens["Raid-helper"])
+		// Create the request
+		url := fmt.Sprintf("https://raid-helper.dev/api/v2/servers/%s/channels/%s/event", serverID, channelSignUpPug)
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+		if err != nil {
+			WriteErrorLog("Error defining request to raid-helper inside function NewSecondaryRaid()", err.Error())
+			return
+		}
 
-	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		WriteErrorLog("Error making request to raid-helper inside function NewSecondaryRaid()", err.Error())
-		return
-	}
-	defer resp.Body.Close()
+		// Set headers
+		//req.Header.Set("Authorization", apiToken)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", mapOfTokens["Raid-helper"])
 
-	// Read the response
-	_, err = io.ReadAll(resp.Body)
-	if err != nil {
-		WriteErrorLog("Error reading response: inside function NewSecondaryRaid()", err.Error())
-		return
+		// Send the request
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			WriteErrorLog("Error making request to raid-helper inside function NewSecondaryRaid()", err.Error())
+			return
+		}
+		defer resp.Body.Close()
+
+		// Read the response
+		_, err = io.ReadAll(resp.Body)
+		if err != nil {
+			WriteErrorLog("Error reading response: inside function NewSecondaryRaid()", err.Error())
+			return
+		}
+		WriteInformationLog(fmt.Sprintf("A in-between raid before next main raid has been created for date: %s", customEvents[0].Date), "Adding an extra raid event")
+		InformPlayerDirectly(fmt.Sprintf("**--------------------------------------------------------------**\n\nA new raid of type: %s has been created: %s\n\nSecondary raid resets on: %s\n\nNext main raid resets on: %s", raidShortName, customEvents[0].Date, resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), SplitOfficerName(officerGMArlissa)["ID"], session)
 	}
-	WriteInformationLog(fmt.Sprintf("A in-between raid before next main raid has been created for date: %s", customEvents[0].Date), "Adding an extra raid event")
-	InformPlayerDirectly(fmt.Sprintf("**--------------------------------------------------------------**\n\nA new raid of type: %s has been created: %s\n\nSecondary raid resets on: %s\n\nNext main raid resets on: %s", raidShortName, customEvents[0].Date, resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), SplitOfficerName(officerGMArlissa)["ID"], session)
-}
 */
 func SeperateAnyTagsInMessage(channelID string, messageValue string) []string {
 	returnMessageTagsSlice := []string{}
@@ -8775,10 +8677,9 @@ func RetrieveUsersInRole(roleIDs []string, session *discordgo.Session) []string 
 	return guildMembersInCorrectRoles
 }
 
-
 func RetriveRaidHelperEvent(periodBack time.Time) map[string]any {
 	newRaidURL := fmt.Sprintf("https://raid-helper.dev/api/v3/servers/%s/events", serverID)
-	raidEvents :=  make(map[string]any)
+	raidEvents := make(map[string]any)
 	var response any
 	getSignupData, _ := http.NewRequest("GET", newRaidURL, nil)
 	getSignupData.Header = http.Header{
@@ -8820,7 +8721,7 @@ func RetriveRaidHelperEvent(periodBack time.Time) map[string]any {
 							}
 						}
 					}
-				} 	
+				}
 			}
 		}
 		if len(raidEvents) == 0 {
@@ -8856,17 +8757,16 @@ func ImportKeyvaultConfig() {
 		log.Fatal("An error occured while trying to load the keyvault config: Inside function ImportKeyVaultConfig()", err.Error())
 	}
 	json.Unmarshal(keyvaultImportBytes, &KeyvaultConfig)
-	
+
 	if len(KeyvaultConfig.Tokens) < 1 {
-		log.Fatal("An error occured while counting the amount of secrets available: Less than 1 token definitions are present", err.Error())
+		log.Fatal("An error occured while counting the amount of secrets available: Less than 1 token definitions are present")
 	}
 
 	KeyvaultConfig = keyvault{
-		URI:    fmt.Sprintf("%s.vault.azure.net", KeyvaultConfig.URI),
+		Name:   fmt.Sprintf("https://%s.vault.azure.net", KeyvaultConfig.Name),
 		Tokens: KeyvaultConfig.Tokens,
 	}
 }
-
 
 // Any errors occruing within this function will kill this program
 func WriteErrorLog(message string, errorMessage string) {
@@ -8956,10 +8856,10 @@ func StorageAccountClient(storageAccountURI string) *azblob.Client {
 	return nil
 }
 
-func StorageAccountAppendBlob(blobName string, containerName string, logName string,  storageClient *azblob.Client, context context.Context) error {
+func StorageAccountAppendBlob(blobName string, containerName string, logName string, storageClient *azblob.Client, context context.Context) error {
 	//Runs first time as part of app starting when being deployed (The appendblob wont be there yet)
 	storageClient.CreateContainer(context, containerName, nil)
-	
+
 	logFile, err := os.Open(logName)
 	if err != nil {
 		WriteErrorLog(fmt.Sprintf("An error occured while trying to open the log file %s, during the function StorageAccountAppendBlob()", logName), err.Error())
