@@ -64,6 +64,14 @@ type topic struct {
 	ToC              bool   `json:"toc"`          //ToC = Is this topic supposed to link all the threads together, forming a table of contents (ToC) in the main-thread
 }
 
+type trackPost struct {
+	MessageID string `json:"messageID"`
+	Active bool `json:"active"`
+	ChannelID string `json:"channelID"`
+	LinkedChannelID string `json:"linkedChannelID"`
+	LinkedChannelName string `json:"linkedChannelName"`
+}
+
 type keyvaultToken struct {
 	Name      string `json:"name"`
 	VersionID string `json:"version"`
@@ -417,6 +425,7 @@ var (
 	}
 
 	automaticAnnounceDiscordChannel = &discordgo.Channel{}
+	trackCacheChanged = make(chan struct{}, 1) //Channel will be between func AutoTrackPosts() & UseSlashCommand / Commands from the discord server
 
 	//Used by function CalculateRaiderPerformance()
 	mapOfPointScale = map[string]int{
@@ -760,6 +769,26 @@ var (
 			Template: &discordgo.ApplicationCommand{
 				Name:        "announcebot",
 				Description: "Run the raidautomator announcement program",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "title",
+						Description: "Define a title for your announcement",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required: 	 true,
+					},
+					{
+						Name:        "description",
+						Description: "To add roles / players to tag, use format @Role OR @Player - Add as many tags as you want",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required: 	 true,
+					},
+					{
+						Name:        "channel",
+						Description: "If you want the bot to track a channel with an announcement. Use when channels gets recreated",
+						Type:        discordgo.ApplicationCommandOptionString,
+						Required: 	 false,
+					},
+				},
 			},
 		},
 		"deletebotchannel": {
@@ -1328,6 +1357,7 @@ var (
 	classesPath             = baseCachePath + "classes.json"
 	keyvaultPath            = baseCachePath + "keyvault.json"
 	emojiesPath             = baseCachePath + "emojies.json"
+	cacheTrackedPostsCache =  baseCachePath + "cache_tracked_posts.json"
 	configPath              = baseCachePath + "config.json"
 	raidHelperEventsPath    = baseCachePath + "raid_helper_events.json"
 	belowRaidersCachePath   = baseCachePath + "cache_trials_pugs.json"
@@ -1476,6 +1506,7 @@ var (
 	mapOfRoles = make(map[string]string)
 
 	BotSessionMain = &discordgo.Session{}
+	
 
 	greenColor  = 0x00FF00 // Pure Green
 	yellowColor = 0xFFFF00 // Pure Yellow
@@ -1484,6 +1515,7 @@ var (
 
 	raiderCacheMutex       sync.Mutex
 	raidHelperCascheMutex  sync.Mutex
+	postTrackMutex         sync.Mutex
 	errorLogMutex          sync.Mutex
 	configCacheMutex       sync.Mutex
 	MapOfUserDefinedAlerts sync.Map
@@ -1588,7 +1620,7 @@ const (
 )
 
 func init() {
-	fmt.Println("THIS IS VERSION 0.9.0")
+	fmt.Println("THIS IS VERSION 1.0.0")
 	CheckRuntime()
 }
 
@@ -1695,16 +1727,17 @@ func main() {
 	ImportEmojies()
 	ImportClasses()
 	//NotifyPlayerRaidQuestion((PrepareTemplateWithEmojie(messageTemplates["Ask_raider_direct_question_douse"])), BotSessionMain)
-	//NewPlayerJoin(BotSessionMain)
+	NewPlayerJoin(BotSessionMain)
 	//AutoTrackRaidEvents(BotSessionMain)
-	//NewSlashCommand(BotSessionMain)
-	//UseSlashCommand(BotSessionMain) //Contains go-routines
-	//DeleteOldSlashCommand(BotSessionMain)
-	//CalculateRaidWeightsProcent()
-	go AutoAnnounceTracker(5*time.Second, BotSessionMain)
+	NewSlashCommand(BotSessionMain)
+	UseSlashCommand(BotSessionMain) //Contains go-routines
+	DeleteOldSlashCommand(BotSessionMain)
+	CalculateRaidWeightsProcent()
+	go AutoTrackPosts()
+	go AutoAnnounceTracker(5 * time.Second, BotSessionMain) //Contains go-routines
 
 	AutoUpdateRaidLogCache(BotSessionMain, []string{})
-	//go DeleteOldBotChannels(1, 30, BotSessionMain)
+	go DeleteOldBotChannels(1, 30, BotSessionMain)
 
 	if profiles := ReadWriteRaiderProfiles(nil, true); len(profiles) == 0 {
 		InitializeDiscordProfiles(InitializeRaiderProfiles(), BotSessionMain, true) //Retrieve ALL raiders from ANY time since the guild startet logging
@@ -3657,23 +3690,6 @@ func UseSlashCommand(session *discordgo.Session) {
 			//userNam e := user.Username
 			if len(interactionData.Options) == 0 {
 				switch interactionData.Name {
-				case "announcebot":
-					{
-						/*
-							interactionResponse := NewInteractionResponseToSpecificCommand(0, "Starting the announcement...|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
-							err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
-							if err != nil {
-								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent initial response to user %s, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
-								return
-							}
-							guild, err := innerSession.Guild(serverID)
-							if err != nil {
-								WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve guild %s, which is required by the command /announcebot, during the function UseSlashCommand()", serverID), err.Error())
-								return
-							}
-							CheckForExistingCache(path)
-						*/
-					}
 				case "deletebotchannel":
 					{
 						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Running command...|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
@@ -3895,6 +3911,170 @@ func UseSlashCommand(session *discordgo.Session) {
 				}
 			} else {
 				switch interactionData.Name {
+				case "announcebot":
+				{
+					patternDiscordMentions := regexp.MustCompile(`<(@!?|@&|#)\d{17,19}>`)
+					active := false
+					interactionResponse := NewInteractionResponseToSpecificCommand(1, "Starting announcement|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+					err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent the initial response to user %s using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+						return
+					}
+					announceDescription := ""
+					announceTitle := ""
+					channelID := ""
+					for _, option := range interactionData.Options {
+						if _, ok := option.Value.(string); !ok {
+							WriteErrorLog(fmt.Sprintf("The discordgo template is set to garuentee this to be a string, but its not, for officer %s, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), "Data is not string")
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|A bug happened inside the bot - Please report this to %s", SplitOfficerName(officerGMArlissa)["name"]))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent an error response to user %s using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}	
+						switch option.Name {
+							case "title": {
+								announceTitle = option.Value.(string)
+								fmt.Println("TITLE", announceTitle)
+								if exists, channelID := CheckForPost(announceTitle); exists {
+									interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|An announcement with that title already exists <#%s>\nPlease delete the old one first or run again with a different title", channelID))
+									_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+										Embeds: &interactionResponse.Data.Embeds,
+									})
+									if err != nil {
+										WriteErrorLog(fmt.Sprintf("An error occured while trying to sent an error response of announcement already exists in channel ID %s to user %s using slash command /announcebot, during the function UseSlashCommand()", channelID, ResolvePlayerID(userID, innerSession)), err.Error())
+									}
+									return
+								} else {
+									fmt.Println("TITLE DOESNT EXIST")
+								}
+							}
+							case "description": {
+								announceDescription = option.StringValue()
+								fmt.Println("Descriptiojm", announceDescription, len(announceDescription))
+								if len(announceDescription) <= 25 {
+									interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|The announcement provided of `%s` is less than 25 characters long...", announceDescription))
+									_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+										Embeds: &interactionResponse.Data.Embeds,
+									})
+									if err != nil {
+										WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error reponse to user %s about description being too short, found len %d but need len 25 minimum, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession), len(announceDescription)), err.Error())
+									}
+									fmt.Println("Why dont we stop on this return?")
+									return
+								}
+								mentions := patternDiscordMentions.FindAllString(announceDescription, -1)
+								if len(mentions) == 0 && (strings.Contains(announceDescription, "#") || strings.Contains(announceDescription, "@")) {
+									interactionResponse = NewInteractionResponseToSpecificCommand(1, "announcebot|It looks like you tried to add either users, channels or roles to the description.\nMake sure tags are added to the description correctly and try again!")
+									_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+										Embeds: &interactionResponse.Data.Embeds,
+									})
+									if err != nil {
+										WriteErrorLog(fmt.Sprintf("An error occured while trying to sent warning to user %s using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+									}
+									return
+								} else {
+									fmt.Println("DO WE REACH HERE?", announceDescription)
+								}
+							}
+							case "channel": {
+									if id := RetrieveChannelID(option.StringValue()); id != "" {
+										channelID = id
+									} else {
+										interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|The channel provided %s is not valid - Please rerun and use format #<channel>.\nMake sure the channel link is parsed, so DONT type it manually", option.StringValue()))
+										_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+											Embeds: &interactionResponse.Data.Embeds,
+										})
+										if err != nil {
+											WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s about the channel format being incorrect, using the slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+										}
+										return
+									}
+								}
+							}
+						}
+						fmt.Println("DID WE FIND A CHANNEL ID?", channelID)
+						embedToSend := &discordgo.MessageEmbed{
+							Title: announceTitle,
+							Color: blueColor,
+							Fields: []*discordgo.MessageEmbedField{
+								{	
+									Value: announceDescription,
+									Name: "\u200B",
+								},
+							},
+						}
+						linkedChannelName := GetChannelName(channelID, innerSession)
+						if linkedChannelName == "" && active {
+							WriteErrorLog(fmt.Sprintf("The length of the resolved linked channel name is 0, which means we cannot find the channel again when it changes id - This means the config found at %s was changed BEFORE this code could run, which means it will return early, for user %s using slash command /announcebot, during the function UseSlashCommand()", configPath, ResolvePlayerID(userID, innerSession)), "Channel not found")
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|The channel <#%s> has changed before the bot could find it, please rerun command `/announcebot`\nPro tip: press arrow up, in the chat to reuse the same command and values", channelID))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while tryhing to sent error response to user %s using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}
+						message, err := innerSession.ChannelMessageSendComplex(channelInfo, &discordgo.MessageSend{
+							Embeds: []*discordgo.MessageEmbed{embedToSend},
+						})
+						active = channelID != ""
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent the announce message in channel %s, user %s using slash command /botannounce, during the function UseSlashCommand()", channelInfo, ResolvePlayerID(userID, innerSession)), err.Error())
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|An error happened inside the bot - %s", err.Error()))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s about the announcement message that could not be sent, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}
+						_, err = innerSession.ChannelMessageSend(channelInfo, strings.Join(SeperateAnyTagsInMessage(announceDescription), ", "))
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent tag message, for user %s using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|An error happened inside the bot - %s", err.Error()))
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s about the announcement message that could not be sent, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}
+						post := trackPost{
+							ChannelID: message.ChannelID,
+							LinkedChannelID: channelID,
+							Active: active,
+							MessageID: message.ID,
+							LinkedChannelName:linkedChannelName,
+						}
+						ReadWriteTrackPosts(post)
+						select {
+							case trackCacheChanged <- struct{}{}:
+							default:
+						}
+						fmt.Println("DO WE REACH TOWARDS THE END=?", post)
+						returnString := ""
+						if active {
+							returnString = fmt.Sprintf("Successfully created and will be tracked to channel ID <#%s>\nTo stop the tracking of a specific post, please run `/stopannouncebot`", channelID)
+						} else {
+							returnString = fmt.Sprintf("Successfully created message and can be found here => https://discord.com/channels/%s/%s/%s", serverID, post.ChannelID, post.MessageID)
+						}
+						interactionResponse = NewInteractionResponseToSpecificCommand(2, fmt.Sprintf("announcebot|%s", returnString))
+						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+							Embeds: &interactionResponse.Data.Embeds,
+						})
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent final successfull response to user %s, using the slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
+						}
+						
+				}
 				case "raidsummary":
 					{
 						useOnlyMainRaids, _ := CheckUserBoolResponseFlag(interactionData.Options, "includesmallraids")
@@ -4080,7 +4260,7 @@ func UseSlashCommand(session *discordgo.Session) {
 								Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 							})
 							copyTemplate := DeepCopyInteractionResponse(slashCommandAdminCenter["simplemessage"].Responses["messagetouser"].Response)
-							sliceOfResponseString := SeperateAnyTagsInMessage(event.ChannelID, stringValue)
+							sliceOfResponseString := SeperateAnyTagsInMessage(stringValue)
 							embedFields := []*discordgo.MessageEmbedField{
 								{Value: stringValue},
 							}
@@ -4417,12 +4597,14 @@ func UseSlashCommand(session *discordgo.Session) {
 						}
 					}
 					if _, ok := currentRaiderProfileMap[userID]; !ok {
-						interactionResponse = NewInteractionResponseToSpecificCommand(1, fmt.Sprintf("Raider not found|Please contact %s as this seems to be a bug", SplitOfficerName(officerGMArlissa)["name"]))
-						WriteErrorLog("An error ocurred while trying to send error response to user 2 %s , using slash command /myraiderperformance, during the function UseSlashCommand", "User not found")
+						interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("Raider not found|This is either due to %s not being in 1 main raid yet or a bug. You can verify this by running command `/myattendance`", ResolvePlayerID(userID, innerSession)))
+						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+							Embeds: &interactionResponse.Data.Embeds,
+						})
+						WriteErrorLog(fmt.Sprintf("An error ocurred while trying to send error response to user 2 %s , using slash command /myraiderperformance, during the function UseSlashCommand",userID), "User not found")
 						return
 					}
 					timeRaidDataLastUpdated, _ := time.Parse(timeLayoutLogs, currentRaiderProfileMap[userID].RaidData.TimeOfData)
-					fmt.Println(CheckForLaterThanDuration(timeRaidDataLastUpdated, 7), "IS THE RESULT", timeRaidDataLastUpdated.String())
 					isDataOld := CheckForLaterThanDuration(timeRaidDataLastUpdated, 7)
 					if isDataOld {
 						logsLastThreeMonth, err := ReadRaidDataCache(time.Now().AddDate(0, -3, 0), true)
@@ -4729,7 +4911,10 @@ func UseSlashCommand(session *discordgo.Session) {
 						}
 					} else {
 						interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("myreminder|Your time of `%s` is not valid. Please see the examples for help.", timeNoneFiltered))
-						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						_, err := innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
+							Flags: discordgo.MessageFlagsEphemeral,
+							Embeds: interactionResponse.Data.Embeds,
+						})
 						if err != nil {
 							WriteErrorLog("An error occured while trying to send initial response to user %s using the slash command /myreminder 2, during the function UseSlashCommand()", err.Error())
 						}
@@ -4942,6 +5127,30 @@ func UseSlashCommand(session *discordgo.Session) {
 	})
 }
 
+func CheckForPost(title string, channelID ...string) (bool, string) {
+	messagesCount := 100
+	id := channelInfo
+	if len(channelID) > 0 {
+		id = channelID[0]
+	}
+	messages, err := BotSessionMain.ChannelMessages(id, messagesCount, "", "", "")
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve the last %d messages from channel ID %s, returning early, during the function CheckForPost()", messagesCount, id), err.Error())
+		return false, ""
+	}
+	for _, message := range messages {
+		if len(message.Embeds) == 0 {
+			continue
+		}
+
+		if strings.EqualFold(message.Embeds[0].Title, title) {
+			return true, message.ID
+		}
+	}
+	return false, ""
+}
+
+
 func CheckForLaterThanDuration(timeToCheck time.Time, days int) bool {
 	return time.Since(timeToCheck) > time.Duration(days)*24*time.Hour
 }
@@ -5133,6 +5342,35 @@ func ReadWriteConfig(currentConfig ...config) config {
 		WriteInformationLog(fmt.Sprintf("Config found at %s has been successfully updated at %s, during the function ReadWriteConfig()", configPath, GetTimeString()), "Updating config file")
 	}
 	return configCache
+}
+
+func ReadWriteTrackPosts(post ...trackPost) map[string]trackPost {
+	postTrackMutex.Lock()
+	defer postTrackMutex.Unlock()
+	returnMapOfTrackPosts := make(map[string]trackPost)
+	if bytes := CheckForExistingCache(cacheTrackedPostsCache); len(bytes) > 0 {
+			err := json.Unmarshal(bytes, &returnMapOfTrackPosts)
+			if err != nil {
+				WriteErrorLog(fmt.Sprintf("An error occured while trying to unmarshal bytes of len %d on path %s, during the function ReadWriteTrackPosts()", len(bytes), cacheTrackedPostsCache), err.Error())
+			}
+	}
+	if len(post) == 0 {
+		return returnMapOfTrackPosts
+	}
+	returnMapOfTrackPosts[post[0].MessageID] = post[0]
+	marshal, err := json.MarshalIndent(returnMapOfTrackPosts, "", " ")
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to marshal json of returnMapOfTrackPosts, Message ID of new message to save: %s, len of total map %d, cache on path %s cannot be updated, during the function ReadWriteTrackPosts()", post[0].MessageID, len(returnMapOfTrackPosts), cacheTrackedPostsCache), err.Error())
+		return returnMapOfTrackPosts
+	}
+	err = os.WriteFile(cacheTrackedPostsCache, marshal, 0644)
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to write cache to the file of returnMapOfTrackPosts, Message ID of new message to save: %s, len of total map %d, cache on path %s cannot be updated, during the function ReadWriteTrackPosts()", post[0].MessageID, len(returnMapOfTrackPosts), cacheTrackedPostsCache), err.Error())
+	}
+	if len(returnMapOfTrackPosts) == 0 {
+		WriteInformationLog(fmt.Sprintf("The cache objects found on path %s, this means no channel has ever been tracked yet, during the function ReadWriteTrackPosts()", cacheTrackedPostsCache), "No cache found")
+	}
+	return returnMapOfTrackPosts
 }
 
 func ReadWriteRaiderProfiles(raiders []raiderProfile, initial bool) []raiderProfile {
@@ -6732,6 +6970,165 @@ func ReadWriteRaidHelperCache(trackedRaids ...map[string]trackRaid) map[string]t
 	return raids
 }
 
+func AutoTrackPosts() {
+	tracked := ReadWriteTrackPosts()
+	checkInterval := time.Second * 10
+	// stop channels owned by this goroutine only
+	stops := map[string]chan struct{}{}
+
+	start := func(p trackPost) {
+		if _, ok := stops[p.MessageID]; ok {
+			return // already running
+		}
+		ch := make(chan struct{})
+		stops[p.MessageID] = ch
+		go UpdateAnnouncePost(p, ch, checkInterval)
+	}
+
+	stop := func(id string) {
+		if ch, ok := stops[id]; ok {
+			close(ch)
+			delete(stops, id)
+		}
+	}
+
+	// Startup: start active ones
+	for _, p := range tracked {
+		if p.Active {
+			start(p)
+			WriteInformationLog(fmt.Sprintf("Starting tracking of all existing posts found on path %s as part of system start-up, len of all tracked posts %d and with interval %s, during the function AutoTrackPosts()", cacheTrackedPostsCache, len(tracked), checkInterval.String()), "Tracking post")
+		}
+	}
+
+	// React to cache-change signals
+	for range trackCacheChanged {
+		after := ReadWriteTrackPosts()
+
+		for id, pAfter := range after {
+			pBefore, existed := tracked[id]
+			if !existed {
+				// if you truly never remove and only add, this is fine
+				if pAfter.Active {
+					start(pAfter)
+					WriteInformationLog(fmt.Sprintf("Starting new tracking of post with ID: %s and channel ID to track: %s, and interval %s, during the function AutoTrackPosts()", pAfter.MessageID, pAfter.LinkedChannelID, checkInterval.String()), "Tracking post")
+				}
+				continue
+			}
+
+			// false -> true : start
+			if !pBefore.Active && pAfter.Active {
+				start(pAfter)
+				WriteInformationLog(fmt.Sprintf("Starting an existing tracking of post with ID: %s and channel ID to track: %s, and interval %s, during the function AutoTrackPosts()", pAfter.MessageID, pAfter.LinkedChannelID, checkInterval.String()), "Tracking post")
+			}
+
+			// true -> false : stop
+			if pBefore.Active && !pAfter.Active {
+				stop(id)
+				WriteInformationLog(fmt.Sprintf("Stopping an existing tracking of post with ID: %s and channel ID to track: %s, and interval %s, during the function AutoTrackPosts()", pAfter.MessageID, pAfter.LinkedChannelID, checkInterval.String()), "Tracking post")
+			}
+		}
+		tracked = after
+	}
+}
+
+func UpdateAnnouncePost(post trackPost, channel <-chan struct{}, interval time.Duration) {
+ticker := time.NewTicker(interval)
+timeToWaitInLoop := time.Second * 5
+	defer ticker.Stop()
+	for {
+		select {
+		case <-channel:
+			WriteInformationLog(fmt.Sprintf("The post %s has been deactived and will no longer be tracked by the bot, during the function UpdateAnnouncePost()", post.MessageID), "Stop tracking")
+			return
+		case <-ticker.C:
+			message, err := BotSessionMain.ChannelMessage(post.ChannelID, post.MessageID)
+			if message == nil {
+				//WriteErrorLog(fmt.Sprintf("No message found for post with channel ID %s and message ID: %s", post.ChannelID, post.MessageID), err.Error())
+				continue
+			}
+			if len(message.Embeds) == 0 {
+				WriteErrorLog(fmt.Sprintf("The post %s that is supposed to be tracked is not created with embeds, which is required by this function, skipping, during the function UpdateAnnouncePost()", post.MessageID), "Skipping post")
+				continue
+			}
+			embed := message.Embeds[0] //Only care about the first
+			if len(embed.Fields) == 0 {
+				WriteErrorLog(fmt.Sprintf("The post %s that is supposed to be tracked is not created with fields, which is required by this function, skipping, during the function UpdateAnnouncePost()", post.MessageID), "Skipping post")
+				continue
+			}
+			if len(embed.Fields) == 0 {
+				continue
+			}
+			field := embed.Fields[0]
+			if err != nil {
+				WriteErrorLog(fmt.Sprintf("An error occured while trying to retrieve message ID %s from channel ID %s, which is required by this function, skipping, during the function UpdateAnnounceBot()", post.ChannelID, post.MessageID), err.Error())
+				continue
+			}
+			match := false
+			notChanged := false
+			oldID := ""
+			for x := range 5 {
+				x = x + 1
+				channels, err := BotSessionMain.GuildChannels(serverID)
+				if err != nil {
+					WriteErrorLog(fmt.Sprintf("An error occured while trying to get all discord channels on server %s, this is crusial for the tracking of a post, skipping, during the function UpdateAnnounceBot()", serverID), err.Error())
+					continue
+				}
+				for _, channel := range channels {
+					if channel.Name == post.LinkedChannelName {
+						match = true
+						if channel.ID != post.LinkedChannelID {
+							oldID = post.LinkedChannelID
+							post.LinkedChannelID = channel.ID
+							ReadWriteTrackPosts(post)
+							WriteInformationLog(fmt.Sprintf("Post with old channel ID %s has changed to ID: %s, which means the post must also be changed to reflect this, during the function UpdateAnnounceBot()", post.ChannelID, channel.ID), "Found new channel")
+							break
+						}
+						notChanged = true
+					}
+				}
+				if match {
+					break
+				}
+
+				if notChanged {
+					break
+				}
+				WriteInformationLog(fmt.Sprintf("Waiting %s for next try of finding the new channel, it might not just be created yet, for post with ID %s, try %d/5, during the function UpdateAnnounceBot()", timeToWaitInLoop.String(), post.MessageID, x), "Sleeping thread")
+				time.Sleep(time.Second * 5)
+			}
+
+			if !match {
+				WriteErrorLog(fmt.Sprintf("The message ID %s being tracked could not find the new channel ID for tracked channel %s, skipping, during the function UpdateAnnounceBot()", post.MessageID, post.ChannelID), "Skipping post")
+				continue
+			}
+
+			if notChanged {
+				continue
+			}
+
+			field.Value = strings.ReplaceAll(field.Value, oldID, post.LinkedChannelID)
+			embed.Fields[0] = field
+			embeds := []*discordgo.MessageEmbed{embed}
+			_, err = BotSessionMain.ChannelMessageEditComplex(&discordgo.MessageEdit{
+				Embeds: &embeds,
+				ID: post.MessageID,
+				Channel: post.ChannelID,
+			})
+			if err != nil {
+				WriteErrorLog(fmt.Sprintf("An error occured while trying to send the new embed to change the channel ID inside field, on message ID %s, during the function UpdateAnnounceBot()", post.MessageID), err.Error())
+				continue
+			}
+			WriteInformationLog(fmt.Sprintf("Successfully updated message ID %s to change channel ID from %s and to %s, during the function UpdateAnnounceBot()", post.MessageID, oldID, post.LinkedChannelID), "Updated tracked post")
+			/*
+			if RetrieveChannelID(field.Value) == "" {
+				WriteErrorLog(fmt.Sprintf("Channel ID could not be retrieved from field %s which makes it impossible to verify the tracking of post %s, skipping, during the function UpdateAnnounceBot()", field.Value, post.MessageID), "Field missing channel ID")
+				continue
+			}
+				*/
+		}
+	}
+}
+
 func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 	createChannel := false
 	var err error
@@ -6769,8 +7166,15 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 			ParentID: categoryAssistance,
 			PermissionOverwrites: []*discordgo.PermissionOverwrite{
 				{
-					ID:   "1335182970193051739",
-					Type: discordgo.PermissionOverwriteTypeMember,
+					ID:   roleRaider,
+					Type: discordgo.PermissionOverwriteTypeRole,
+					Allow: discordgo.PermissionViewChannel |
+						discordgo.PermissionSendMessagesInThreads,
+					Deny: discordgo.PermissionSendMessages,
+				},
+				{
+					ID: roleTrial,
+					Type: discordgo.PermissionOverwriteTypeRole,
 					Allow: discordgo.PermissionViewChannel |
 						discordgo.PermissionSendMessagesInThreads,
 					Deny: discordgo.PermissionSendMessages,
@@ -6808,7 +7212,7 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 	for threadName := range configCurrent.Announce { //Keep threads alive if they are already present
 		for _, thread := range threadList.Threads {
 			if thread.ParentID != configCurrent.ChannelID {
-				WriteInformationLog(fmt.Sprintf("Thread with name %s has been skipped before it is not contained below category %s", threadName, categoryAssistance), "Thread skipped")
+				//WriteInformationLog(fmt.Sprintf("Thread with name %s has been skipped before it is not contained below category %s", threadName, categoryAssistance), "Thread skipped")
 				continue
 			}
 			if threadName == thread.Name {
@@ -6832,12 +7236,12 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 	editMainPost := false
 	for nameThread, config := range configCurrent.Announce {
 		if mapOfExistingThreads[nameThread] {
-			WriteInformationLog(fmt.Sprintf("Thread already exists %s and will not be created, during the function AutoChangeAnnounceChannel()", nameThread), "Skipping thread")
+			//WriteInformationLog(fmt.Sprintf("Thread already exists %s and will not be created, during the function AutoChangeAnnounceChannel()", nameThread), "Skipping thread")
 			continue
 		}
 
 		if config.MainThread {
-			WriteInformationLog(fmt.Sprintf("The thread with name %s shall be part of the main-thread and will be skipped to not make a stand-alone thread, during the function AutoChangeAnnounceChannel()", nameThread), "Skipping thread")
+			//WriteInformationLog(fmt.Sprintf("The thread with name %s shall be part of the main-thread and will be skipped to not make a stand-alone thread, during the function AutoChangeAnnounceChannel()", nameThread), "Skipping thread")
 			continue
 		}
 		thread, err := botSession.ThreadStartComplex(configCurrent.ChannelID, &discordgo.ThreadStart{
@@ -6863,24 +7267,33 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 			WriteErrorLog(fmt.Sprintf("An error occured while trying to sent the information message for the given thread %s, during the function AutoChangeAnnounceChannel()", nameThread), err.Error())
 			continue
 		}
-
+		_, err = botSession.ChannelMessageSend(thread.ID, fmt.Sprintf("\n\n*Want to go back? <#%s> *", configCurrent.ChannelID))
+		if err != nil {
+			WriteErrorLog(fmt.Sprintf("An error occured while trying to sent the anchor back link to thread %s, during the function AutoChangeAnnounceChannel()", nameThread), err.Error())
+			continue
+		}
 		WriteInformationLog(fmt.Sprintf("Thread with name %s has been created and its description has been added to the channel, during the function AutoChangeAnnounceChannel()", nameThread), "Created thread")
 	}
 
 	announceMap := configCurrent.Announce
 	topics := make([]topic, 0, len(announceMap))
+	topicsNotMainThread := make([]topic, 0, len(announceMap))
 	for _, t := range announceMap {
 		topics = append(topics, t)
 	}
+
 	sort.Slice(topics, func(i, j int) bool {
 		return topics[i].Order < topics[j].Order
 	})
+
 	if editMainPost {
 		topicsOfMainThread := []topic{}
 		DeleteMessagesInBulk(configCurrent.ChannelID, botSession)
 		for _, topic := range topics {
 			if topic.MainThread {
 				topicsOfMainThread = append(topicsOfMainThread, topic)
+			} else {
+				topicsNotMainThread = append(topicsNotMainThread, topic)
 			}
 		}
 		count := 0
@@ -6907,9 +7320,9 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 			if count == 1 { //Build ToC
 				x := 0
 				sliceToc := []string{}
-				for _, thread := range mapOfThreads {
+				for _, topic := range topicsNotMainThread {
 					x++
-					sliceToc = append(sliceToc, fmt.Sprintf("> **%d)** %s ➡ **For details see link <#%s>**", x, announceMap[thread.Name].ShortDescription, thread.ID))
+					sliceToc = append(sliceToc, fmt.Sprintf("> **%d)** %s ➡ **For details see link <#%s>**", x,  topic.ShortDescription, mapOfThreads[topic.Name].ID))
 				}
 				_, err := botSession.ChannelMessageSend(configCurrent.ChannelID, strings.Join(sliceToc, "\n"))
 				if err != nil {
@@ -6923,17 +7336,17 @@ func AutoChangeAnnounceChannel(botSession *discordgo.Session) {
 	}
 }
 
-func KeepThreadAlive(threadID string) {
-
-}
-
 func AutoAnnounceTracker(interval time.Duration, botSession *discordgo.Session) {
-	//Need to make a safeguard, because if the bot channel is created then the bot restarted, the channel var will be nil but channel will exist
 	staticConfig := configCurrent
 	botSession.AddHandler(func(innerSession *discordgo.Session, message *discordgo.MessageCreate) {
-		//fmt.Println("STATIC ID:", staticConfig.ChannelID, "AUTHOR ID", message.Author.ID, "session ID", innerSession.State.User.ID)
 		if automaticAnnounceDiscordChannel != nil && message.Author.ID != innerSession.State.User.ID && message != nil {
-			fmt.Println("IS THIS FROM A THREAD?", message.Thread.ID, message.Message.)
+			ch, err := innerSession.State.Channel(message.ChannelID)
+			if err == nil && ch.IsThread() && ch.ParentID == configCurrent.ChannelID {
+				err = botSession.ChannelMessageDelete(ch.ID, message.ID)
+				if err != nil {
+					WriteErrorLog(fmt.Sprintf("An error occured while trying to delete message %s from user %s in thread %s as part of auto-removing messages that is not from the bot, during the function AutoAnnounceTracker()", message.ID, message.Author.Username, ch.ID), err.Error())
+				}
+			}
 		}
 	})
 
@@ -6943,7 +7356,36 @@ func AutoAnnounceTracker(interval time.Duration, botSession *discordgo.Session) 
 		if bytes := CheckForExistingCache(configPath); len(bytes) == 0 {
 			ReadWriteConfig(staticConfig)
 		}
+		configBytesBefore, err := json.Marshal(configCurrent)
+		if err != nil {
+			WriteErrorLog("An error occured while trying to marshal the old config to bytes, during the function AutoAnnounceTracker()", err.Error())
+		}
+		lengthBytesBefore := len(configBytesBefore)
 		configCurrent = ReadWriteConfig()
+		configBytesAfter, err := json.Marshal(configCurrent)
+		if err != nil {
+			WriteErrorLog("An error occured while trying to marshal the new config to bytes, during the function AutoAnnounceTracker()", err.Error())
+		}
+		lengthBytesAfter := len(configBytesAfter)
+		if lengthBytesAfter != lengthBytesBefore {
+			WriteInformationLog(fmt.Sprintf("The config found on path %s has been altered, length before in bytes %d, length after %d, checking if channel exists, during the function AutoAnnounceTracker()", configPath, lengthBytesBefore, lengthBytesAfter), "Config changed")
+			channels, err := botSession.GuildChannels(serverID)
+			if err != nil {
+				WriteErrorLog(fmt.Sprintf("An error occured while trying to retrive all channels on server with ID %s, this is crucial for the function and will return early, during the function AutoAnnnounceTracker()", serverID), err.Error())
+				continue
+			}
+			for _, channel := range channels {
+				if channel.Name == channelNameAnnouncement {
+					WriteInformationLog(fmt.Sprintf("Since config is changed but channel %s already exists, it will be removed, then recreated later, during the function AutoAnnounceTracker()", channelNameAnnouncement), "Found channel")
+					_, err = botSession.ChannelDelete(channel.ID)
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to delete channel %s, during the function AutoAnnounceTracker()", channelNameAnnouncement), err.Error())
+					} else {
+						WriteInformationLog(fmt.Sprintf("Channel %s successfully deleted due to the config being changed, during the function AutoAnnounceTracker()", channelNameAnnouncement), "Channel deleted")
+					}
+				}
+			}
+		}
 		if configCurrent.Announce == nil {
 			WriteInformationLog(fmt.Sprintf("Since no threads has been found in the config on path %s, this loop will wait till next tick at: %s", configPath, GetTimeString()), "No threads in config")
 			continue
@@ -7063,7 +7505,10 @@ func GetChannelName(channelID string, session *discordgo.Session) string {
 	if err != nil {
 		WriteErrorLog(fmt.Sprintf("An error occured while trying to find the channel name for id: %s", channelID), err.Error())
 	}
-	return channelName.Name
+	if channelName != nil {
+		return channelName.Name
+	}
+	return ""
 }
 
 func NewPlayerJoin(botSession *discordgo.Session) {
@@ -8573,10 +9018,8 @@ func DetermineNewLogger(commingRaids []commingRaid, session *discordgo.Session) 
 		InformPlayerDirectly(fmt.Sprintf("**--------------------------------------------------------------**\n\nA new raid of type: %s has been created: %s\n\nSecondary raid resets on: %s\n\nNext main raid resets on: %s", raidShortName, customEvents[0].Date, resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), SplitOfficerName(officerGMArlissa)["ID"], session)
 	}
 */
-func SeperateAnyTagsInMessage(channelID string, messageValue string) []string {
+func SeperateAnyTagsInMessage(messageValue string) []string {
 	returnMessageTagsSlice := []string{}
-	//returnMessageTagsSlice = append(returnMessageTagsSlice, messageValue)
-
 	if messageValueSplit := strings.Split(messageValue, " "); len(messageValueSplit) > 1 || len(messageValueSplit) == 1 && strings.Contains(messageValueSplit[0], "@") {
 		for _, stringPartOfMessage := range messageValueSplit {
 			if strings.Contains(stringPartOfMessage, "@") {
@@ -8657,6 +9100,14 @@ func DeleteMessagesInBulk(channelID string, botSession *discordgo.Session) {
 	if err != nil {
 		WriteErrorLog("An error occured while trying to delete all the messages from the main sign-ups channel:", err.Error())
 	}
+}
+
+func RetrieveChannelID(channelWithTag string) string {
+	patternOnlyID := regexp.MustCompile(`<#(\d{17,19})>`)
+	if idSlice := patternOnlyID.FindStringSubmatch(channelWithTag); len(idSlice) == 2 {
+		return idSlice[1] // digits only
+	}
+	return ""
 }
 
 func RetrieveUsersInRole(roleIDs []string, session *discordgo.Session) []string {
