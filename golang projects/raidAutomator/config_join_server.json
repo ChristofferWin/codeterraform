@@ -1,0 +1,39 @@
+{
+    "version": "1.0.0",
+    "questions": [
+        {
+            "name": "Are you a pug?",
+            "options": [
+                "yes",
+                "no"
+            ],
+            "order": 0,
+            "description": "If your here to raid as part of the guild, press `no`"
+        },
+        {
+            "name": "What is your class?",
+            "order": 1,
+            "linkToData": {
+                "path": "./classes.json",
+                "property": "name"
+            }
+        },
+        {
+            "name": "What is your role?",
+            "dependson": 1,
+            "order": 2
+        },
+        {
+            "name": "Type your main's name with same symbols as in-game",
+            "order": 3,
+            "textField": true,
+            "description": "Make sure the name matches exactly, otherwise the bot cant find the char on warcraftlogs"
+        },
+        {
+            "name": "Type your alt's name with same symbols as in-game",
+            "order": 4,
+            "textField": true,
+            "description": "This is your alt 1, if you have multiple, please only type the most important one"
+        }
+    ]
+}

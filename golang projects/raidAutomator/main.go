@@ -110,6 +110,7 @@ type classesInternal struct {
 	Name          string       `json:"name"`
 	ClassSpecs    []classSpecs `json:"listOfSpecs"`
 	PossibleRaces []string     `json:"possibleRaces"`
+	RoleTypes 	  []string 	   `json:"roleTypes"`
 }
 
 type class struct {
@@ -581,26 +582,6 @@ var (
 							},
 						},
 					},
-					/*
-						{
-							Name:        "playerinfo",
-							Description: "Use the 'playerinfo' command to see a sub-menu of options related to you",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-							Options: []*discordgo.ApplicationCommandOption{
-								{
-									Type:        discordgo.ApplicationCommandOptionBoolean,
-									Name:        "summary",
-									Description: "See overall information about you",
-									Required:    false,
-								},
-								{
-									Type:        discordgo.ApplicationCommandOptionBoolean,
-									Name:        "worldbuffs",
-									Description: "See information related to your use of world-buffs in main-raids",
-									Required:    false,
-								},
-							},
-						},*/
 				},
 			},
 			Responses: map[string]applicationResponse{
@@ -672,23 +653,6 @@ var (
 				},
 			},
 		},
-
-		/*
-			"mynewmain": {
-				Template: &discordgo.ApplicationCommand{
-					Name:        "mynewmain",
-					Description: "Define your new main, this command must be accepted by an officer",
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Name:        "oldmainname",
-							Description: "Type name with same symbols, e.g. Wyzzlò",
-							Type:        discordgo.ApplicationCommandOptionString,
-							Required:    true,
-						},
-					},
-				},
-			},
-		*/
 		"myraiderperformance": {
 			Template: &discordgo.ApplicationCommand{
 				Name:        "myraiderperformance",
@@ -1727,8 +1691,9 @@ func main() {
 	ImportEmojies()
 	ImportClasses()
 	//NotifyPlayerRaidQuestion((PrepareTemplateWithEmojie(messageTemplates["Ask_raider_direct_question_douse"])), BotSessionMain)
-	NewPlayerJoin(BotSessionMain)
+	//NewPlayerJoin(BotSessionMain)
 	//AutoTrackRaidEvents(BotSessionMain)
+	/*
 	NewSlashCommand(BotSessionMain)
 	UseSlashCommand(BotSessionMain) //Contains go-routines
 	DeleteOldSlashCommand(BotSessionMain)
@@ -1776,8 +1741,11 @@ func main() {
 			}
 		}
 	}
+		*/
 	//fmt.Println(len(GetAllWarcraftLogsRaidData(false, true)))
 	//Since we are running inside a PaaS service, we will never stop unless forced
+
+		// CustomID convention: <scope>:<userID>:<menuName>
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
@@ -2185,12 +2153,6 @@ func GetAllWarcraftLogsRaidData(inMem bool, newestOne bool, logCode string, botI
 	return WriteRaidCache(UpdateClassSpec(logsOfAllRaids))
 }
 
-/*
-	func RetriveRaiderSpecificData(allLogs []logAllData, actors []int, fights map[string]any, query map[string]any) []logAllData {
-		SetWarcraftLogQueryVariables
-		return nil
-	}
-*/
 func WriteRaidCache(logDataSlice []logAllData) []logAllData {
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
@@ -2223,49 +2185,6 @@ func WriteRaidCache(logDataSlice []logAllData) []logAllData {
 	WriteInformationLog(fmt.Sprintf("The following %d of type []logAllData has been found on path %s", len(returnLogAllData), raidAllDataPath), "Reading cache")
 	return returnLogAllData
 }
-
-/*
-	func WriteWarcraftLogsQueryErrorLogs(failedQueryResult map[string]any, failedQueryRequest map[string]any) {
-		errorLogWarcraftLogsMutex.Lock()
-		defer errorLogWarcraftLogsMutex.Unlock()
-		cachedErrors := []logDataLoss{}
-
-		dataLoss := logDataLoss{}
-		mapOfSumAndCount := make(map[int]int)
-		if mapOfError, ok := errorSlice.(map[string]any); ok {
-			if variablesExist, ok := mapOfError["variables"].(map[string]any); ok {
-
-			}
-		}
-
-		if sliceOfFailedQueries, ok := failedQueryRequest["errors"].([]any); ok {
-			for x, errorSlice := range sliceOfFailedQueries {
-
-			}
-		}
-
-		errStruct := logDataLoss{}
-		if currentCache := CheckForExistingCache(errorLogPath); len(currentCache) > 0 {
-			err := json.Unmarshal(currentCache, &cachedErrors)
-			if err != nil {
-				log.Fatal("An error occured while trying to unmarshal json from information log cache: inside function WriteErrorLog()", err)
-			}
-		}
-		cachedErrors = append(cachedErrors, errStruct)
-
-		errJson, err := json.MarshalIndent(cachedErrors, "", " ")
-		if err != nil {
-			log.Fatal("An error occured while trying to marshal information log to json: inside function WriteErrorLog()", err)
-		}
-
-		cacheFile, err := os.OpenFile(errorLogPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-		if err != nil {
-			log.Fatal(fmt.Sprintf("Error opening file: Inside function WriteErrorLog() %s", errorLogPath), err.Error())
-		}
-		defer cacheFile.Close()
-		cacheFile.Write(errJson)
-	}
-*/
 
 func RetrieveSpecificEncounterLog(encounterID map[string]int64) []map[string]any {
 	mapOfEncounters := []map[string]any{}
@@ -2676,23 +2595,6 @@ func VerifyWarcraftLogData(mapToVerify map[string]any) bool {
 			}
 		}
 	}
-	/*
-		if mapToVerify == nil {
-			return false
-		} else {
-			WriteInformationLog("The map provided is nil. During function VerifyWarcraftLogData()", "Verify Warcraft logs data")
-		}
-
-		if mapOfLogs, ok := mapToVerify["logs"].(map[string]any); ok {
-			if sliceOfErrors, ok := mapOfLogs["errors"].([]any); ok {
-				WriteInformationLog(fmt.Sprintf("The map provided contains the following GraphQL errors: %s\nDuring function VerifyWarcraftLogData()", sliceOfErrors...), "Verify Warcraft logs data")
-			}
-			return false
-		} else {
-			WriteInformationLog("The warcraft logs data is valid...", "During function VerifyWarcraftLogData()")
-			return true
-		}
-	*/
 	return false
 }
 
@@ -3687,7 +3589,6 @@ func UseSlashCommand(session *discordgo.Session) {
 			interactionData = event.ApplicationCommandData()
 		}
 		if CheckForOfficerRank(userID, innerSession) {
-			//userNam e := user.Username
 			if len(interactionData.Options) == 0 {
 				switch interactionData.Name {
 				case "deletebotchannel":
@@ -5733,7 +5634,6 @@ func ResolveRoleIDs(session *discordgo.Session, roleIDs ...string) []string {
 	fmt.Println("ROLE ID222:", roleIDs)
 	for _, role := range allRoles {
 		mapOfAllRoles[role.ID] = role.Name
-		//fmt.Println("role ID", role.ID, "role name", role.Name, )
 	}
 	for _, roleID := range roleIDs {
 		if role, ok := mapOfAllRoles[roleID]; ok {
@@ -5785,33 +5685,6 @@ func SortRaidsInSpecificMaps(raids []logAllData) (map[string][]logAllData, []str
 	return mapOfRaids, sliceOfRaidNames
 }
 
-/*
-	func MergeRaidDataForUserOutput(allLogDataSlice []logAllData) []*discordgo.MessageEmbed {
-		mapOfDifferentRaidTypes := make(map[string][]logAllData)
-		returnEmbedsOfMergedRaids := []*discordgo.MessageEmbed{}
-		for _, logData := range allLogDataSlice {
-			nameOfRaid := ""
-			if raidTitleSplit := strings.Split(logData.RaidTitle, " "); len(raidTitleSplit) > 1 {
-				nameOfRaid = strings.ToLower(raidTitleSplit[0])
-			} else if raidTitleSplit := strings.Split(logData.RaidTitle, "_"); len(raidTitleSplit) > 1 {
-				nameOfRaid = strings.ToLower(raidTitleSplit[0])
-			}
-			mapOfDifferentRaidTypes[nameOfRaid] = append(mapOfDifferentRaidTypes[nameOfRaid], logData)
-		}
-
-		for raidName, allLogs := range mapOfDifferentRaidTypes {
-			allFields := []*discordgo.MessageEmbedField{}
-			for _, allLog := range allLogs {
-
-			}
-
-			messageEmbed := &discordgo.MessageEmbed{
-				Title: fmt.Sprintf("Overall summary of raid with name %s", raidName),
-				Color: greenColor,
-			}
-		}
-	}
-*/
 func DeepCopyInteractionResponse(original *discordgo.InteractionResponse) *discordgo.InteractionResponse {
 	var copy discordgo.InteractionResponse
 	b, _ := json.Marshal(original)
@@ -6173,8 +6046,7 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 			pointsSorted = SortFloat64FromMap(false, pointsPlayers)
 		}
 	}
-
-	fmt.Println("POINTS PLAYERS:", pointsPlayers, "SORTED:", pointsSorted)
+ 
 	maxPoints := 0.0
 	for x, raider := range raiders {
 		for raiderName, points := range pointsPlayers {
@@ -6225,67 +6097,6 @@ func CalculateRaiderPerformance(raider raiderProfile, raids []logAllData) raider
 		}
 	}
 	ReadWriteRaiderProfiles(raiders, false)
-
-	/*
-		mostDoneAbility := 0
-		mapOfMostDoneAbility := make(map[string]int)
-		//abilityNameToTrack := ""
-		//typeToTrack := ""
-		for _, raid := range playersOfSameClass[raider.MainCharName] { //Create template values and specific aggregated values for raider that was parsed
-			abilityName := ""
-			for x, ability := range raid.Abilities {
-				if ability.TotalCasts > mostDoneAbility {
-					mostDoneAbility = ability.TotalCasts
-					abilityName = ability.Name
-				}
-				if x == len(raid.Abilities) -1 {
-					mapOfMostDoneAbility[abilityName]++
-				}
-			}
-			if raid.HealingDone > raid.DamageDone {
-				//typeToTrack = "healing"
-			}
-		}
-
-		biggestCount := 0
-		x = 0
-		for _, count := range mapOfMostDoneAbility {
-			if count > biggestCount {
-				biggestCount = count
-			}
-			x++
-			if x == len(mapOfMostDoneAbility) -1 {
-				//abilityNameToTrack = abilityName
-			}
-		}
-		/*
-		deathsToTrack := logPlayerDeath{} //Will contain the aggregated values from the entire period
-		mostDoneStat := 0
-
-		mapOfAveragePerformance := make(map[string]logPlayer)
-		for raiderName, raidLogs := range playersOfSameClass {
-			var totalCPM int64
-			totalDeaths := map[string][]logPlayerDeath{}
-			totalMostDoneStat := 0 //Will prioritize whether u did most dps, healed the most or took the most dmg (relative to urself only)
-			mostUsedAbility := logPlayerAbility{}
-			totalCasts := 0
-			for _, playerLog := range raidLogs {
-				totalCPM += playerLog.ActiveTimeMS
-
-				for _, death := range playerLog.Deaths {
-					if !death.PartOfWipe {
-						totalDeaths[raiderName] = append(totalDeaths[raiderName], death)
-					}
-				}
-				for _, ability := range playerLog.Abilities {
-					if ability.Name == abilityNameToTrack {
-						totalCasts += ability.TotalCasts
-					}
-				}
-
-			}
-		}
-	*/
 	return returnRaiderProfile
 }
 
@@ -6969,7 +6780,35 @@ func ReadWriteRaidHelperCache(trackedRaids ...map[string]trackRaid) map[string]t
 	}
 	return raids
 }
+/*
+func NewModular(elements []string) {
+		presetMenuID := "rh:" + "346353264461217795" + ":preset"
+		msg := &discordgo.MessageSend{
+		Content: "Select a template for this event.",
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:    presetMenuID,
+						Placeholder: "Preset templates",
+						MaxValues:   1,
+						Options: []discordgo.SelectMenuOption{
+							{Label: "WoW Classic", Value: "wow_classic", Emoji: &discordgo.ComponentEmoji{Name: "⚔️"}},
+							{Label: "WoW MoP",     Value: "wow_mop",     Emoji: &discordgo.ComponentEmoji{Name: "🐼"}},
+							{Label: "Time Poll",   Value: "time_poll",   Emoji: &discordgo.ComponentEmoji{Name: "🕒"}},
+						},
+					},
+				},
+			},
+		},
+	}
 
+	_, err = BotSessionMain.ChannelMessageSendComplex("1308523274698887298", msg)
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured"), err.Error())
+	}
+}
+*/
 func AutoTrackPosts() {
 	tracked := ReadWriteTrackPosts()
 	checkInterval := time.Second * 10
@@ -7119,12 +6958,6 @@ timeToWaitInLoop := time.Second * 5
 				continue
 			}
 			WriteInformationLog(fmt.Sprintf("Successfully updated message ID %s to change channel ID from %s and to %s, during the function UpdateAnnounceBot()", post.MessageID, oldID, post.LinkedChannelID), "Updated tracked post")
-			/*
-			if RetrieveChannelID(field.Value) == "" {
-				WriteErrorLog(fmt.Sprintf("Channel ID could not be retrieved from field %s which makes it impossible to verify the tracking of post %s, skipping, during the function UpdateAnnounceBot()", field.Value, post.MessageID), "Field missing channel ID")
-				continue
-			}
-				*/
 		}
 	}
 }
@@ -7511,6 +7344,10 @@ func GetChannelName(channelID string, session *discordgo.Session) string {
 	return ""
 }
 
+func NewPlayerJoin2() {
+	
+}
+
 func NewPlayerJoin(botSession *discordgo.Session) {
 	mapOfMessageReactions := make(map[string]bool) //MessageID -> bool
 	mapOfUsedConnections := make(map[string]bool)
@@ -7591,14 +7428,6 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 	// Separate Message Handler (Fixes multiple registrations)
 	botSession.AddHandler(func(session *discordgo.Session, event *discordgo.MessageCreate) {
 		if event.Content != "" && strings.Contains(GetChannelName(event.ChannelID, session), "bot-chat") || strings.Contains(GetChannelName(event.ChannelID, session), "automatic-") {
-			/*channel, err := session.State.Channel(event.ChannelID)
-			if err != nil {
-				WriteErrorLog("An error occured while trying to retrieve the channel of which a message was sent from by user %s, during the function UseSlashCommand()", err.Error())
-				return
-			}
-
-			*/
-			fmt.Println("DO WE REACh", event.Content)
 			if event.Author.ID == session.State.User.ID {
 				if strings.Contains(event.Content, " VISIT ") {
 					patternUserID := regexp.MustCompile(`<@(\d+)>`) //strings.Contains(event.Content, " VISIT ") &&
@@ -8220,46 +8049,6 @@ func GetWarcraftLogsData(query map[string]any) map[string]any {
 	return nil
 }
 
-/*
-func UnwrapBaseWarcraftLogRaids(mapToUnwrap map[string]any) []logsBase {
-	sliceOfLogs := []logsBase{}
-	for _, value := range mapToUnwrap {
-		for _, value := range value.(map[string]any) {
-			for _, value := range value.(map[string]any) {
-				for _, value := range value.(map[string]any) {
-					for _, value := range value.([]any) {
-						newLog := logsBase{}
-						for name, value := range value.(map[string]any) {
-							if name == "owner" {
-								if strings.ToLower(value.(map[string]any)["name"].(string)) == "throyn1986" {
-									newLog.LoggerName = value.(map[string]any)["name"].(string)
-								} else if strings.ToLower(value.(map[string]any)["name"].(string)) == "shufflez26" {
-									newLog.LoggerName = value.(map[string]any)["name"].(string)
-								} else if strings.ToLower(value.(map[string]any)["name"].(string)) == "zyrtec" {
-									newLog.LoggerName = value.(map[string]any)["name"].(string)
-								}
-							} else if name == "code" {
-								newLog.Code = value.(string)
-							} else if name == "startTime" {
-								newLog.startTime = time.Unix(int64(value.(float64))/1000, 0).Local()
-							} else if name == "endTime" {
-								newLog.endTime = time.Unix(int64(value.(float64))/1000, 0).Local()
-							}
-						}
-
-						if newLog.LoggerName != "" {
-							sliceOfLogs = append(sliceOfLogs, newLog)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return sliceOfLogs
-}
-*/
-
 func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderProfile, logs ...logPlayer) logsRaider {
 	raiderData := logsRaider{}
 	raiderData.TimeOfData = time.Now().Format(timeLayoutLogs)
@@ -8388,8 +8177,7 @@ func UnwrapWarcraftLogRaiderRanking(mapToUnwrap map[string]any, raider raiderPro
 		} else {
 			mapOfRanks = ranks
 		}
-		//fmt.Println("RANK:", rank)
-		//os.Exit(0)
+
 		rankPercent := mapOfRanks["rankPercent"].(float64)
 		if rankPercent != 0 {
 			rankPercent = math.Round(rankPercent*100) / 100
@@ -8780,71 +8568,6 @@ func NotifyPlayerRaidQuestion(template messageTemplate, session *discordgo.Sessi
 	})
 }
 
-/*
-	func NotifyPlayerSignUp(notifyType string, session *discordgo.Session) {
-		currentRaiders := []string{}
-		mapOfMissingSignUp := make(map[string]bool)
-		mapOfPlayersToContact := make(map[string]bool)
-		embedMessageRaidReminder := messageTemplates["Signup_reminder"]
-		if strings.Contains(notifyType, "pug") {
-			currentRaiders = RetrieveUsersInRole([]string{roleTrial, rolePuggie, roleRaider}, session)
-		} else {
-			currentRaiders = RetrieveUsersInRole([]string{roleTrial, roleRaider}, session)
-		}
-
-		signUpsAsInterface, eventLink, srLink := RetriveRaidHelperEvent(session, false)
-
-		for _, signUpsInterface := range signUpsAsInterface {
-			for propertyName, propertyValue := range signUpsInterface {
-				if propertyName == "userId" {
-					for _, currentRaider := range currentRaiders {
-						if strings.Split(currentRaider, "/")[0] == propertyValue.(string) {
-							mapOfMissingSignUp[propertyValue.(string)] = true
-							break
-						}
-					}
-				}
-			}
-		}
-
-		for _, raiderName := range currentRaiders {
-			if !mapOfMissingSignUp[raiderName] {
-				mapOfPlayersToContact[raiderName] = true
-			}
-		}
-
-		for name, _ := range mapOfPlayersToContact {
-			dmChannel, err := session.UserChannelCreate(name)
-			if err != nil {
-				WriteErrorLog(fmt.Sprintf("An error occured while trying to create a private channel with user: %s inside function NotifyPlayerSignUp()", name), err.Error())
-			}
-			_, err = session.GuildMember(serverID, name)
-			if err != nil {
-				WriteErrorLog(fmt.Sprintf("An error occured while trying to retrive guild user info: %s inside function NotifyPlayerSignUp()", name), err.Error())
-			}
-			user, _ := session.GuildMember(serverID, name)
-
-			for x, _ := range embedMessageRaidReminder.Fields {
-				if x == 0 {
-					embedMessageRaidReminder.Fields[x].Value = fmt.Sprintf("Hi %s\n%s\n", user.Nick, embedMessageRaidReminder.Fields[x].Value)
-				} else if x == len(embedMessageRaidReminder.Fields)-2 {
-					embedMessageRaidReminder.Fields[x].Value = eventLink
-				} else if x == len(embedMessageRaidReminder.Fields)-1 {
-					embedMessageRaidReminder.Fields[x].Value = srLink
-				}
-			}
-
-			tagUser := discordgo.MessageEmbed{
-				Fields: embedMessageRaidReminder.Fields,
-			}
-			_, err = session.ChannelMessageSendEmbed(dmChannel.ID, &tagUser)
-			if err != nil {
-				WriteErrorLog("An error occured while trying to create the embeded notify for user:", err.Error())
-			}
-			WriteInformationLog(fmt.Sprintf("Message reminder for raid successfully sent to: %s with name: %s", user.User.ID, user.User.Username), "Remind raider of signing up")
-		}
-	}
-*/
 func CheckForOfficerRank(playerID string, botSession *discordgo.Session) bool {
 	playerRoles, err := botSession.GuildMember(serverID, playerID)
 	if err != nil {
@@ -8873,19 +8596,6 @@ func CheckForRaiderRank(playerID string, botSession *discordgo.Session) bool {
 	return false
 }
 
-/*
-	func RetrieveSecondaryRaidTemplate() []raidHelperEvent {
-		customRaidTemplates := []raidHelperEvent{}
-		if customRaidTemplateBytes := CheckForExistingCache(customEventTemplatesPath); customRaidTemplateBytes != nil {
-			err := json.Unmarshal(customRaidTemplateBytes, &customRaidTemplates)
-			if err != nil {
-				WriteErrorLog("An error occured while trying to unmarshal json for custom event templates: Inside function RetrieveSecondaryRaidTemplate()", err.Error())
-				return nil
-			}
-		}
-		return customRaidTemplates
-	}
-*/
 func DetermineNewLogger(commingRaids []commingRaid, session *discordgo.Session) {
 	mapOfSeenLoggers := make(map[string]bool)
 	userID := ""
@@ -8934,90 +8644,6 @@ func DetermineNewLogger(commingRaids []commingRaid, session *discordgo.Session) 
 	}
 }
 
-/*
-	func NewSecondaryRaid(raidShortName string, dayOfTheWeek time.Weekday, session *discordgo.Session, cleanRaidChannel bool) {
-		// Define the request body
-		if cleanRaidChannel {
-			DeleteMessagesInBulk(channelSignUpPug, session)
-			WriteInformationLog(fmt.Sprintf("Deleted all messages in channel %s", channelSignUp), "Delete all messages from channel")
-			time.Sleep(2 * time.Second)
-		}
-
-		currentTime := time.Now().Local()
-		newCommingRaids := DetermineNextSecondaryRaid(session)
-		if len(newCommingRaids) == 0 {
-			WriteInformationLog("No raids to post before next main raid", "Skip posting signup")
-			return
-		}
-		fmt.Println("THIS IS THE DETERMINED RAIDS:", newCommingRaids)
-		newCommingRaid := commingRaid{}
-		for _, commingRaid := range newCommingRaids {
-			if commingRaid.Name == raidShortName {
-				newCommingRaid = commingRaid
-			}
-		}
-		daysUntilMainRaid := int(time.Thursday) - int(currentTime.Weekday()) //Change time.WeekDay from thursday if your main raid day is say Wednesday, e.g. time.Wednesday
-		if daysUntilMainRaid < 0 {
-			daysUntilMainRaid += 7
-		}
-
-		resetTimeOfSecondaryRaid, _ := time.ParseInLocation(timeLayout, newCommingRaid.NextReset, time.Local)
-		nextMainRaidDate := currentTime.AddDate(0, 0, daysUntilMainRaid)
-		if nextMainRaidDate.Before(resetTimeOfSecondaryRaid) {
-			WriteInformationLog(fmt.Sprintf("Not possible to run %s before main raid as it resets on: %s", resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), "Analyzing for an in-between raid")
-			return //We cannot run an extra raid between main-raids
-		}
-
-		customEvents := RetrieveSecondaryRaidTemplate()
-		if len(customEvents) == 0 {
-			WriteErrorLog("An error occured while trying to retrieve the custom event templates... Please define at-least 1 otherwise the bot cannot create mid-week pop-up raids", "During function NewSecondaryRaid()")
-			return
-		}
-		daysUntilSunday := (7 - int(currentTime.Weekday())) % 7 // Days to add to reach next Sunday
-		customEvents[0].Date = currentTime.AddDate(0, 0, daysUntilSunday).Format("02-January-2006")
-		customEvents[0].Time = "19:30"
-		customEvents[0].Title = fmt.Sprintf("%s %s", raidShortName, "BEFORE NEXT main raid")
-		customEvents[0].Softres.Instance = raidShortName
-
-		// Marshal the data to JSON
-		jsonData, err := json.Marshal(customEvents[0])
-		if err != nil {
-			WriteErrorLog("Error marshalling JSON: Inside function NewSecondaryRaid()", err.Error())
-			return
-		}
-
-		// Create the request
-		url := fmt.Sprintf("https://raid-helper.dev/api/v2/servers/%s/channels/%s/event", serverID, channelSignUpPug)
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-		if err != nil {
-			WriteErrorLog("Error defining request to raid-helper inside function NewSecondaryRaid()", err.Error())
-			return
-		}
-
-		// Set headers
-		//req.Header.Set("Authorization", apiToken)
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", mapOfTokens["Raid-helper"])
-
-		// Send the request
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			WriteErrorLog("Error making request to raid-helper inside function NewSecondaryRaid()", err.Error())
-			return
-		}
-		defer resp.Body.Close()
-
-		// Read the response
-		_, err = io.ReadAll(resp.Body)
-		if err != nil {
-			WriteErrorLog("Error reading response: inside function NewSecondaryRaid()", err.Error())
-			return
-		}
-		WriteInformationLog(fmt.Sprintf("A in-between raid before next main raid has been created for date: %s", customEvents[0].Date), "Adding an extra raid event")
-		InformPlayerDirectly(fmt.Sprintf("**--------------------------------------------------------------**\n\nA new raid of type: %s has been created: %s\n\nSecondary raid resets on: %s\n\nNext main raid resets on: %s", raidShortName, customEvents[0].Date, resetTimeOfSecondaryRaid.String(), nextMainRaidDate.String()), SplitOfficerName(officerGMArlissa)["ID"], session)
-	}
-*/
 func SeperateAnyTagsInMessage(messageValue string) []string {
 	returnMessageTagsSlice := []string{}
 	if messageValueSplit := strings.Split(messageValue, " "); len(messageValueSplit) > 1 || len(messageValueSplit) == 1 && strings.Contains(messageValueSplit[0], "@") {
@@ -9044,49 +8670,6 @@ func InformPlayerDirectly(message string, userID string, session *discordgo.Sess
 	}
 }
 
-/*
-	func HttpServerForOauth2() WarcraftLogTokenCurrent {
-		newWarcraftLogsTokenBody := WarcraftLogTokenCurrent{
-			TokenType:    "refresh_token",
-			RefreshToken: `"`,
-		}
-		data := url.Values{}
-		data.Set("grant_type", "refresh_token")
-		data.Set("refresh_token", newWarcraftLogsTokenBody.RefreshToken)
-		data.Set("client_id", warcraftLogsAppID)
-		req, err := http.NewRequest("POST", "https://www.warcraftlogs.com/oauth/token", bytes.NewBufferString(data.Encode()))
-		if err != nil {
-			fmt.Println("An error occured while trying to prepare the POST request for a new warcraftlogs access token:", err)
-		}
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-		client := &http.Client{}
-		resp, err := client.Do(req) // ← **This is the actual HTTP request**
-		if err != nil {
-			fmt.Println("Error making request:", err)
-		}
-		defer resp.Body.Close()
-		// Read the response body
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response:", err)
-		}
-
-		// Handle response
-		if resp.StatusCode == http.StatusOK {
-			var result map[string]any
-			if err := json.Unmarshal(body, &result); err != nil {
-				fmt.Println("Error parsing JSON:", err)
-			}
-			fmt.Println("New Access Token:", result["access_token"])
-			if newRefreshToken, ok := result["refresh_token"]; ok {
-				fmt.Println("New Refresh Token:", newRefreshToken)
-			}
-		} else {
-			fmt.Println("Error:", string(body))
-		}
-		return WarcraftLogTokenCurrent{}
-	}
-*/
 func DeleteMessagesInBulk(channelID string, botSession *discordgo.Session) {
 	messagesToDelete, err := botSession.ChannelMessages(channelID, 25, "", "", "")
 	messageIDsToDelete := []string{}

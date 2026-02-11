@@ -20,6 +20,11 @@
       ],
       "possibleRaces": [
        "Nightelf"
+      ],
+      "roleTypes": [
+        "DPS",
+        "Healer",
+        "Tank"
       ]
     },
     {
@@ -44,6 +49,9 @@
       "possibleRaces": [
         "Dwarf",
         "Nightelf"
+      ],
+      "roleTypes": [
+        "DPS"
       ]
     },
     {
@@ -70,6 +78,9 @@
       "possibleRaces":[
         "Gnome",
         "Human"
+      ],
+      "roleTypes": [
+        "DPS"
       ]
     },
     {
@@ -107,6 +118,11 @@
       "possibleRaces":[
         "Human",
         "Dwarf"
+      ],
+      "roleTypes": [
+        "DPS",
+        "Healer",
+        "Tank"
       ]
     },
     {
@@ -132,6 +148,20 @@
         "Human",
         "Dwarf",
         "Nightelf"
+      ],
+      "roleTypes": [
+        "DPS",
+        "Healer"
+      ]
+    },
+    {
+      "name": "Shaman",
+      "possibleRaces": [
+        "Draenei"
+      ],
+      "roleTypes": [
+        "DPS",
+        "Healer"
       ]
     },
     {
@@ -165,6 +195,9 @@
         "Gnome",
         "Human",
         "Nightelf"
+      ],
+      "roleTypes": [
+        "DPS"
       ]
     },
     {
@@ -191,6 +224,9 @@
       "possibleRaces":[
         "Gnome",
         "Human"
+      ],
+      "roleTypes": [
+        "DPS"
       ]
     },
     {
@@ -217,6 +253,10 @@
         "Gnome",
         "Human",
         "Nightelf"
+      ],
+      "roleTypes": [
+        "DPS",
+        "Tank"
       ]
     }
   ]
