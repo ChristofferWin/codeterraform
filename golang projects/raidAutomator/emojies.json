@@ -28,6 +28,13 @@
         "emojiNickName": "race"
     },
     {
+        "ID":"1473991815257395303",
+        "emojiShortName":"draenei",
+        "emojiName":"race_draenei_female",
+        "emojiType": 0,
+        "emojiNickName": "race"
+    },
+    {
         "ID":"1336087522094223400",
         "emojiShortName":"druid",
         "emojiName":"class_druid",
@@ -80,6 +87,13 @@
         "ID":"1336087506969690233",
         "emojiShortName":"warrior",
         "emojiName":"class_warrior",
+        "emojiType": 1,
+        "emojiNickName": "class"
+    },
+    {
+        "ID":"1473987465479192586",
+        "emojiShortName":"shaman",
+        "emojiName":"class_shaman",
         "emojiType": 1,
         "emojiNickName": "class"
     },
@@ -227,6 +241,27 @@
         "ID":"1336087474601988096",
         "emojiShortName":"fury-prot",
         "emojiName":"warrior_prot",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1473987328895881286",
+        "emojiShortName":"ele",
+        "emojiName":"shaman_elemental",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1473987430465011818",
+        "emojiShortName":"resto",
+        "emojiName":"shaman_resto",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1473987381278281769",
+        "emojiShortName":"ench",
+        "emojiName":"shaman_enchancement",
         "emojiType": 2,
         "emojiNickName": "spec"
     },

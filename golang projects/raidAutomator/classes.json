@@ -4,7 +4,7 @@
       "listOfSpecs": [
         {
           "classSpec": "Balance",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         },
         {
@@ -32,7 +32,7 @@
       "listOfSpecs": [
         {
           "classSpec": "Beastmastery",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         },
         {
@@ -42,7 +42,7 @@
         },
         {
           "classSpec": "Survival",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         }
       ],
@@ -65,7 +65,7 @@
         },
         {
           "classSpec": "Fire",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": "https://www.wowhead.com/classic/guide/classes/mage/fire/dps-overview-pve"
         },
         {
@@ -106,12 +106,12 @@
         },
         {
           "classSpec": "Protection",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         },
         {
           "classSpec": "Retribution",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         }
       ],
@@ -155,21 +155,11 @@
       ]
     },
     {
-      "name": "Shaman",
-      "possibleRaces": [
-        "Draenei"
-      ],
-      "roleTypes": [
-        "DPS",
-        "Healer"
-      ]
-    },
-    {
       "name": "Rogue",
       "listOfSpecs": [
         {
           "classSpec": "Assassination",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": "https://www.wowhead.com/classic/guide/classes/rogue/assassination/dps-overview-pve"
         },
         {
@@ -186,7 +176,7 @@
         },
         {
           "classSpec": "Subtlety",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         }
       ],
@@ -217,7 +207,7 @@
         },
         {
           "classSpec": "Demonology",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         }
       ],
@@ -234,7 +224,7 @@
       "listOfSpecs": [
         {
           "classSpec": "Arms",
-          "memeSpec": true,
+          "memeSpec": false,
           "classGuideLink": ""
         },
         {
@@ -257,6 +247,33 @@
       "roleTypes": [
         "DPS",
         "Tank"
+      ]
+    },
+    {
+      "name": "Shaman",
+      "listOfSpecs": [
+        {
+          "classSpec": "Elemental",
+          "memeSpec": false,
+          "classGuideLink": ""
+        },
+        {
+          "classSpec": "Restoration",
+          "memeSpec": false,
+          "classGuideLink": "https://www.wowhead.com/classic/guide/classes/warrior/fury/dps-overview-pve"
+        },
+        {
+          "classSpec": "Enchancement",
+          "memeSpec": false,
+          "classGuideLink": "https://www.warcrafttavern.com/wow-classic/guides/pve-protection-warrior-tank-talents-builds/"
+        }
+      ],
+      "possibleRaces":[
+        "Draenei"
+      ],
+      "roleTypes": [
+        "DPS",
+        "Healer"
       ]
     }
   ]
