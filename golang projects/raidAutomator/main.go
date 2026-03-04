@@ -1739,8 +1739,6 @@ func main() {
 	/*
 		SIGNALS BELOW
 	*/
-	
-	CreateTwoWayChannelCommunication()
 	raidChannelIDs = RetrieveSubsetDiscordChannels(raidingChannelSubString)
 	NewPlayerJoin(BotSessionMain)
 	//NotifyPlayerRaidQuestion((PrepareTemplateWithEmojie(messageTemplates["Ask_raider_direct_question_douse"])), BotSessionMain)
@@ -1849,8 +1847,8 @@ func CreateTwoWayChannelCommunication() {
 						return
 					}
 					player := currentChannels[0]
-					feedbackResponse(player.RespondChannelID, feedbackResponseContentSlice[1])
-					
+					feedbackResponse(player.RespondChannelID, strings.Join(feedbackResponseContentSlice[1:], " "))
+					return
 				}
 				if len(feedbackResponseContentSlice) < 3 {
 					_, err = session.ChannelMessageSend(dmChannelID, currentFeedbackTopicStrings)
@@ -1869,9 +1867,9 @@ func CreateTwoWayChannelCommunication() {
 				}
 				if player == (playerChannel{}) {
 					responseStringSlice := []string{}
-					responseStringSlice = append(responseStringSlice, fmt.Sprintf("Your feedback topic name of: ``%s`` was not found... Please use one of the below names when you want to respond to feedback:\n\n", topic))
+					responseStringSlice = append(responseStringSlice, fmt.Sprintf("Your feedback topic name of: ``%s`` was not found... Please use one of the feedback topics below:\n\n", topic))
 					for _, currentChannel := range currentChannels {
-						responseStringSlice = append(responseStringSlice, currentChannel.FriendlyName)
+						responseStringSlice = append(responseStringSlice, fmt.Sprintf("Type: ``feedback %s <Your message>``", currentChannel.FriendlyName))
 					}
 					_, err = session.ChannelMessageSend(dmChannelID, strings.Join(responseStringSlice, "\n"))
 					if err != nil {
@@ -1879,7 +1877,7 @@ func CreateTwoWayChannelCommunication() {
 					}
 					return
 				}
-				feedbackResponse(player.RespondChannelID, feedbackResponseContentSlice[2])
+				feedbackResponse(player.RespondChannelID, strings.Join(feedbackResponseContentSlice[2:], " "))
 			}
 			case channel.Type == discordgo.ChannelTypeGuildPublicThread && channel.ParentID == channelFeedback: {
 				playerSlice := FindSpecificPlayerChannels(ReadWritePlayerChannels(), channel.ID)
@@ -5321,7 +5319,7 @@ func NewFeedbackTopicString(playerChannels []playerChannel, playerName string) s
 	sliceOfTopicString := []string{}
 	sliceOfTopicString = append(sliceOfTopicString, "You have multiple feedback's open and must add more information when responding\n")
 	for _, currentChannel := range playerChannels {
-		sliceOfTopicString = append(sliceOfTopicString, fmt.Sprintf("Type: ``feedback %s <Your response message>``", currentChannel.FriendlyName))
+		sliceOfTopicString = append(sliceOfTopicString, fmt.Sprintf("Type: ``feedback %s <Your response message>``", strings.Split(currentChannel.FriendlyName, " ")[0]))
 	}
 	fmt.Println("WHAT IS THE LENGTH?", len(playerChannels))
 	if len(playerChannels) < 2 {
