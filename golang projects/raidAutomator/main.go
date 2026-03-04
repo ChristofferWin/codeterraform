@@ -64,12 +64,42 @@ type topic struct {
 	ToC              bool   `json:"toc"`          //ToC = Is this topic supposed to link all the threads together, forming a table of contents (ToC) in the main-thread
 }
 
+type questionnaire struct {
+	Version string `json:"version"` //Must use format 1.1.1 /Semantic
+	Questions []question `json:"questions"`
+}
+
+type question struct {
+	Name string
+	Options []string `json:"options"`
+	Order int `json:"order"`
+	Description string `json:"description"`
+	LinkToData questionLink  `json:"linkToData"`
+	DependsOn int `json:"dependsOn"` //Looks at the property Order to determine which one its linked to
+	TextField bool `json:"textField"`
+}
+
+type questionLink struct {
+	Path string `json:"path"`
+	PropertyName string `json:"property"`
+}
+
 type trackPost struct {
 	MessageID string `json:"messageID"`
 	Active bool `json:"active"`
 	ChannelID string `json:"channelID"`
 	LinkedChannelID string `json:"linkedChannelID"`
 	LinkedChannelName string `json:"linkedChannelName"`
+}
+
+type playerChannel struct {
+	RaiderName string `json:"raiderName"`
+	RaiderDiscordID string `json:"raiderDiscordID"`
+	FriendlyName string `json:threadNickName` //We want a way for the user to let the bot know which thread they want to respond to, incase player has more than 1 active current threads
+	TimeOfCreation string `json:"timeOfCreation"`
+	UserChannelID string `json:"userChannelID"` //DM channel with raider 
+	RespondChannelID string `json:"respondChannelID"` //Channel user will respond to using DMs 
+	IsActive bool `json:"isActive"`
 }
 
 type keyvaultToken struct {
@@ -424,7 +454,12 @@ var (
 		WarcraftLogsAppID:   warcraftLogsAppID,
 		DiscordAppID:        crackedAppID,
 	}
-
+	ServerJoinQuestionnaireImport = questionnaire{ //This default one will always be overwritten by the startup import of an existing file
+		Version: "0.0.0", //When set to 0.0.0 the bot expects it to be empty
+		Questions: make([]question, 0),
+	}
+	feedbackThreads = make([]playerChannel, 0)
+	raidChannelIDs = []string{}
 	automaticAnnounceDiscordChannel = &discordgo.Channel{}
 	trackCacheChanged = make(chan struct{}, 1) //Channel will be between func AutoTrackPosts() & UseSlashCommand / Commands from the discord server
 
@@ -753,6 +788,12 @@ var (
 						Required: 	 false,
 					},
 				},
+			},
+		},
+		"closefeedback": {
+			Template: &discordgo.ApplicationCommand{
+				Name: "closefeedback",
+				Description: "Use when you want to close a given feedback thread. Must run in the thread itself",
 			},
 		},
 		"deletebotchannel": {
@@ -1287,6 +1328,7 @@ var (
 		"channelRogue":   channelRogue,
 		"channelWarlock": channelWarlock,
 		"channelWarrior": channelWarrior,
+		"channelShaman": channelShaman,
 	}
 
 	mapOfConstantOfficers = map[string]string{
@@ -1310,9 +1352,9 @@ var (
 		"Raid-leading",
 		"Officers",
 		"General",
-		"Our discord bot",
+		"Discord bot",
 		"Motivation",
-		"Issues between guildies",
+		"Issues guildies",
 		"Whistleblower",
 	}
 
@@ -1323,6 +1365,7 @@ var (
 	emojiesPath             = baseCachePath + "emojies.json"
 	cacheTrackedPostsCache =  baseCachePath + "cache_tracked_posts.json"
 	configPath              = baseCachePath + "config.json"
+	configServerJoin        = baseCachePath + "config_join_server.json"
 	raidHelperEventsPath    = baseCachePath + "raid_helper_events.json"
 	belowRaidersCachePath   = baseCachePath + "cache_trials_pugs.json"
 	raidersCachePath        = baseCachePath + "cache_raiders.json"
@@ -1330,6 +1373,8 @@ var (
 	raidHelperCachePath     = baseCachePath + "cache_raid_helper.json"
 	raidCachePath           = baseCachePath + "cache_raids.json" // Will be the largest file due to warcraftlogs info
 	raidAllDataPath         = baseCachePath + "cache_raid_all_data.json"
+	cachePlayerAlerts       = baseCachePath + "cache_player_alerts.json"
+	cachePlayerFeedbackChannels = baseCachePath + "cache_player_feedback_channels.json"
 	informationLogPath      = baseCachePath + "information_log.json" // Will grow over time
 	//errorLogPathWarcraftLogs = baseCachePath + "warcraft_logs_query_errors.json" // Will grow over time
 	errorLogPath       = baseCachePath + "error_log.json" // Will grow over time
@@ -1503,7 +1548,7 @@ const (
 	channelSignUpNaxx   = "1418598263782899832"
 	channelWelcome      = "1309312094822203402"
 	channelBot          = "1336098468615426189"
-	channelServerRules  = "1312791528267186216"
+	channelServerRules  = "1309545568925650974"
 	channelOfficer      = "1308522605065539714"
 
 	channelNameAnnouncement = "bot-assistance-🤖"
@@ -1518,6 +1563,9 @@ const (
 	channelRogue   = "667826598678102023"
 	channelWarlock = "1308522389176324139"
 	channelWarrior = "1308522446500008006"
+	channelShaman = "1440432785155424438"
+
+	raidingChannelSubString = "signup"
 
 	crackedBuiltin     = "<:cracked:1312847304725893190>"
 	antiCrackedBuiltin = "<:anticracked:1344269727928680508>"
@@ -1584,7 +1632,7 @@ const (
 )
 
 func init() {
-	fmt.Println("THIS IS VERSION 1.0.0")
+	fmt.Println("THIS IS VERSION 1.2.0")
 	CheckRuntime()
 }
 
@@ -1605,6 +1653,8 @@ func CheckRuntime() {
 	WriteInformationLog("Emojie config successfully imported during start-up", "Import Emojie config")
 	ImportClasses()
 	WriteInformationLog("Class config successfully imported during start-up", "Import Class config")
+	ImportServerJoinConfig()
+	WriteInformationLog("Server join config successfully imported during start-up", "Import Player join config")
 
 	azCred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -1685,19 +1735,23 @@ func main() {
 		WriteErrorLog("An error occured while trying to parse the guilds start-time as time.Time type, during main(), the program will stop...", err.Error())
 		log.Fatalf("The guild-start-time of '%s' Is not valid, please set the constant 'timeGuildStarted' In format '%s'", timeGuildStarted, timeLayout)
 	}
+	go CreateTwoWayChannelCommunication()
 	/*
 		SIGNALS BELOW
 	*/
-	ImportEmojies()
-	ImportClasses()
+	
+	CreateTwoWayChannelCommunication()
+	raidChannelIDs = RetrieveSubsetDiscordChannels(raidingChannelSubString)
+	NewPlayerJoin(BotSessionMain)
 	//NotifyPlayerRaidQuestion((PrepareTemplateWithEmojie(messageTemplates["Ask_raider_direct_question_douse"])), BotSessionMain)
-	//NewPlayerJoin(BotSessionMain)
 	//AutoTrackRaidEvents(BotSessionMain)
-	/*
+	
 	NewSlashCommand(BotSessionMain)
 	UseSlashCommand(BotSessionMain) //Contains go-routines
+	
 	DeleteOldSlashCommand(BotSessionMain)
 	CalculateRaidWeightsProcent()
+	
 	go AutoTrackPosts()
 	go AutoAnnounceTracker(5 * time.Second, BotSessionMain) //Contains go-routines
 
@@ -1741,14 +1795,137 @@ func main() {
 			}
 		}
 	}
-		*/
 	//fmt.Println(len(GetAllWarcraftLogsRaidData(false, true)))
 	//Since we are running inside a PaaS service, we will never stop unless forced
 
 		// CustomID convention: <scope>:<userID>:<menuName>
+	fmt.Println("READY")
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
+}
+
+func CreateTwoWayChannelCommunication() {
+	BotSessionMain.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate){
+		channel, err := session.State.Channel(message.ChannelID)
+		playerID := message.Author.ID
+		playerName := ResolvePlayerID(playerID , BotSessionMain)
+		if err != nil {
+			channel, err = session.Channel(message.ChannelID)
+			if err != nil {
+				return
+			}
+		}
+		if message.Author.ID == session.State.User.ID || channel.Type != discordgo.ChannelTypeDM && channel.Type != discordgo.ChannelTypeGuildPublicThread {
+			return
+		}
+		fmt.Println("CHANNEL NAME", channel.Name, channel.Type)
+		currentChannels := FindSpecificPlayerChannels(ReadWritePlayerChannels(), playerID)
+		switch {
+		case strings.Contains(strings.ToLower(message.Content), "feedback") && channel.Type == discordgo.ChannelTypeDM && len(currentChannels) > 0: {
+				dmChannelID := currentChannels[0].UserChannelID
+				feedbackResponseContentSlice := strings.Split(message.Content, " ")
+				currentFeedbackTopicStrings := NewFeedbackTopicString(currentChannels, playerName)
+				feedbackResponse := func(chID string, mes string){
+					_, err = session.ChannelMessageSend(chID, fmt.Sprintf("Message from player:\n\n%s", mes))
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to sent respond from user with id %s and name %s to feedback thread %s, during the function CreateTwoWayChannelCommunication()", currentChannels[0].RaiderDiscordID, currentChannels[0].RaiderName, currentChannels[0].RespondChannelID), err.Error())
+						_, err = session.ChannelMessageSend(dmChannelID, "The feedback response was not successfully added... So no officer can see what you just wrote...\n\nPlease try again, if the issue persists, please contact an officer!")
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to send error response to user with id %s and name %s during the function CreateTwoWayCommunication()", currentChannels[0].RaiderDiscordID, currentChannels[0].RaiderName), err.Error())
+						}
+						return
+					}
+					_, err = session.ChannelMessageSend(dmChannelID, fmt.Sprintf("Feedback response successfully added, officers can see your response %s", crackedBuiltin))
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to send success response to user with id %s and name %s, during the function CreateTwoWayCommunication()", currentChannels[0].RaiderDiscordID, currentChannels[0].RaiderName), err.Error())
+					}
+				}
+
+				if currentFeedbackTopicStrings == "" {
+					if len(feedbackResponseContentSlice) < 2 {
+						wrongFormatMessage := "You did not respond correctly, please see the format below\n\nStart a message with feedback <Your feedback>"
+						_, err = session.ChannelMessageSend(dmChannelID, wrongFormatMessage)
+						return
+					}
+					player := currentChannels[0]
+					feedbackResponse(player.RespondChannelID, feedbackResponseContentSlice[1])
+					
+				}
+				if len(feedbackResponseContentSlice) < 3 {
+					_, err = session.ChannelMessageSend(dmChannelID, currentFeedbackTopicStrings)
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to send response to user with id %s and name %s about using wrong feedback response format, during the function CreateTwoWayChannelCommunication()", currentChannels[0].RaiderDiscordID, currentChannels[0].RaiderName), err.Error())
+					}
+					return
+				}
+				topic := feedbackResponseContentSlice[1]
+				player := playerChannel{}
+				for _, currentChannel := range currentChannels {
+					if strings.EqualFold(currentChannel.FriendlyName, strings.ToLower(topic)) {
+						player = currentChannel
+						break
+					}
+				}
+				if player == (playerChannel{}) {
+					responseStringSlice := []string{}
+					responseStringSlice = append(responseStringSlice, fmt.Sprintf("Your feedback topic name of: ``%s`` was not found... Please use one of the below names when you want to respond to feedback:\n\n", topic))
+					for _, currentChannel := range currentChannels {
+						responseStringSlice = append(responseStringSlice, currentChannel.FriendlyName)
+					}
+					_, err = session.ChannelMessageSend(dmChannelID, strings.Join(responseStringSlice, "\n"))
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to send response to user with id %s and name %s about responding to a feedback topic that doesnt exist of name %s, during the function CreateTwoWayChannelCommunication()", currentChannels[0].RaiderDiscordID, currentChannels[0].RaiderName, topic), err.Error())
+					}
+					return
+				}
+				feedbackResponse(player.RespondChannelID, feedbackResponseContentSlice[2])
+			}
+			case channel.Type == discordgo.ChannelTypeGuildPublicThread && channel.ParentID == channelFeedback: {
+				playerSlice := FindSpecificPlayerChannels(ReadWritePlayerChannels(), channel.ID)
+				if len(playerSlice) == 0 {
+					return
+				}
+				if strings.Contains(strings.ToLower(message.Content), "internal") {
+					WriteInformationLog(fmt.Sprintf("The officer with id %s and name %s responded to a discord feedback thread but does not wont it to be sent to the user, thread id %s and name %s, during the function CreateTwoWayChannelCommuncation()",message.Author.ID,ResolvePlayerID(message.Author.ID, session), channel.ID, channel.Name), "No response sent")
+					return
+				}
+				_, err = session.ChannelMessageSend(playerSlice[0].UserChannelID, fmt.Sprintf("The officer %s has responded on feedback topic: %s\n\n%s", ResolvePlayerID(message.Author.ID, session), playerSlice[0].FriendlyName, message.Content))
+				if err != nil {
+					WriteErrorLog(fmt.Sprintf("An error occured while trying to sent response to user with id %s and name %s from officer %s in thread with name %s, during the function CreateTwoWayChannelCommunication()", playerSlice[0].RaiderDiscordID, playerSlice[0].RaiderName, ResolvePlayerID(message.Author.ID, session), channel.Name), err.Error())
+					_, err = session.ChannelMessageSend(playerSlice[0].RespondChannelID, fmt.Sprintf("Was not possible to sent message to raider %s due to error %s", playerSlice[0].RaiderName, err.Error()))
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to let officers know that a feedback response did not get to the user with id %s and name %s, during the function CreateTwoWayChannelCommunication()", playerSlice[0].RaiderDiscordID, playerSlice[0].RaiderName), err.Error())
+					}
+				}
+			}
+		}
+	})
+}
+
+func FormatChannelSubsetResponseString(message string, channelIDs []string) []string {
+	returnSlice := []string{}
+	for _, id := range channelIDs {
+		returnSlice = append(returnSlice, fmt.Sprintf("%s ➡ <#%s>", message, id))
+	}
+	return returnSlice
+}
+
+func RetrieveSubsetDiscordChannels(subString string) []string {
+	allChannels, err := BotSessionMain.GuildChannels(serverID)
+	currentChannels := []string{}
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to retrive all guild channels from discord server %s, during the function DeleteOldBotChannels()", serverID), err.Error())
+	}
+	for _, discordChan := range allChannels {
+		if strings.Contains(discordChan.Name, subString) {
+			currentChannels = append(currentChannels, discordChan.ID)
+		}
+	}
+	if len(currentChannels) == 0 {
+		WriteInformationLog(fmt.Sprintf("The length of found channels is 0, which means multiple related bot operations cannot function properly - Please make sure channels are created containing %s as part of the name, on server with ID: %s, during the function RetrieveSignUpDiscordChannels()", subString, serverID), "No channels found")
+	}
+	return currentChannels
 }
 
 func CalculateRaidWeightsProcent() {
@@ -3357,7 +3534,7 @@ func UseSlashCommand(session *discordgo.Session) {
 			customIDSplit := strings.Split(customID, "/")
 			if len(customIDSplit) != 2 {
 				WriteErrorLog(fmt.Sprintf("The customID provided by the modolar response is not in the correct fomat: %s, expected <command>/<value>", customID), "Wrong format")
-				interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("button %s|This button is not yet supported... Please contact %s", customID, SplitOfficerName(officerGMArlissa)["name"]))
+				interactionResponse := NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("button %s|This button is not yet supported... Please contact %s", customID, SplitOfficerName(officerGMArlissa)["Name"]))
 				err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
 				if err != nil {
 					WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user %s, using button %s, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession), customID), err.Error())
@@ -3482,6 +3659,48 @@ func UseSlashCommand(session *discordgo.Session) {
 					if err != nil {
 						WriteErrorLog(fmt.Sprintf("An error occured while trying to send feedback to the thread with name %s and ID: %s, using slash command /feedback, during the function UseSlashCommand()", threadName, thread.ID), err.Error())
 					}
+					if !anonymous {
+						dmChannel, err := innerSession.UserChannelCreate(userID)
+						if err != nil {
+							interactionResponse = NewInteractionResponseToSpecificCommand(1, "feedback|Was not able to make a direct channel with you.\nThis mneans that you cannot get updates about your feedback.\nIf this is an issue, please contact an officer")
+							_, err = innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
+								Embeds: interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent warning to user with ID %s and name %s, using the slash command /feedback, during the function UseSlashCommand()", userID, playerName), err.Error())
+							}
+
+						}
+						playerDirectChannel := playerChannel{
+							RaiderName: playerName,
+							RaiderDiscordID: userID,
+							TimeOfCreation: GetTimeString(),
+							UserChannelID: dmChannel.ID,
+							RespondChannelID: thread.ID,
+							FriendlyName: strings.Split(customIDSlice[1], "\n")[0],
+							IsActive: true,
+						}
+						ReadWritePlayerChannels(playerDirectChannel)
+						_, err = innerSession.ChannelMessageSend(playerDirectChannel.UserChannelID, fmt.Sprintf("Hi %s - Inside this chat window you can add any new information to the current given feedback - You can even write back to an officer when they respond to it!\n\nThe feedback post sent to officers can be seen below:\n\n%s", playerDirectChannel.RaiderName, content))
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent direct message to user with id %s and name %s inside dm channel %s, using slash command /feedback, during the function UseSlashCommand()", playerDirectChannel.RaiderDiscordID, playerDirectChannel.RaiderName, playerDirectChannel.UserChannelID), err.Error())
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("feedback|An error occured while trying to reach you in DM's - Please show the following error to %s:\n\n%s", SplitOfficerName(officerGMArlissa)["Name"], err.Error()))
+							_, err = innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
+								Embeds: interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user with id %s and name %s, using slash command /feedback, during the function UseSlashCommand()", playerDirectChannel.RaiderDiscordID, playerDirectChannel.RaiderName), err.Error())
+							}
+							return
+						}
+						interactionResponse = NewInteractionResponseToSpecificCommand(2, "feedback|Please see the message from the bot regarding how to talk to an officer via feedback created")
+						_, err = innerSession.FollowupMessageCreate(event.Interaction, true, &discordgo.WebhookParams{
+							Embeds: interactionResponse.Data.Embeds,
+						})
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent message about a new dm channel being created for user %s, using slash command /feedback, during the function UseSlashCommand()", playerName), err.Error())
+						}
+					} 	
 				}
 			case "bench_modal":
 				{
@@ -3521,7 +3740,7 @@ func UseSlashCommand(session *discordgo.Session) {
 					allTrackedRaids := ReadWriteRaidHelperCache()
 					trackedRaid := trackRaid{}
 					if _, ok := allTrackedRaids[messageID]; !ok {
-						interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("Raid to bench for not found|This should not happen - Please contact %s", SplitOfficerName(officerGMArlissa)["name"]))
+						interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("Raid to bench for not found|This should not happen - Please contact %s", SplitOfficerName(officerGMArlissa)["Name"]))
 						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 							Embeds: &interactionResponse.Data.Embeds,
 						})
@@ -3624,6 +3843,48 @@ func UseSlashCommand(session *discordgo.Session) {
 							WriteErrorLog(fmt.Sprintf("An error occured while truing to sent success response to user %s, using slash command /deletebotchannel, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), err.Error())
 						}
 					}
+				case "closefeedback": {
+						interactionResponse := NewInteractionResponseToSpecificCommand(1, "closefeedback|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
+						err := innerSession.InteractionRespond(event.Interaction, &interactionResponse)
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent the intial response to user with id %s and name %s, returning early, using slash command /closefeedback, during the function UseSlashCommand()", userID, ResolvePlayerID(userID, session)), err.Error())
+							return
+						}
+						channelID := event.Interaction.ChannelID
+						playerChannelSlice := FindSpecificPlayerChannels(ReadWritePlayerChannels(), channelID)
+						if len(playerChannelSlice) == 0 {
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, "closefeedback|The channel the command was run in is not a feedback thread...")
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to sent error response to user with id %s and name %s, using the slash command /closefeedback, during the function UseSlashCommand()", userID, ResolvePlayerID(userID, innerSession)), err.Error())
+							}
+							return
+						}
+						player := playerChannelSlice[0]
+						player.IsActive = false
+						ReadWritePlayerChannels(player)
+						_, err = innerSession.ChannelMessageSend(player.UserChannelID, fmt.Sprintf("The officer ``%s`` has closed your feedback of topic ``%s``\n\nIf your not satisfied with the result, you are more than welcome to reach out to any officer for clarification", ResolvePlayerID(userID, session), player.FriendlyName))
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent feedback thread status closed to user with id %s and name %s, using slash command /closefeedback, during the function UseSlashCommand()", player.RaiderDiscordID, player.RaiderName), err.Error())
+							interactionResponse = NewInteractionResponseToSpecificCommand(1, "closefeedback|The feedback thread is successfully closed BUT the bot was not able to tell player %s directly...\n\nPlease tell the player manually!")
+							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+								Embeds: &interactionResponse.Data.Embeds,
+							})
+							if err != nil {
+								WriteErrorLog(fmt.Sprintf("An error occured while trying to let the officer with id %s and name %s know that the closing thread message could not be sent directly to player %s, using slash command /closefeedback, during the function UseSlashCommand()", userID, ResolvePlayerID(userID, session), player.RaiderName), err.Error())
+							}
+							return
+						}
+						interactionResponse = NewInteractionResponseToSpecificCommand(2, fmt.Sprintf("closefeedback|The feedback has been successfully closed and the player %s is notified!\n\nYou can simply let this thread be now as it will be automatically archived by discord", player.RaiderName))
+						_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
+							Embeds: &interactionResponse.Data.Embeds,
+						})
+						if err != nil {
+							WriteErrorLog(fmt.Sprintf("An error occured while trying to sent final success response to officer with id %s and name %s using slash command /closefeedback, during the function UseSlashCommand()", userID, ResolvePlayerID(userID, innerSession)), err.Error())
+						}
+					}
 				case "benchreason":
 					{
 						interactionResponse := NewInteractionResponseToSpecificCommand(1, "Initiating benching|", discordgo.InteractionResponseDeferredChannelMessageWithSource)
@@ -3646,7 +3907,7 @@ func UseSlashCommand(session *discordgo.Session) {
 						raidCacheMap := make(map[string]trackRaid)
 						err = json.Unmarshal(cacheRaidHelper, &raidCacheMap)
 						if err != nil {
-							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("benchreason|An error occured inside the bot when trying to convert raid-helper bytes to struct - Please contact %s", ResolvePlayerID(SplitOfficerName(officerGMArlissa)["name"], innerSession)))
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("benchreason|An error occured inside the bot when trying to convert raid-helper bytes to struct - Please contact %s", ResolvePlayerID(SplitOfficerName(officerGMArlissa)["Name"], innerSession)))
 							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 								Embeds: &interactionResponse.Data.Embeds,
 							})
@@ -3828,7 +4089,7 @@ func UseSlashCommand(session *discordgo.Session) {
 					for _, option := range interactionData.Options {
 						if _, ok := option.Value.(string); !ok {
 							WriteErrorLog(fmt.Sprintf("The discordgo template is set to garuentee this to be a string, but its not, for officer %s, using slash command /announcebot, during the function UseSlashCommand()", ResolvePlayerID(userID, innerSession)), "Data is not string")
-							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|A bug happened inside the bot - Please report this to %s", SplitOfficerName(officerGMArlissa)["name"]))
+							interactionResponse = NewInteractionResponseToSpecificCommand(0, fmt.Sprintf("announcebot|A bug happened inside the bot - Please report this to %s", SplitOfficerName(officerGMArlissa)["Name"]))
 							_, err = innerSession.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 								Embeds: &interactionResponse.Data.Embeds,
 							})
@@ -5026,6 +5287,48 @@ func UseSlashCommand(session *discordgo.Session) {
 			}
 		}
 	})
+}
+
+func FindSpecificPlayerChannels(playerChannels []playerChannel, identifier string, overwriteActive ...bool) []playerChannel {
+	returnPlayerChannels := []playerChannel{}
+	effectiveOverwrite := false
+	if len(overwriteActive) > 0 {
+		effectiveOverwrite = overwriteActive[0]
+	}
+	for _, currentChannel := range playerChannels {
+		if !effectiveOverwrite && !currentChannel.IsActive {
+			fmt.Println("Is this out pitfall?")
+    		continue
+		}
+		fmt.Println("Player name:", currentChannel.RaiderName, currentChannel.RespondChannelID)
+		switch {
+		case currentChannel.RaiderDiscordID == identifier: {
+				returnPlayerChannels = append(returnPlayerChannels, currentChannel)
+			}
+		case currentChannel.UserChannelID == identifier: {
+				returnPlayerChannels = append(returnPlayerChannels, currentChannel)
+			}
+		case currentChannel.RespondChannelID == identifier: {
+				returnPlayerChannels = append(returnPlayerChannels, currentChannel)
+			}
+		}
+	}
+	fmt.Println("LEN", len(returnPlayerChannels))
+	return returnPlayerChannels
+}
+
+func NewFeedbackTopicString(playerChannels []playerChannel, playerName string) string {
+	sliceOfTopicString := []string{}
+	sliceOfTopicString = append(sliceOfTopicString, "You have multiple feedback's open and must add more information when responding\n")
+	for _, currentChannel := range playerChannels {
+		sliceOfTopicString = append(sliceOfTopicString, fmt.Sprintf("Type: ``feedback %s <Your response message>``", currentChannel.FriendlyName))
+	}
+	fmt.Println("WHAT IS THE LENGTH?", len(playerChannels))
+	if len(playerChannels) < 2 {
+		return ""
+	}
+
+	return strings.Join(sliceOfTopicString, "\n")
 }
 
 func CheckForPost(title string, channelID ...string) (bool, string) {
@@ -6752,6 +7055,51 @@ func GetWeeklyBench(event *discordgo.MessageUpdate) map[string]bench {
 	return benchRaidersMap
 }
 
+func ReadWritePlayerChannels(channelWithPlayer ...playerChannel) []playerChannel {
+	bytes := CheckForExistingCache(cachePlayerFeedbackChannels)
+	cachePlayerChannels := []playerChannel{}
+	if len(bytes) != 0 {
+		err := json.Unmarshal(bytes, &cachePlayerChannels)
+		if err != nil {
+			WriteErrorLog(fmt.Sprintf("An error occured while trying to unmarshal json for cache %s, returning early, during the function ReadWritePlayerChannels()", cachePlayerFeedbackChannels), err.Error())
+			return nil
+		}
+	}
+	if len(channelWithPlayer) == 0 {
+		return cachePlayerChannels
+	}
+		
+	currentPlayerChannel := channelWithPlayer[0]
+	mapOfPlayerChannels := make(map[string]playerChannel)
+	for _, currentPlayer := range cachePlayerChannels {
+		mapOfPlayerChannels[fmt.Sprintf("%s/%s", currentPlayer.RaiderDiscordID, currentPlayer.RespondChannelID)] = currentPlayer
+	}
+
+	_, exist := mapOfPlayerChannels[fmt.Sprintf("%s/%s", currentPlayerChannel.RaiderDiscordID, currentPlayerChannel.RespondChannelID)]
+	if exist {
+		for x, currentPlayer := range cachePlayerChannels {
+			if currentPlayer.RaiderDiscordID == currentPlayerChannel.RaiderDiscordID && currentPlayer.RespondChannelID == currentPlayerChannel.RespondChannelID {
+				cachePlayerChannels[x] = currentPlayerChannel
+				WriteInformationLog(fmt.Sprintf("Changed feedback channel cache for player with id %s and name %s", currentPlayer.RaiderDiscordID, currentPlayer.RaiderName), "Updating cache")
+			}
+		}
+	} else {
+		WriteInformationLog(fmt.Sprintf("Added new feedback channel connection, that responds to thread id %s for player with id %s and name %s", currentPlayerChannel.RespondChannelID, currentPlayerChannel.RaiderDiscordID, currentPlayerChannel.RaiderName), "Updating cache")
+		cachePlayerChannels = append(cachePlayerChannels, currentPlayerChannel)
+	}
+	
+	marshal, err := json.MarshalIndent(cachePlayerChannels, "", " ")
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to write to cache %s, player with name %s and id %s could not be updated in cache", cachePlayerFeedbackChannels, currentPlayerChannel.RaiderName, currentPlayerChannel.RaiderDiscordID), err.Error())
+		return nil
+	}
+	err = os.WriteFile(cachePlayerFeedbackChannels, marshal, 0644)
+	if err != nil {
+		WriteErrorLog(fmt.Sprintf("An error occured while trying to write to file %s, during the function ReadWritePlayerChannels()", cachePlayerFeedbackChannels), err.Error())
+	}
+	return cachePlayerChannels
+}
+
 func ReadWriteRaidHelperCache(trackedRaids ...map[string]trackRaid) map[string]trackRaid {
 	raidHelperCascheMutex.Lock()
 	defer raidHelperCascheMutex.Unlock()
@@ -6780,35 +7128,53 @@ func ReadWriteRaidHelperCache(trackedRaids ...map[string]trackRaid) map[string]t
 	}
 	return raids
 }
-/*
+
 func NewModular(elements []string) {
-		presetMenuID := "rh:" + "346353264461217795" + ":preset"
-		msg := &discordgo.MessageSend{
-		Content: "Select a template for this event.",
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.SelectMenu{
-						CustomID:    presetMenuID,
-						Placeholder: "Preset templates",
-						MaxValues:   1,
-						Options: []discordgo.SelectMenuOption{
-							{Label: "WoW Classic", Value: "wow_classic", Emoji: &discordgo.ComponentEmoji{Name: "⚔️"}},
-							{Label: "WoW MoP",     Value: "wow_mop",     Emoji: &discordgo.ComponentEmoji{Name: "🐼"}},
-							{Label: "Time Poll",   Value: "time_poll",   Emoji: &discordgo.ComponentEmoji{Name: "🕒"}},
-						},
+		eventID := "event123"
+
+msg := &discordgo.MessageSend{
+	Content: "Configure your event, then press Submit.",
+	Components: []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.SelectMenu{
+					CustomID:    "preset:" + eventID,
+					Placeholder: "Choose preset",
+					MaxValues:   1,
+					Options: []discordgo.SelectMenuOption{
+						{Label: "WoW Classic", Value: "wow_classic"},
+						{Label: "WoW MoP",     Value: "wow_mop"},
 					},
 				},
 			},
 		},
-	}
-
-	_, err = BotSessionMain.ChannelMessageSendComplex("1308523274698887298", msg)
-	if err != nil {
-		WriteErrorLog(fmt.Sprintf("An error occured"), err.Error())
-	}
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.SelectMenu{
+					CustomID:    "difficulty:" + eventID,
+					Placeholder: "Choose difficulty",
+					MaxValues:   1,
+					Options: []discordgo.SelectMenuOption{
+						{Label: "Normal", Value: "normal"},
+						{Label: "Heroic", Value: "heroic"},
+					},
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    "Submit",
+					Style:    discordgo.PrimaryButton,
+					CustomID: "submit:" + eventID,
+				},
+			},
+		},
+	},
 }
-*/
+	BotSessionMain.ChannelMessageSendComplex("1308523274698887298", msg)
+}
+
 func AutoTrackPosts() {
 	tracked := ReadWriteTrackPosts()
 	checkInterval := time.Second * 10
@@ -7344,10 +7710,6 @@ func GetChannelName(channelID string, session *discordgo.Session) string {
 	return ""
 }
 
-func NewPlayerJoin2() {
-	
-}
-
 func NewPlayerJoin(botSession *discordgo.Session) {
 	mapOfMessageReactions := make(map[string]bool) //MessageID -> bool
 	mapOfUsedConnections := make(map[string]bool)
@@ -7358,7 +7720,7 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 	stage4 := "Please select your in-game race:"
 	stage5 := "Please select your spec:"
 	stage5a := "Your in-game race has been auto selected as"
-	stage6 := "Do you have MC douse?"
+	stage6 := "Are you attuned to the current raid-tier ?"
 	stage7 := "Please type your in-game name with same symbols"
 	stage8 := "Please select your hardened role:"
 	stage8a := "Do you have engineering?"
@@ -7428,6 +7790,14 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 	// Separate Message Handler (Fixes multiple registrations)
 	botSession.AddHandler(func(session *discordgo.Session, event *discordgo.MessageCreate) {
 		if event.Content != "" && strings.Contains(GetChannelName(event.ChannelID, session), "bot-chat") || strings.Contains(GetChannelName(event.ChannelID, session), "automatic-") {
+			/*channel, err := session.State.Channel(event.ChannelID)
+			if err != nil {
+				WriteErrorLog("An error occured while trying to retrieve the channel of which a message was sent from by user %s, during the function UseSlashCommand()", err.Error())
+				return
+			}
+
+			*/
+			fmt.Println("DO WE REACh", event.Content)
 			if event.Author.ID == session.State.User.ID {
 				if strings.Contains(event.Content, " VISIT ") {
 					patternUserID := regexp.MustCompile(`<@(\d+)>`) //strings.Contains(event.Content, " VISIT ") &&
@@ -7549,6 +7919,7 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 
 						for _, classSpec := range specsPossibleNoMeme {
 							for _, specEmojie := range allEmojiesSpec {
+								fmt.Println("SPEC NICK", classSpec.ClassNickName, specEmojie.ShortName)
 								if classSpec.ClassNickName == specEmojie.ShortName && !mapOfSpecs[specEmojie.ID] {
 									uniqueClassSpecificEmojies = append(uniqueClassSpecificEmojies, specEmojie)
 									mapOfSpecs[specEmojie.ID] = true
@@ -7763,7 +8134,10 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 							yesAndNoEmojies = append(yesAndNoEmojies, fmt.Sprintf("%s %s", funEmojie.Wrapper, funEmojie.ShortName))
 						}
 					}
-					botSession.ChannelMessageSend(event.ChannelID, fmt.Sprintf("Spec %s %s Chosen\nDo you have MC douse?\n\n%s", specEmojie.Wrapper, specEmojie.ShortName, strings.Join(yesAndNoEmojies, "\n\n")))
+					_, err := botSession.ChannelMessageSend(event.ChannelID, fmt.Sprintf("Spec %s %s Chosen\n%s\n\n%s", specEmojie.Wrapper, specEmojie.ShortName, stage6, strings.Join(yesAndNoEmojies, "\n\n")))
+					if err != nil {
+						WriteErrorLog(fmt.Sprintf("An error occured while trying to send response for spec for user %s, in channel %s, during the function NewPlayerJoin()", event.UserID, event.ChannelID), err.Error())
+					}
 				} else if emojie := DetermineEmoji(event.Emoji.Name); emojie.TypeInt == 0 {
 					allEmojiesRace := GetEmojies(0, []string{"race"})
 					for _, emojie := range allEmojiesRace {
@@ -7808,11 +8182,13 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 					raidProfile.LastTimeChangedString = GetTimeString()
 
 					finalMessageSlice := []string{}
+					signUpChannels := fmt.Sprintf("\n%s", strings.Join(FormatChannelSubsetResponseString("Signup at", raidChannelIDs), "\n"))
 					switch emojie.ShortName {
 					case "puggie":
 						{
 							botSession.GuildMemberRoleAdd(serverID, raidProfile.ID, rolePuggie)
-							finalMessageSlice = append(finalMessageSlice, fmt.Sprintf("Server role puggie assigned, thank you for joining <Hardened> as a pug\n\nBefore signing up, please add your toon to the Gear-check channel:\n\n <#%s>\n\nSee the raid-signups:\n\nAQ40 / BWL <#%s> and NAXX <#%s>", channelGearCheck, channelSignUp, channelSignUpNaxx)) //Must be changed when we run pug raids
+							
+							finalMessageSlice = append(finalMessageSlice, fmt.Sprintf("Server role puggie assigned, thank you for joining <Hardened> as a pug\n\nBefore signing up, please add your toon to the Gear-check channel:\n\n <#%s>\n\n%s", channelGearCheck, signUpChannels)) //Must be changed when we run pug raids
 						}
 					case "trial":
 						{
@@ -7857,7 +8233,7 @@ func NewPlayerJoin(botSession *discordgo.Session) {
 								classLeader = officerGMArlissa
 							}
 							botSession.GuildMemberRoleAdd(serverID, raidProfile.ID, classDiscordRole)
-							finalMessageSlice = append(finalMessageSlice, fmt.Sprintf("Server role trial assigned, welcome to the <Hardened> Team! %s\n\n**Loot rules are different for trials** - As a general rule of thumb, biggest items are off-limits for first raid minimum.\n\nYour new class leader: @ %s\n\nRaid-leader: %s\n\nGet familiar with your class channel: <#%s>\n\nRaid sign-ups channels: AQ40 / BWL <#%s> NAXX <#%s>\n\nGuild general chat channel: <#%s>", crackedBuiltin, strings.Split(classLeader, "/")[1], SplitOfficerName(officerGMArlissa)["Name"], classChannel, channelSignUp, channelSignUpNaxx, channelGeneral))
+							finalMessageSlice = append(finalMessageSlice, fmt.Sprintf("Server role trial assigned, welcome to the <Hardened> Team! %s\n\n**Loot rules are different for trials** \n\nYour new class leader: @ %s\n\nRaid-leader: %s\n\nGet familiar with your class channel: <#%s>\n\nRaid sign-ups channels: %s\n\nGuild general chat channel: <#%s>", crackedBuiltin, strings.Split(classLeader, "/")[1], SplitOfficerName(officerGMArlissa)["Name"], classChannel, signUpChannels, channelGeneral))
 
 						}
 					}
@@ -8763,6 +9139,30 @@ func RetriveRaidHelperEvent(periodBack time.Time) map[string]any {
 		}
 	}
 	return raidEvents
+}
+
+func ImportServerJoinConfig() {
+	if configImportBytes := CheckForExistingCache(configServerJoin); len(configImportBytes) == 0 {
+		marshal, err := json.MarshalIndent(ServerJoinQuestionnaireImport, "", " ")
+		if err != nil {
+			log.Fatal("The template defined for variable ServerJoinQuestionnaireImport is invalid and cannot be marshaled, please fix the var and run again, during the function ImportServerJoinConfig()\n", err)
+		}
+		err = os.WriteFile(configServerJoin, marshal, 0644)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("An error occured while trying to write %s to file\n", configServerJoin), err.Error())
+		}
+		WriteInformationLog(fmt.Sprintf("No server join config-file found on disc - Therefor the bot cannot run function NewPlayerJoin(). Please add a config to path %s and restart the bot if this is needed, during the function ImportServerJoinConfig", configServerJoin), "No config found")
+		return
+	} else {
+		err := json.Unmarshal(configImportBytes, &ServerJoinQuestionnaireImport)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("An error occured while trying to unmarshal the saved file on path %s:\n"), err.Error())
+		}
+		if ServerJoinQuestionnaireImport.Version == "0.0.0" && len(ServerJoinQuestionnaireImport.Questions) > 0 {
+			WriteInformationLog("It is highly recommended to bumb the version property from 0.0.0 when the config file is actually defined, because otherwise you risk the bot rejecting the file, during the function ImportServerJoinConfig()", "Bad version")
+		}
+		WriteInformationLog(fmt.Sprintf("Config on path %s has been retrieved with %d amount of questions present", configServerJoin, len(ServerJoinQuestionnaireImport.Questions)), "Import successful")
+	}
 }
 
 func ImportClasses() {
