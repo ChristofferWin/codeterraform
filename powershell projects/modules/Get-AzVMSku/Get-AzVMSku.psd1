@@ -53,7 +53,7 @@
     # Modules that must be imported into the global environment prior to importing this module
     RequiredModules = @(
         "Az.Accounts",
-        @{ ModuleName = "Az.Compute"; ModuleVersion = "0.0"; MaximumVersion = "9.999.999" },
+        "Az.Compute",
         "Az.MarketplaceOrdering",
         "Az.Resources"
     )   
