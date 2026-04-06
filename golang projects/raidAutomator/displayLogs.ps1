@@ -18,7 +18,7 @@ foreach($log in $filePaths) {
 }
 
 while($true){
-    $format = "MMMM dd, yyyy HH:mm:ss"
+    $format = "MMMM dd, yyyy HH:mm:ss"  
     $dateNowBefore  = [DateTime]::ParseExact((Get-Date -Format $format), $format, $null)
     $fileSizeNow = (Get-Content $logToRead).Length
     Start-Sleep -Seconds $intervalInSeconds

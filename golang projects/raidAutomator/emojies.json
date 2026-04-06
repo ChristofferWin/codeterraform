@@ -119,6 +119,13 @@
         "emojiNickName": "spec"
     },
     {
+        "ID":"1474901174325870633",
+        "emojiShortName":"dreamstate",
+        "emojiName":"druid_dreamstate",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
         "ID":"1336087839150178395",
         "emojiShortName":"beas",
         "emojiName":"hunter_beastmastery",
@@ -141,14 +148,14 @@
     },
     {
         "ID":"1335630428173897779",
-        "emojiShortName":"arc-fro",
+        "emojiShortName":"arcane",
         "emojiName":"mage_arcane",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
     {
         "ID":"1336087490364182598",
-        "emojiShortName":"wc-fro",
+        "emojiShortName":"frost",
         "emojiName":"mage_frost",
         "emojiType": 2,
         "emojiNickName": "spec"
@@ -171,6 +178,20 @@
         "ID":"1335630431282004058",
         "emojiShortName":"imp-conc",
         "emojiName":"paladin_conc",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1474900318763618315",
+        "emojiShortName":"ret",
+        "emojiName":"paladin_ret",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1474900545226412135",
+        "emojiShortName":"palaprot",
+        "emojiName":"paladin_palaprot",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
@@ -204,29 +225,36 @@
     },
     {
         "ID":"1340127021317099550",
-        "emojiShortName":"dagg",
-        "emojiName":"rogue_dagger",
+        "emojiShortName":"assa",
+        "emojiName":"rogue_assassination",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
     {
         "ID":"1340127019551428618",
-        "emojiShortName":"swor",
-        "emojiName":"rogue_sword",
+        "emojiShortName":"comb",
+        "emojiName":"rogue_combat",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
     {
         "ID":"1336087479618506853",
-        "emojiShortName":"ds-ru",
+        "emojiShortName":"destruction",
         "emojiName":"warlock_destruction",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
     {
         "ID":"1336087478385512490",
-        "emojiShortName":"dm-ru",
+        "emojiShortName":"demonology",
         "emojiName":"warlock_demonology",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1371104768268701716",
+        "emojiShortName":"afflication",
+        "emojiName":"warlock_afflication",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
@@ -239,8 +267,15 @@
     },
     {
         "ID":"1336087474601988096",
-        "emojiShortName":"fury-prot",
+        "emojiShortName":"prot",
         "emojiName":"warrior_prot",
+        "emojiType": 2,
+        "emojiNickName": "spec"
+    },
+    {
+        "ID":"1474898946731147345",
+        "emojiShortName":"arms",
+        "emojiName":"warrior_arms",
         "emojiType": 2,
         "emojiNickName": "spec"
     },
