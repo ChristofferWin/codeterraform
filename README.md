@@ -2,7 +2,7 @@
 Repo build to support the blog residing at https://codeterraform.com
 
 ## Most recent update
-The PowerShell module used to retrieve Azure Virtual Machine images directly from the Azure Marketplace has received a MASSIVE upgrade in its latest major release, version 3.0.2.
+The PowerShell module used to retrieve Azure Virtual Machine images directly from the Azure Marketplace has received a MASSIVE upgrade in its latest major release, version 3.0.2.    
 
 The module now makes it possible to browse the ENTIRE Azure image marketplace, requiring only a valid Azure location to get started.
 
