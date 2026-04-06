@@ -1,5 +1,5 @@
 locals {
-  test_object = {
+  test_objectt = {
     name = var.nested_object_with_nested_object_optional
     attribute1 = var.nested_object_with_nested_object_optional.resource_attributes.attribute1
     attribute2 = var.nested_object_with_nested_object_optional.resource_attributes.attribute2
