@@ -10,7 +10,7 @@ Read more about the module’s capabilities here. => https://github.com/Christof
 
 Download and get started today => https://www.powershellgallery.com/packages/Get-AzVMSku/3.0.2
 
-## Newest release: The Terraform module "azurerm-hub-spoke"
+## Newest release: The Terraform module "azurerm-hub-spoke" t
 
 This module is capable of deploying an entire hub-spoke typology as per described in the Microsoft Cloud Adoption Framework. See the <a href="https://github.com/ChristofferWin/codeterraform/releases/tag/1.0.0-hub-spoke">Release page</a> for more information!
 
