@@ -70,7 +70,10 @@ function Select-Choice {
     Optional filter for VM size names (e.g., 'D', 'E', etc.).
  
 .PARAMETER PublisherName
-    The name or pattern of the image publisher. If not provided and -NoInteractive is not set, an error will be thrown.
+    The name or pattern of the image publisher
+
+.PARAMETER PublisherNameStartsWith
+    Search through image publishers where it starts with your input
  
 .PARAMETER OfferName
     The name or pattern of the image offer. Requires -PublisherName to be set.
@@ -89,6 +92,9 @@ function Select-Choice {
  
 .PARAMETER RawFormat
     Returns as json.
+
+.PARAMETER UnfilteredPublishers
+    Per default the module filters publisher names containing strings like test, punctuation and large numbers. Use this switch to include them
  
 .PARAMETER NoVMInformation
     Skips VM size lookup and quota analysis (faster).
@@ -108,6 +114,11 @@ function Select-Choice {
     Get-AzVMSku -Location "westeurope" -PublisherName "palo" #Could even do PALO as its incase-sensitive
  
     Starts an interactive session to look at ALL Palo-Altos current Offers in West Europe.
+
+.EXAMPLE
+    Get-AzVMSku -Location "westeurope" -PublisherNameStartsWith "microsoft"
+
+    Look through only vendors with images starting with microsoft
  
 .EXAMPLE
     Get-AzVMSku -Location "eastus" -PublisherName "bitnami" -OfferName "wordpress" -NewestSKUs -NewestSKUsVersions -NoInteractive | Set-AzVMSku -Force
@@ -159,6 +170,7 @@ function Get-AzVMSku {
         [Parameter(ParameterSetName = "ManualSettings", Mandatory = $true)][string]$Location,
         [Parameter(ParameterSetName = "ManualSettings")][string]$VMPattern,
         [parameter(ParameterSetName = "ManualSettings")][string]$PublisherName,
+        [parameter(ParameterSetName = "ManualSettings")][string]$PublisherNameStartsWith,
         [parameter(ParameterSetName = "ManualSettings")][string]$OfferName,
         [parameter(ParameterSetName = "ManualSettings")][switch]$Top10NewestVersions,
         #[Parameter(ParameterSetName = "ManualSettings")][switch]$ContinueOnError,
@@ -168,40 +180,42 @@ function Get-AzVMSku {
         [Parameter(ParameterSetName = "ManualSettings")][switch]$RawFormat,
         [Parameter(ParameterSetName = "ShowCommandLocations")][switch]$ShowLocations,
         [Parameter(ParameterSetName = "ShowCommandVMs")][switch]$ShowVMCategories,
-        [Parameter(ParameterSetName = "ManualSettings")][switch]$NoVMInformation
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$NoVMInformation,
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$UnfilteredPublishers
     )
     Update-AzConfig -DisplayBreakingChangeWarning $false | Out-Null
     $MSVMURL = "https://azure.microsoft.com/en-us/pricing/details/virtual-machines/series/"
     $CategoryObjects = @()
     $LocationObjects = @()
     $FinalOutput = [PSCustomObject]@{
-        SubscriptionID = ""
-        SubscriptionName = ""
-        TenantID = ""
-        TenantName = ""
+        Context = [PSCustomObject]@{
+            SubscriptionID = ""
+            SubscriptionName = ""
+            TenantID = ""
+            TenantName = ""
+        }
         Publisher = ""
-        PublisherFilterName = $PublisherName
         Offer = ""
-        OfferFilterName = $OfferName
         SKU = ""
-        NewestSku = $NewestSKUs
-        URN = ""
         Version = ""
-        NewestSkuVersion = $NewestSKUsVersions
-        VMSizes = [System.Collections.ArrayList]@()
+        URN = ""
+        VMs = $null
         VMSizePattern = $VMPattern
-        VmQuotas = $null
         Agreement = $null
     }
 
-    if(!$PublisherName -and !$ShowLocations -and !$ShowVMCategories){
+    if ($PublisherName -and $PublisherNameStartsWith) {
+        Write-Warning "Since both PublisherName & PublisherNameStartsWith has been parsed, PublisherName wins and the search for publishers will follow search *$PublisherName*"
+    }
+
+    if(!$PublisherName -and !$ShowLocations -and !$ShowVMCategories -and !$PublisherNameStartsWith){
         if($NoInteractive){
             Write-Error "You must provide a PublisherName because the switch -NoInteractive is true"
             return
         }
         Write-Warning "No PublisherName provided. The module will retrieve every single publisher of VM Images in Azure..."
         Start-Sleep -Seconds 3
-    }
+    } 
     
     if($VMPattern -and $NoVMInformation){
        Write-Warning "The switch -NoVMInformation is true - The VM pattern of '$VMPattern' will be ignored..."
@@ -219,19 +233,19 @@ function Get-AzVMSku {
     try {
         $Context = Get-AzContext -ErrorAction Stop
     }catch{
-        $_
+        Write-Error "You must be logged into Azure on an active subscription to run this module"
         return
     }
-    $FinalOutput.TenantID = $Context.Tenant.id
-    $FinalOutput.SubscriptionName = $Context.Subscription.Name
+    $FinalOutput.Context.TenantID = $Context.Tenant.id
+    $FinalOutput.Context.SubscriptionName = $Context.Subscription.Name
     try {
-        $FinalOutput.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.TenantID}).Name
+        $FinalOutput.Context.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.TenantID}).Name
     }
     catch {
         Write-Verbose "Was not possible to retrieve the Tenant name, continuing..."
     }
-    $FinalOutput.SubscriptionID = $Context.Subscription.Id
-    if(!$FinalOutput.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
+    $FinalOutput.Context.SubscriptionID = $Context.Subscription.Id
+    if(!$FinalOutput.Context.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
         Write-Error "No Azure context found. Please use either Connect-AzAccount or Set-AzAdvancedContext to get one..."
         return
     }
@@ -293,18 +307,23 @@ function Get-AzVMSku {
         Write-Error "The location provided '$Location' is not valid...`nPlease provide one of the following locations:`n$AcceptableLocations"
         return
     }
-    
-    try {
+     try {
         $AzurePublishers = Get-AzVMImagePublisher -Location $Location -ErrorAction Stop
     } catch {
         return $_
     }
     $AzurePublishers = $AzurePublishers | Sort-Object -Property PublisherName
     if(!$ShowVMCategories){
-        $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName -eq $PublisherName}
+        $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName.ToLower() -eq $PublisherName.ToLower()} #MATCH to lower
         if($CapturedPublishers.Count -eq 0) {
             Write-Verbose "No exact match found for PublisherName '$PublisherName' trying with wild-cards..."
-            $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName -like "*$PublisherName*"}
+            if($PublisherName) {
+                $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName.ToLower() -like "*$($PublisherName.ToLower())*"}
+            } elseif($PublisherNameStartsWith) {
+                $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName -like "$($PublisherNameStartsWith.ToLower())*"}
+            } else {
+                $CapturedPublishers = $AzurePublishers
+            }
             if($CapturedPublishers.Count -eq 0) {
                 Write-Warning "No Publishers found using PublisherName '$PublisherName' The module searches using wild-cards as *<PublisherName>* Adjust the name and try again..."
                 return
@@ -313,6 +332,10 @@ function Get-AzVMSku {
             }
         } elseif($CapturedPublishers.Count -eq 1){
             Write-Host -ForegroundColor Green "1 exact match for PublisherName '$($CapturedPublishers[0].PublisherName)' found"
+        }
+        if (!$UnfilteredPublishers -and $CapturedPublishers.Count -gt 1) {
+            Write-Verbose "As per default removing any publishers with the string 'test' In it.`nTo include all test publishers, use switch `IncludeTestPublishers"
+            $CapturedPublishers = $CapturedPublishers | ? {$_.PublisherName -notmatch '(?i)(test|\.|\d{4,})'}
         }
         $MissingValidResponse = $true
         do {
@@ -507,7 +530,7 @@ function Get-AzVMSku {
         do{
             try{
                 if($VMPattern){
-                $VMsizes = Get-AzVMSize -Location $Location -ErrorAction Stop | ? {$_.Name -like "Standard_$VMPattern*" -or $_.Name -like "Basic_$VMPattern*"}
+                $VMsizes = Get-AzComputeResourceSku -Location $Location -ErrorAction Stop | ? {$_.ResourceType -eq "virtualMachines"} | ? {$_.Name -like "Standard_$VMPattern*" -or $_.Name -like "Basic_$VMPattern*"}
                 if($VMsizes.Count -eq 0){
                     if($ContinueOnError -and !$NoInteractive){
                         Write-Warning "0 Virtual machine sizes found using pattern '$VMPattern'..."
@@ -520,7 +543,7 @@ function Get-AzVMSku {
                 Write-Verbose "Found $($VMsizes.Count) VM sizes that matches the pattern '$VMPattern'..."
                 }
                 else{
-                    $VMSizes = Get-AzVmSize -Location $Location -ErrorAction Stop
+                    $VMSizes = Get-AzComputeResourceSku -Location $Location -ErrorAction Stop | ? {$_.ResourceType -eq "virtualMachines"}
                 }
                 Write-Verbose "VM sizes successfully retrieved..."
             }
@@ -528,16 +551,18 @@ function Get-AzVMSku {
                 Write-Error "The following error occured while trying to retrieve vm sizes...:`n$_"
                 return
             }
-            
+            $VMs = @()
             foreach($VM in $VMsizes){
-                $FinalOutput.VMSizes.Add([PSCustomObject]@{
+               $VMSpecs = $VM.Capabilities
+               $VMs += ([PSCustomObject]@{
                     Name = $VM.Name
-                    CoresAvailable = $VM.NumberOfCores
-                    MemoryInGB = if($VM.MemoryInMB -gt 0){$VM.MemoryInMB / 1024} else{0} 
-                    MaxDataDiskCount = $VM.MaxDataDiskCount
-                    OSDiskSizeInGB = if($VM.OSDiskSizeInMB -gt 0){$VM.OSDiskSizeInMB / 1024} else{0}
-                    TempDriveSizeInGB = if($VM.ResourceDiskSizeInMB -gt 0){$VM.ResourceDiskSizeInMB / 1024} else{0}
-                }) | Out-Null
+                    CoresAvailable = ($VMSpecs | ? {$_.Name -eq "vCPUs"}).Value
+                    MemoryInGB = ($VMSpecs | ? {$_.Name -eq "MemoryGB"}).Value
+                    MaxDataDiskCount = ($VMSpecs | ? {$_.Name -eq "MaxDataDiskCount"}).Value
+                    HyperVGeneration = ($VMSpecs | ? {$_.Name -eq "HyperVGenerations"}).Value
+                    MaxNetworkInterfaces = ($VMSpecs | ? {$_.Name -eq "MaxNetworkInterfaces"}).Value
+                    RetirementDate = if($null -in ($VMSpecs | ? {$_.Name -eq "RetirementDateUtc"}).Value){"No date found"}else{($VMSpecs | ? {$_.Name -eq "RetirementDateUtc"}).Value}
+               })
             }
 
         }
@@ -552,19 +577,12 @@ function Get-AzVMSku {
         $QuotasWithVMs = @{}
         foreach ($VM in $VMsizes) {
             $VMFamiliyPartName = $VM.Name -replace '^[^_]+_([A-Za-z])\d+([a-z]+)_v(\d+)$', '$1$2v$3'
-        
+            $VMSpecs = $VM.Capabilities
             foreach ($Quota in $AzureVmUsuage) {
                 if ($Quota.Name.Value -like "*$VMFamiliyPartName*") {
                     $FamilyKey = "$VMFamiliyPartName-Family"
         
                     if (-not $QuotasWithVMs.ContainsKey($FamilyKey)) {
-                        foreach ($Category in $CategoryObjects) {
-                            if (($Category.Title)[0] -eq $VMFamiliyPartName[0]) {
-                                $DescriptionShort = $Category.Description.Split(".")[0]
-                                break
-                            }
-                        }
-        
                         if ($Quota.Limit -gt 0 -and $Quota.CurrentValue -gt 0) {
                             $CPUsPercentUsage = [math]::Floor($Quota.CurrentValue / $Quota.Limit * 100)
                         } else {
@@ -572,34 +590,62 @@ function Get-AzVMSku {
                         }
         
                         $QuotasWithVMs[$FamilyKey] = [pscustomobject]@{
-                            vCPUsAvailable = $Quota.Limit - $Quota.CurrentValue
-                            ArchitectureDescription = $DescriptionShort
-                            vCPUsPercentUsage = $CPUsPercentUsage
-                            VMSizeDistribution = @()
+                            FamilyName = $FamilyKey
+                            Status = ""
+                            AvailablevCPUQuota = $Quota.Limit - $Quota.CurrentValue
+                            CPUQuotaConsumedPercent = "$CPUsPercentUsage %"
+                            RemainingVMCapacity = @()
+                            Sizes = @()
+                            VMsCanBeDeployed = $false
                         }
                     }
-        
-                    if ($QuotasWithVMs[$FamilyKey].vCPUsAvailable -gt 0 -and $VM.NumberOfCores -gt 0) {
-                        $VMCountBeforeLimit = [int]([math]::Floor($QuotasWithVMs[$FamilyKey].vCPUsAvailable / $VM.NumberOfCores))
+                    if ($QuotasWithVMs[$FamilyKey].AvailablevCPUQuota -gt 0 -and ($VMSpecs | ? {$_.Name -eq "vCPUs"}).Value -gt 0) {
+                        $VMCountBeforeLimit = [int]([math]::Floor($QuotasWithVMs[$FamilyKey].AvailablevCPUQuota / ($VMSpecs | ? {$_.Name -eq "vCPUs"}).Value))
                     } else {
                         $VMCountBeforeLimit = 0
                     }
         
-                    $existingSizes = $QuotasWithVMs[$FamilyKey].VMSizeDistribution | ? { $_.SizeName -eq $VM.Name }
+                    $existingSizes = $QuotasWithVMs[$FamilyKey].RemainingVMCapacity | ? { $_.SizeName -eq $VM.Name }
                     if (-not $existingSizes) {
-                        $QuotasWithVMs[$FamilyKey].VMSizeDistribution += [PSCustomObject]@{
+                        $QuotasWithVMs[$FamilyKey].RemainingVMCapacity += [PSCustomObject]@{
                             SizeName = $VM.Name
-                            VMCountBeforeLimit = $VMCountBeforeLimit
+                            VMCountBeforeQuotaLimit = $VMCountBeforeLimit
                         }
                     }
                 }
             }
         }    
     }
+
     $FinalOutput.Agreement = $FinalImage.PurchasePlan
-    $FinalOutput.VmQuotas = $QuotasWithVMs
+    $Quotas = @()
+    $Quotas += $QuotasWithVMs.Values
+    for($x = 0; $x -le $Quotas.Count -1; $x++){
+        if($Quotas[$x].AvailablevCPUQuota -eq 0) {
+            $Quotas[$x].Status = "No vCPU quota available. Request a quota increase from Microsoft"
+        } elseif(($Quotas[$x].RemainingVMCapacity.VMCountBeforeQuotaLimit | Measure-Object -Sum).Sum -eq 0) {
+            $Quotas[$x].Status = "Quota is available for this VM family, but the available quota is insufficient to deploy any VM sizes in the family"
+        } else {
+            $Quotas[$x].Status = "VMs in this family can be deployed. Check the RemainingVMCapacity property for details"
+            $Quotas[$x].VMsCanBeDeployed = $true
+        }
+        $Quotas[$x].RemainingVMCapacity = $Quotas[$x].RemainingVMCapacity | Sort-Object -Property VMCountBeforeQuotaLimit -Descending
+    }
+    $FinalOutput.VMs = $Quotas
+    $VmSizesMap = @{}
+    foreach($VM in $VMs){
+        $VmSizesMap[$VM.Name] = $VM
+    }
+    for($x = 0; $x -le $FinalOutput.VMs.Count -1; $x++) {
+        $VMsToAdd = @()
+        foreach($Size in $FinalOutput.VMs[$x].RemainingVMCapacity) {
+            $VMsToAdd += $VmSizesMap[$Size.SizeName]
+        }
+        $FinalOutput.VMs[$x].Sizes = $VMsToAdd
+    }
+
     if($RawFormat){
-        if($FinalOutput.VMSizes.Count -ge 10){
+        if($VMs.Count -ge 10){
             Write-Warning "The output is very large, its recommended to pipe the output to a file..."
             Start-Sleep -Seconds 2
         }
