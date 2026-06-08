@@ -21,6 +21,10 @@ function Select-Choice {
                 }
                 $i++
             }
+            if($warning) {
+                Write-Warning $warning
+                $warning = $null
+            }
             Write-Host -ForegroundColor Blue -NoNewline "Your selection...: "
             $UserChoice = Read-Host
             foreach($Choice in $Choices) {
@@ -32,14 +36,13 @@ function Select-Choice {
                 }
             }
             if($MissingResponse) {
-                Write-Warning "The choice of '$UserChoice' Is invalid, please select another Option..."
+                $warning = "The choice of '$UserChoice' Is invalid, please select another Option..."
             }
         } elseif($ArrayOfOptions.Count -gt 1 && $NoInteractive) {
             if($Message){
                 Write-Error "The command found multiple results and require user-input to continue. $Message" #In this case - The parameter name is a defined error defined from where the function is called
             } else {
                 Write-Error "The command found multiple results and require user-input to continue. Please either use a more specific name for '$ParameterName' To Limit the $ParameterName result to 1, or remove the switch 'NoInteractive'"
-
             }
             return
         } else {
@@ -55,7 +58,7 @@ function Select-Choice {
 .DESCRIPTION
     This function allows dynamic retrieval of Azure VM image metadata including publisher, offer, SKU, and version.
     It supports both interactive and non-interactive modes, and can output raw data for automation.
-    Both the "PublisherName" & "OfferName" parameters are case-insensitive
+    The "PublisherName", "PublisherNameStartsWith" & "OfferName" parameters are case-insensitive
  
     It also allows you to (In the context of a specific Azure Subscription):
     - Explore available VM image publishers, offers, skus and their respective versions
@@ -64,28 +67,25 @@ function Select-Choice {
     - Output structured data as JSON for programmatic use
  
 .PARAMETER Location
-    The Azure region to use (e.g., 'westeurope'). Required for all operations.
+    The Azure region to use (e.g., 'westeurope'). Required for all operations except -ShowVMCategories.
  
 .PARAMETER VMPattern
     Optional filter for VM size names (e.g., 'D', 'E', etc.).
  
 .PARAMETER PublisherName
-    The name or pattern of the image publisher
+    The name or part-name of the image publisher (Searches in between of a name, so *PublisherName*.
 
 .PARAMETER PublisherNameStartsWith
-    Search through image publishers where it starts with your input
+    The name or part-name of the image publisher (Searches from the start of a name, so PublisherNameShort*
  
 .PARAMETER OfferName
-    The name or pattern of the image offer. Requires -PublisherName to be set.
- 
-.PARAMETER Top10NewestVersions
-    Show only the newest 10 versions of a specific SKU of a Azure Market Place vendor-offer
+    The name or part-name of the image offer. Requires -PublisherName or -PublisherNameStartsWith to be set.
  
 .PARAMETER NewestSKUs
     Automatically select the newest SKU from the selected offer.
  
-.PARAMETER NewestSKUsVersions
-    Automatically select the newest image version for the selected SKU.
+.PARAMETER AllSKUsVersions
+    By default the module will auto-select the newest version of a SKU - To see all available versions use switch -AllSKUsVersions.
  
 .PARAMETER NoInteractive
     Prevents all user interaction; must provide all required inputs via parameters, see examples.
@@ -94,7 +94,7 @@ function Select-Choice {
     Returns as json.
 
 .PARAMETER UnfilteredPublishers
-    Per default the module filters publisher names containing strings like test, punctuation and large numbers. Use this switch to include them
+    Per default the module filters publisher names containing strings like test, punctuation and large numbers. Use this switch to include them.
  
 .PARAMETER NoVMInformation
     Skips VM size lookup and quota analysis (faster).
@@ -121,9 +121,9 @@ function Select-Choice {
     Look through only vendors with images starting with microsoft
  
 .EXAMPLE
-    Get-AzVMSku -Location "eastus" -PublisherName "bitnami" -OfferName "wordpress" -NewestSKUs -NewestSKUsVersions -NoInteractive | Set-AzVMSku -Force
+    Get-AzVMSku -Location "eastus" -PublisherName "bitnami" -OfferName "wordpress" -NewestSKUs -NoInteractive | Set-AzVMSku -Force
  
-    Non-interactively retrieves the latest Bitnami image version and SKU.
+    Non-interactively retrieves the latest Bitnami image version and SKU & automatically accepts the image agreement  of the image using pipe Set-AzVmSKu
  
 .EXAMPLE
     Get-AzVMSku -Location "northeurope" -VMPattern "Ds"
@@ -155,7 +155,7 @@ function Select-Choice {
  
 .NOTES
     - You must be logged in to Azure using `Connect-AzAccount` before using this function.
-    - When using -NoInteractive, you must specify required parameters such as PublisherName.
+    - When using -NoInteractive, you must specify parameters to avoid being asked for input.
     - Over 2,500 publishers are available in Azure; exact names may vary across regions.
  
 .LINK
@@ -172,10 +172,9 @@ function Get-AzVMSku {
         [parameter(ParameterSetName = "ManualSettings")][string]$PublisherName,
         [parameter(ParameterSetName = "ManualSettings")][string]$PublisherNameStartsWith,
         [parameter(ParameterSetName = "ManualSettings")][string]$OfferName,
-        [parameter(ParameterSetName = "ManualSettings")][switch]$Top10NewestVersions,
         #[Parameter(ParameterSetName = "ManualSettings")][switch]$ContinueOnError,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NewestSKUs,
-        [Parameter(ParameterSetName = "ManualSettings")][switch]$NewestSKUsVersions,
+        [Parameter(ParameterSetName = "ManualSettings")][switch]$AllSKUsVersions,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NoInteractive,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$RawFormat,
         [Parameter(ParameterSetName = "ShowCommandLocations")][switch]$ShowLocations,
@@ -221,11 +220,7 @@ function Get-AzVMSku {
        Write-Warning "The switch -NoVMInformation is true - The VM pattern of '$VMPattern' will be ignored..."
     }
     
-    if($Top10NewestVersions -and $NewestSKUsVersions){
-        Write-Warning "the switch 'Top10NewestVersions' Will be ignored because switch 'NewestSKUsVersions' Is set"
-    }
-    
-    if($OfferName -and !$PublisherName){
+    if($OfferName -and (!$PublisherName -and !$PublisherNameStartsWith)){
         Write-Error "A PublisherName must be provided when the OfferName is used..."
         return
     }
@@ -284,12 +279,18 @@ function Get-AzVMSku {
         }
         catch{
             Write-Warning "Was not able to retrieve required information from Microsoft for the flag 'ShowVMCategories'..."
+            return
         }
-        $Categories = $WebsiteContent | ? {$_ -like "*h2*series*"}
-        foreach($Category in $Categories){
+        $CategoryObjects = @()
+        $captureGroups = [regex]::Matches(
+            $WebsiteContent,
+            '(?is)<h2[^>]*>\s*(?<title>[^<]*\bfamily\b[^<]*)\s*</h2>.*?<h3[^>]*>(?<category>.*?)</h3>.*?<p[^>]*>(?<description>.*?)</p>'
+        )
+        foreach ($match in $captureGroups) {
             $CategoryObjects += [pscustomobject]@{
-                Title = $Category.Trim().Replace("<h2>", "").Replace("</h2>", "")
-                Description = $WebsiteContent[$WebsiteContent.IndexOf($Category) + 2].Trim() -Replace "<[^>]+>|&#\d+;", ""
+                Title       = [System.Net.WebUtility]::HtmlDecode(($match.Groups['title'].Value -replace '<[^>]+>', '').Trim())
+                Category    = [System.Net.WebUtility]::HtmlDecode(($match.Groups['category'].Value -replace '<[^>]+>', '').Trim())
+                Description = [System.Net.WebUtility]::HtmlDecode(($match.Groups['description'].Value -replace '<[^>]+>', '').Trim())
             }
         }
         return $CategoryObjects
@@ -365,15 +366,15 @@ function Get-AzVMSku {
             $AzureOffers = $AzureOffers | Sort-Object -Property Offer
             try {
                 $NewListOfOffers = @()
-                    if($OfferName) {
+                    if($OfferName) {    
                         $NewListOfOffers = $AzureOffers.Offer | ? {$_.Trim().ToLower() -eq $OfferName.Trim().ToLower()}
                         if($NewListOfOffers.Count -eq 0) {
                             Write-Verbose "No exact match found for OfferName '$OfferName' trying with wild-cards..."
                             $NewListOfOffers = $AzureOffers.Offer | ? {$_ -like "*$OfferName*"}
                             if($NewListOfOffers.Count -eq 0) {
-                                Write-Warning "No Offers found using OfferName '$Offername' The module searches using wild-cards as *<Offername>* Adjust the name and try again`nReturning..."
+                                Write-Warning "No Offers found using OfferName '$Offername' Under publisher '$($FinalOutput.Publisher)'`nReturning..."
                                 Start-Sleep -Seconds 3
-                                return
+                                Continue
                             } elseif($NewListOfOffers.Count -eq 1){
                                 Write-Host -ForegroundColor Green "1 match for OfferName '$($NewListOfOffers)' found using wild-cards"
                             }
@@ -428,26 +429,24 @@ function Get-AzVMSku {
             }
         
             if($AzureImages.Count -eq 0) {
-                if($OfferName){
-                    Write-Error "The OfferName: '$($OfferName)' is not valid under PublisherName: '$($FinalOutput.Publisher)'`nPlease either change the value or ommit it entirely..."
-                    Return
+                if($NewestSKUs) {
+                    Write-Warning "No images found under selection $($FinalOutput.Offer) using switch -NewestSKUs"
+                    Write-Warning "Either stop the module and run again without switch -NewestSKUs or choose another publisher, then offer"
+                    Start-Sleep 3
                 }
-                Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
+                else {
+                    Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
+                }
                 Start-Sleep -Seconds 3
                 Continue
             }
             $AzureImages = $AzureImages.Version | Sort-Object { [version]$_ }
             try {
-                if($NewestSKUsVersions){
-                    $FinalOutput.Version = $AzureImages[-1]
+                if($AllSKUsVersions){
+                    $FinalOutput.Version = Select-Choice -ArrayOfOptions $AzureImages -ParameterName "Image version" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUsVersion" -ErrorAction Stop
                 } else {
-                    $NewListOfVersions = @()
-                    if($Top10NewestVersions){
-                        $NewListOfVersions = $AzureImages | Select -Last 10
-                    } else {
-                        $NewListOfVersions = $AzureImages
-                    }
-                    $FinalOutput.Version = Select-Choice -ArrayOfOptions $NewListOfVersions -ParameterName "Image version" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUsVersion" -ErrorAction Stop
+                    Write-Warning "Auto-selected newest SKU version. Use -AllSKUsVersions to choose a specific version"
+                    $FinalOutput.Version = $AzureImages[-1]
                 }
             } catch{
                 Write-Warning "No Version found for the given SKU $($FinalOutput.Version)`nReturning..."
