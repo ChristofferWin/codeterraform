@@ -1,0 +1,2540 @@
+[
+  {
+    "PublisherName": "netgate",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netgate-pfsense-plus-fw-vpn-router",
+      "pfsense-plus-public-cloud-fw-vpn-router",
+      "tnsr-public-cloud-vpn-server"
+    ]
+  },
+  {
+    "PublisherName": "versanetworks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "versa-operating-system",
+      "versa-cloud-gw-20-3",
+      "versa-vos-21-1-2"
+    ]
+  },
+  {
+    "PublisherName": "Canonical",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-24_04-lts",
+      "0001-com-ubuntu-server-jammy",
+      "ubuntu-22_04-lts"
+    ]
+  },
+  {
+    "PublisherName": "tencentos",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "tencentos_4_4",
+      "tencentos_3_3",
+      "opencloudos_9_4"
+    ]
+  },
+  {
+    "PublisherName": "center-for-internet-security-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cis-hardened-images",
+      "cis-windows-server-2022-l1",
+      "cis-ubuntu-linux-2204-l1"
+    ]
+  },
+  {
+    "PublisherName": "nginxinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nginx-plus-v1-standard",
+      "nginx-plus-ent-v1",
+      "nginx_plus_with_nginx_app_protect_premium"
+    ]
+  },
+  {
+    "PublisherName": "fireeye",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "fireeye_nx",
+      "fireeye_px",
+      "fireeye_ia"
+    ]
+  },
+  {
+    "PublisherName": "matillion",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "matillion-etl-snowflake",
+      "matillion-etl-azure-synapse",
+      "matillion"
+    ]
+  },
+  {
+    "PublisherName": "bi-builders-as",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "xpert-bi-vm",
+      "xpert_bi_with_azure_sql_db",
+      "xpert_bi_with_snowflake"
+    ]
+  },
+  {
+    "PublisherName": "micro-focus",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "arcsight-logger",
+      "vertica-disk-image",
+      "platespin-migrate_2020_5"
+    ]
+  },
+  {
+    "PublisherName": "arcesb",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "arcesb_edi",
+      "arcesb_mft",
+      "arcesb_free_as2"
+    ]
+  },
+  {
+    "PublisherName": "ortus",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "boxlang-miniserver-ubuntu",
+      "boxlang-miniserver-windows",
+      "boxlang-with-commandbox-ubuntu"
+    ]
+  },
+  {
+    "PublisherName": "tata_communications_ltd",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "izo-multi-cloud-network",
+      "izo-mcn-vrouter",
+      "izo-multi-cloud-network-arm"
+    ]
+  },
+  {
+    "PublisherName": "yendigital",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "athena-beta-release-v4",
+      "athena-beta-release-v3",
+      "athena-beta-release-v2"
+    ]
+  },
+  {
+    "PublisherName": "cotechnoe",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nextcloud-server",
+      "apache-jena-fuseki",
+      "peertube-server"
+    ]
+  },
+  {
+    "PublisherName": "qualysguard",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "qualys-virtual-scanner",
+      "qualys-gateway-service-appliance",
+      "qualys-virtual-firewall-appliance"
+    ]
+  },
+  {
+    "PublisherName": "ishlangu-load-balancer-adc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ishlangu-load-balancer-byol",
+      "ishlangu-load-balancer-is100",
+      "ishlangu-load-balancer-is1000"
+    ]
+  },
+  {
+    "PublisherName": "cdatasoftware",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cdatasync",
+      "cdataarc",
+      "cdataapiserver"
+    ]
+  },
+  {
+    "PublisherName": "siemens-germany",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "teamcenter_vm_germany",
+      "simcenter_vm_germany",
+      "insights_hub_vm_germany"
+    ]
+  },
+  {
+    "PublisherName": "MicrosoftSQLServer",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "sql2022-ws2022",
+      "sql2019-ws2019",
+      "sql2025-ws2025"
+    ]
+  },
+  {
+    "PublisherName": "microsoft_commercial_marketplace_services",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "modm_vm",
+      "chrwh-vm-contoso-01",
+      "msalemvmoffer"
+    ]
+  },
+  {
+    "PublisherName": "commvault",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "commvault",
+      "cloud-data-manager",
+      "commvaultmediaagent"
+    ]
+  },
+  {
+    "PublisherName": "pnop",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "jmeter",
+      "owasp-zap",
+      "pnop-os_2104-01-joke"
+    ]
+  },
+  {
+    "PublisherName": "res",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "resoneworkspace",
+      "resoneautomation",
+      "resonevirtualdesktopextender"
+    ]
+  },
+  {
+    "PublisherName": "ndl",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mx-enterprise-edition",
+      "mx-public-store-edition",
+      "digitise-apps"
+    ]
+  },
+  {
+    "PublisherName": "thorntechnologiesllc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "sftpgateway",
+      "sftpgateway-professional",
+      "sftpgateway-enterprise"
+    ]
+  },
+  {
+    "PublisherName": "iconics",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "iconics-suite-10973",
+      "iconics-suite-10972",
+      "iconics-suite-10971"
+    ]
+  },
+  {
+    "PublisherName": "rockwellautomationinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rockwell_automation_optix_runtime_vm",
+      "rockwell_ftpc",
+      "test_e3d_cross_acr"
+    ]
+  },
+  {
+    "PublisherName": "microsoft-ads",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "windows-data-science-vm",
+      "linux-data-science-vm-ubuntu",
+      "standard-data-science-vm"
+    ]
+  },
+  {
+    "PublisherName": "a10networks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "a10-vthunder-adc",
+      "a10-vthunder-adc-1gbps",
+      "a10-vthunder-tps-2"
+    ]
+  },
+  {
+    "PublisherName": "array_networks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "array-networks-vapv",
+      "array-networks-vasf",
+      "array-networks-vztag"
+    ]
+  },
+  {
+    "PublisherName": "cyllix",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "apache-kafka-kraft-4_0_0-cyllix",
+      "apache-kafka-kraft-3_9_1-cyllix",
+      "cx-observability-node-ubuntu-x64"
+    ]
+  },
+  {
+    "PublisherName": "sonicwall-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "sonicwall-nsm-azure",
+      "sma1000vm",
+      "sma-500v-byol"
+    ]
+  },
+  {
+    "PublisherName": "nextfoam",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nextfoam-openfoamv2512-ubuntu2204-x64",
+      "nextfoam-hpcvm-ubuntu2204-x64",
+      "nextfoam_baram25_ubuntu22_x64"
+    ]
+  },
+  {
+    "PublisherName": "packettech_inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "securestart_hardened_ubuntu_2404_lts_server",
+      "securestart_hardened_rhel9_server",
+      "securestart_hardened_windows_server_2022"
+    ]
+  },
+  {
+    "PublisherName": "cisco",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cisco-asav",
+      "cisco-csr-1000v",
+      "cisco-ftdv"
+    ]
+  },
+  {
+    "PublisherName": "varmournetworks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "varmourapplication",
+      "varmourappcontroller",
+      "varmour-642"
+    ]
+  },
+  {
+    "PublisherName": "media3-technologies-llc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cpanel-premier",
+      "cpanel-admin",
+      "adobecf2018w"
+    ]
+  },
+  {
+    "PublisherName": "ivanti-inc-pcs",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ivanti-connect-secure-vm",
+      "ivanti-connect-secure-25-x-vm",
+      "ivanti-connect-secure-25-x-vm2"
+    ]
+  },
+  {
+    "PublisherName": "waltsoft",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "waltsoft-n8n-ai",
+      "waltsoft-flowise-v2",
+      "waltsoft-anything-llm-server"
+    ]
+  },
+  {
+    "PublisherName": "nacarattosolutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "redhat_enterprise_linux_9_6",
+      "redhat_enterprise_linux_8_10",
+      "redhat_enterprise_linux_9"
+    ]
+  },
+  {
+    "PublisherName": "progresssoftwarecorporation",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "moveit-transfer-vm",
+      "flowmon",
+      "loadmaster360-connector"
+    ]
+  },
+  {
+    "PublisherName": "filingcloud",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "filingbox_team",
+      "filingbox_smb",
+      "filingbox_mega"
+    ]
+  },
+  {
+    "PublisherName": "kinvolk",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "flatcar-container-linux",
+      "flatcar-container-linux-corevm",
+      "flatcar-container-linux-free"
+    ]
+  },
+  {
+    "PublisherName": "neo4j",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "neo4j-ee-vm",
+      "neo4j-ce-vm",
+      "neo4j-enterprise-4_2"
+    ]
+  },
+  {
+    "PublisherName": "cognosys",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "2887-lamp-with-ubuntu-server-2004-lts",
+      "3507-solr-890-with-ubuntu-2004-lts",
+      "2838-centos-83-free"
+    ]
+  },
+  {
+    "PublisherName": "tidalmediainc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "windows-server-2022-datacenter",
+      "active-directory-windows-server-2022",
+      "docker-ce-ubuntu-22-04"
+    ]
+  },
+  {
+    "PublisherName": "f5-networks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "f5-big-ip-best",
+      "f5-big-ip-better",
+      "f5-big-ip-good"
+    ]
+  },
+  {
+    "PublisherName": "RedHat",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "RHEL",
+      "rhel-byos",
+      "RHEL-SAP"
+    ]
+  },
+  {
+    "PublisherName": "maidenhead-bridge",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "csc-any-az",
+      "zs-csc-mux-1-pricpa",
+      "csc-mux-1g-zia"
+    ]
+  },
+  {
+    "PublisherName": "backupassure",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "backupassure",
+      "backupassure-pro",
+      "backupassure_2_0_0"
+    ]
+  },
+  {
+    "PublisherName": "riverbed",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "riverbed_scc_steelhead",
+      "riverbed-cloud-accelerator",
+      "riverbed_appresponse"
+    ]
+  },
+  {
+    "PublisherName": "veritas",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netbackup-8-0",
+      "veritas-infoscale-enterprise-741-vm",
+      "veritas-resiliency-platform-vhd-offer"
+    ]
+  },
+  {
+    "PublisherName": "hammerspace",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "hammerspace_pay_as_you_go",
+      "hammerspace_byol_5_0",
+      "hammerspace-4-6-5"
+    ]
+  },
+  {
+    "PublisherName": "onapsis",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "onapsis_platform",
+      "onapsis_platform_u24",
+      "onapsis_platform_19_09"
+    ]
+  },
+  {
+    "PublisherName": "cysec",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "arcatrustedos_std_freetrial",
+      "arcatrustedos_al_freetrial",
+      "arcaos_al_freetrial"
+    ]
+  },
+  {
+    "PublisherName": "machinesense",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "machineqc",
+      "diagportal",
+      "crystal01"
+    ]
+  },
+  {
+    "PublisherName": "varnish",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "varnish-enterprise",
+      "varnish-custom-statistics",
+      "varnish-cache_"
+    ]
+  },
+  {
+    "PublisherName": "delphix",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "delphix_dynamic_data_platform",
+      "delphix-continuous-data-subcription",
+      "delphix-continuous-compliance"
+    ]
+  },
+  {
+    "PublisherName": "zabbix",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "zabbix_server",
+      "zabbix_proxy",
+      "server_6_4_vm"
+    ]
+  },
+  {
+    "PublisherName": "exact",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "exactglobe",
+      "exactsynergyvm",
+      "elisvm"
+    ]
+  },
+  {
+    "PublisherName": "automationanywhere",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "automationanywhere-a2019-vm",
+      "aaeprodvm",
+      "automationexpressvm"
+    ]
+  },
+  {
+    "PublisherName": "procomputers",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "almalinux-9",
+      "rhel-9",
+      "rocky-linux-9"
+    ]
+  },
+  {
+    "PublisherName": "primekey",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ejbca_enterprise_cloud_edition_private_vhd",
+      "signserver_enterprise_cloud_edition_private_vhd",
+      "ejbca_enterprise_cloud_ra_private_vhd"
+    ]
+  },
+  {
+    "PublisherName": "mapd",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "omnisci-platform",
+      "omnisci-platform-cpu",
+      "omnisci-platform-oss"
+    ]
+  },
+  {
+    "PublisherName": "iris",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "irisvmoffer_20250911",
+      "irisvm001",
+      "irisvmoffer_byol_20251120"
+    ]
+  },
+  {
+    "PublisherName": "softnas",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "buurst_nas",
+      "buurst_byol",
+      "mp_nas_byol"
+    ]
+  },
+  {
+    "PublisherName": "tmaxsoft",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "tmax-jeusse",
+      "tmax-jeusee",
+      "tmax-webtobse"
+    ]
+  },
+  {
+    "PublisherName": "microsoft-azure-compute",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "accpreview",
+      "accpreviewsuse",
+      "tdxprivateimagesuse"
+    ]
+  },
+  {
+    "PublisherName": "firemon",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "firemon_sip_azure",
+      "lumeta-command-center4-4",
+      "lumeta-scout4-4"
+    ]
+  },
+  {
+    "PublisherName": "veeam",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "veeam-backup-replication",
+      "azure_backup",
+      "veeam-cloud-connect-enterprise"
+    ]
+  },
+  {
+    "PublisherName": "arista-networks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cloudeos-router-payg",
+      "cloudeos-router-byol",
+      "cloudvision-vhd"
+    ]
+  },
+  {
+    "PublisherName": "paloaltonetworks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vmseries-flex",
+      "panorama",
+      "cortex_xsoar"
+    ]
+  },
+  {
+    "PublisherName": "infoblox",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "infoblox-nios-x-vm",
+      "infoblox_nios_paygo",
+      "infoblox-vm-appliances-905"
+    ]
+  },
+  {
+    "PublisherName": "panzura-file-system",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "panzura-cloudfs-8600-26755",
+      "panzura-freedom-filer",
+      "panzura-cloudfs-87"
+    ]
+  },
+  {
+    "PublisherName": "h2o-ai",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "h2o-driverles-ai",
+      "driverlessaiazureapp",
+      "h2oai-h2ogpt"
+    ]
+  },
+  {
+    "PublisherName": "manageengine",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "applications-manager",
+      "manageengine-adaudit-plus",
+      "passwordmanagerpro-ee"
+    ]
+  },
+  {
+    "PublisherName": "dcassociatesgroupinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-server-2404-lts",
+      "gitlab-ce-server",
+      "jenkins-server"
+    ]
+  },
+  {
+    "PublisherName": "jfrog",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "artifactory-vm",
+      "jfrogcontainerregistry-vm",
+      "x-ray-vm"
+    ]
+  },
+  {
+    "PublisherName": "spektra",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cloudlabs-windows-jumpvm",
+      "demovm",
+      "seedvmubuntu"
+    ]
+  },
+  {
+    "PublisherName": "cmdb360",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cmdb360_base_station",
+      "azure_satellite",
+      "ansible_satellite"
+    ]
+  },
+  {
+    "PublisherName": "netskope",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netskope_cloud_exchange",
+      "netskope-npa-publisher",
+      "netskope_cloud_exchange_v_6_0_1"
+    ]
+  },
+  {
+    "PublisherName": "intersystems",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "intersystems-iris-community",
+      "intersystems-iris-health",
+      "intersystems-iris-byol"
+    ]
+  },
+  {
+    "PublisherName": "datastax",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "datastax-enterprise",
+      "dse_6",
+      "opsc_6"
+    ]
+  },
+  {
+    "PublisherName": "redhat-rhel",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rh-jboss-eap",
+      "ocp-worker",
+      "oke-worker"
+    ]
+  },
+  {
+    "PublisherName": "zainabmarket",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-22-minimal",
+      "rhel-9",
+      "almalinux-9"
+    ]
+  },
+  {
+    "PublisherName": "adiom",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "adiom_dsync_vm",
+      "adiom_dsync_vm_general",
+      "adiom_dsync_vm_dynamo"
+    ]
+  },
+  {
+    "PublisherName": "clouber",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cuber",
+      "cws",
+      "mcenter"
+    ]
+  },
+  {
+    "PublisherName": "MicrosoftWindowsDesktop",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "windows-11",
+      "Windows-10",
+      "office-365"
+    ]
+  },
+  {
+    "PublisherName": "redhat-limited",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rh-rhel",
+      "rh-jboss-eap",
+      "rh-ocp-worker"
+    ]
+  },
+  {
+    "PublisherName": "anarion-technologies",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress_v-6-6-2",
+      "mariadb",
+      "nginx_v-1_26_3"
+    ]
+  },
+  {
+    "PublisherName": "perforce",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "perforce-helix-core-offer",
+      "perforce-swarm-offer",
+      "perforce-hansoft-offer"
+    ]
+  },
+  {
+    "PublisherName": "dellemc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "dell-emc-networker-virtual-edition",
+      "dell-emc-avamar-virtual-edition",
+      "dell-emc-datadomain-virtual-edition-v4"
+    ]
+  },
+  {
+    "PublisherName": "knime",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "knime-business-hub-standard",
+      "knime-server-small",
+      "knime-executor-byol"
+    ]
+  },
+  {
+    "PublisherName": "SUSE",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "sles-15-sp6",
+      "sles-15-sp5",
+      "SLES-SAP"
+    ]
+  },
+  {
+    "PublisherName": "info-inlet-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "postgres16_pgvector_ubuntu_noble",
+      "argocd-20260411-v336",
+      "goose-20260622"
+    ]
+  },
+  {
+    "PublisherName": "microsoft-dsvm",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "dsvm-windows",
+      "ubuntu-2204",
+      "linux-data-science-vm-ubuntu"
+    ]
+  },
+  {
+    "PublisherName": "ibm",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "qradar750",
+      "ibm_security_access_manager",
+      "ibm-security-guardium-multi-cloud"
+    ]
+  },
+  {
+    "PublisherName": "wallix",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wallixbastion",
+      "wallixaccessmanager",
+      "bastion4cloud-bastion-image"
+    ]
+  },
+  {
+    "PublisherName": "tempered-networks-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "tempered-airwall-v22",
+      "tempered-conductor-v22",
+      "tempered-networks-hipswitch-v22"
+    ]
+  },
+  {
+    "PublisherName": "instight-technology",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "insight_database_testing_byol",
+      "insight_data_masking_byol",
+      "piso_manager-byol"
+    ]
+  },
+  {
+    "PublisherName": "docker",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "docker-ce",
+      "docker-ee",
+      "docker-ee-basic"
+    ]
+  },
+  {
+    "PublisherName": "snips",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "snips_flow",
+      "on-server-vm",
+      "snips-flow-demo-license"
+    ]
+  },
+  {
+    "PublisherName": "pivotal",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "pivotal-greenplum-images",
+      "pivotal-ops-manager",
+      "bosh-windows-server-2022"
+    ]
+  },
+  {
+    "PublisherName": "apps-4-rent",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress-on-ubuntu-1804",
+      "lamp-on-ubuntu-2004",
+      "jenkins-on-ubuntu20"
+    ]
+  },
+  {
+    "PublisherName": "MicrosoftWindowsServer",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "WindowsServer",
+      "windowsserver2022",
+      "windows-cvm"
+    ]
+  },
+  {
+    "PublisherName": "bitnami",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress",
+      "mysql",
+      "postgresql"
+    ]
+  },
+  {
+    "PublisherName": "questlabservices",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "grafana",
+      "zammadhelpdesk",
+      "openclawsecureagentonubuntu"
+    ]
+  },
+  {
+    "PublisherName": "arm",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "github_arm_linux_runner",
+      "github_arm_linux_runner_2404",
+      "github_arm_windows11_runner"
+    ]
+  },
+  {
+    "PublisherName": "audiocodes",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mediantsessionbordercontroller",
+      "audcstteams",
+      "audiocodesarmforazure"
+    ]
+  },
+  {
+    "PublisherName": "intellicus-technologies-pvt-ltd",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "intellicus_bi_server_50_user_windows",
+      "intellicus_bi_server_50_user_linux",
+      "intellicus_bi_server_100_user_windows"
+    ]
+  },
+  {
+    "PublisherName": "Debian",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "debian-12",
+      "debian-11",
+      "debian-13"
+    ]
+  },
+  {
+    "PublisherName": "fidesys",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "fidesys",
+      "fidesys_v1_7_rus",
+      "fidesys_rus_1_7"
+    ]
+  },
+  {
+    "PublisherName": "devopsimages",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-server-24-04-ltd",
+      "rhel-9-devops-images",
+      "almalinux-os-9-devops-images"
+    ]
+  },
+  {
+    "PublisherName": "cohesive",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cohesive-vns3-7_0_x",
+      "cohesive-vns3-6_0_x",
+      "vns3_4x_network_security"
+    ]
+  },
+  {
+    "PublisherName": "cloudmavensolutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "centos-7-9-cm",
+      "centos-8-5-cm",
+      "centos-8-stream-cm"
+    ]
+  },
+  {
+    "PublisherName": "drizti",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "hpcbox-cluster-gpu-node",
+      "hpcbox-cluster-compute-node",
+      "hpcbox-openfoam-cluster-master"
+    ]
+  },
+  {
+    "PublisherName": "ncache",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ncache_vm_offer",
+      "ncache_vm_offer_win",
+      "ent-linux-535"
+    ]
+  },
+  {
+    "PublisherName": "microsoft-agci-gaming",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "agci-golden-images",
+      "agci-gamedev-image",
+      "microsoftepicpixelstreamer"
+    ]
+  },
+  {
+    "PublisherName": "rubrik-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rubrik-cloud-data-management",
+      "rubrik-data-protection",
+      "rubrik-rsc-p"
+    ]
+  },
+  {
+    "PublisherName": "ansys",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rockylinux8-251",
+      "rockylinux8-242",
+      "centos-solvers221"
+    ]
+  },
+  {
+    "PublisherName": "mfe_azure",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cloud_workload_security",
+      "atd-mcafee",
+      "tie_mcafee"
+    ]
+  },
+  {
+    "PublisherName": "susellc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "opensuse-leap-x86-64",
+      "manager-server-5-2-byos-x86-64",
+      "manager-proxy-5-2-byos-x86-64"
+    ]
+  },
+  {
+    "PublisherName": "almalinux",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "almalinux",
+      "almalinux-x86_64",
+      "almalinux-hpc"
+    ]
+  },
+  {
+    "PublisherName": "readymind",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntults20_lamp",
+      "ubuntults20_nextcloud",
+      "moodle"
+    ]
+  },
+  {
+    "PublisherName": "marklogic",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "marklogic-12",
+      "marklogic-developer-11",
+      "marklogic-developer-10"
+    ]
+  },
+  {
+    "PublisherName": "wsusainc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ads",
+      "idera_teamservervm",
+      "idera_erstdio"
+    ]
+  },
+  {
+    "PublisherName": "vembutechnologiespvtltd",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "bdrsuite-backup-for-microsoft-365",
+      "bdrsuite-backup-and-replication-for-hyper-v",
+      "bdrsuite-for-microsoft-windows"
+    ]
+  },
+  {
+    "PublisherName": "azul",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "azul-zulu17-ubuntu-2004",
+      "azul-zulu11-ubuntu-2004",
+      "azul-zulu17-windows-2019"
+    ]
+  },
+  {
+    "PublisherName": "keysight-technologies-ixvm",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "keysight-ixnetwork-virtual-edition",
+      "keysight-ixload-virtual-edition",
+      "keysight-breakingpoint-virtual-edition"
+    ]
+  },
+  {
+    "PublisherName": "samsungsds-cello",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "samsungsds-nexledger-n",
+      "cello-loading-optimizer-50-windows",
+      "gcp_id"
+    ]
+  },
+  {
+    "PublisherName": "gigamon-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "gigamon-gigavue-cloud-suite",
+      "gigamon-gigavue-cloud-suite-v2",
+      "gigamon-fm-6_1_00"
+    ]
+  },
+  {
+    "PublisherName": "microsoft-azure-batch",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-server-container",
+      "centos-container",
+      "ubuntu-server-container-rdma"
+    ]
+  },
+  {
+    "PublisherName": "midvision",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "websphere-application-server-nde-90",
+      "ibm-app-connect-enterprise-edition-13",
+      "redhat-jboss-eap-8"
+    ]
+  },
+  {
+    "PublisherName": "onyx-point-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "op-bnf-v1",
+      "op-scc-v1",
+      "op_simp_6_3"
+    ]
+  },
+  {
+    "PublisherName": "z1",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "z1-securemail-gateway",
+      "securemail-gateway",
+      "z1-securehub-debian12"
+    ]
+  },
+  {
+    "PublisherName": "omnissallc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "omnissa-hcs-uag",
+      "omnissa-hcs-podmgr",
+      "euc-appvolumes-manager"
+    ]
+  },
+  {
+    "PublisherName": "keysight-technologies-cloudlens",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "keysight-cloudlens-manager",
+      "keysight-cloudlens-vcontroller",
+      "keysight-cloudlens-virtual-packet-broker"
+    ]
+  },
+  {
+    "PublisherName": "odix",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "odix-mgmt-server",
+      "file-santizing-server",
+      "ubuntu-linux-20-04-cis-odix"
+    ]
+  },
+  {
+    "PublisherName": "vidizmo",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vidizmosinglemachine",
+      "vidizmoappvm",
+      "vidizmo-highavailability-servers"
+    ]
+  },
+  {
+    "PublisherName": "zscaler",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "zscaler-private-access",
+      "zscaler-private-access-service-edge",
+      "zscaler-private-access-network-connector"
+    ]
+  },
+  {
+    "PublisherName": "brocade_communications",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "brocade-virtual-traffic-manager",
+      "brocade-virtual-web-application-firewall",
+      "brocade-virtual-traffic-manager-with-waf-module"
+    ]
+  },
+  {
+    "PublisherName": "dataiku",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "dataiku-data-science-studio",
+      "fleet-manager",
+      "fleet-manager-dev"
+    ]
+  },
+  {
+    "PublisherName": "kyligence",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "kc_vm",
+      "kc_rhel",
+      "kc_vm_yang"
+    ]
+  },
+  {
+    "PublisherName": "tibco-software",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "grid-server-engine",
+      "grid-server-manager",
+      "jasperreports_server_vm_byol_v_9_0"
+    ]
+  },
+  {
+    "PublisherName": "dhi",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mike-plus",
+      "mike-zero",
+      "feflow"
+    ]
+  },
+  {
+    "PublisherName": "decyphertek",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wazuh",
+      "sonarqube-ce",
+      "vaultwarden"
+    ]
+  },
+  {
+    "PublisherName": "cloudtrio-solutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress-on-ubuntu24-04lts",
+      "jenkins-on-ubuntu22-04lts",
+      "docker-on-ubuntu22-04lts"
+    ]
+  },
+  {
+    "PublisherName": "vmware-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nsx-policy-manager",
+      "nsx-public-cloud-gateway",
+      "tanzu-platform"
+    ]
+  },
+  {
+    "PublisherName": "MicrosoftCBLMariner",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "azure-linux-3",
+      "cbl-mariner",
+      "cbl-mariner-test"
+    ]
+  },
+  {
+    "PublisherName": "nasunicorporation",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nasuni-management-console",
+      "naa-server",
+      "nasuni-niq"
+    ]
+  },
+  {
+    "PublisherName": "safesoftwareinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "fme-platform",
+      "fme-core",
+      "fme-engine"
+    ]
+  },
+  {
+    "PublisherName": "barracudanetworks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "barracuda-ng-firewall",
+      "waf",
+      "barracuda-email-security-gateway"
+    ]
+  },
+  {
+    "PublisherName": "belindacz",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-24_04-lts",
+      "windows-server-2022",
+      "nginx-ubuntu-24_04-lts"
+    ]
+  },
+  {
+    "PublisherName": "volterraedgeservices",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "volterra-node",
+      "voltmesh_node",
+      "voltstack_combo_node"
+    ]
+  },
+  {
+    "PublisherName": "openlinkswcom-pago",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "openlink-virtuoso-azure-pago-offer-20201019",
+      "openlink-virtuoso-azure-byol-offer-20201017",
+      "openlink-dbpedia-2021-09-pago-offer"
+    ]
+  },
+  {
+    "PublisherName": "hanu",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "hanu-insight",
+      "hanu-managed-services",
+      "hanu-insightv2"
+    ]
+  },
+  {
+    "PublisherName": "OpenLogic",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "CentOS",
+      "CentOS-HPC",
+      "CentOS-LVM"
+    ]
+  },
+  {
+    "PublisherName": "media3-llc-adobe",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "adobe-cf2025-win",
+      "adobe-cf2023-win",
+      "adobe-cf2023-ubunt"
+    ]
+  },
+  {
+    "PublisherName": "ribboncommunications",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ribbon_sbc_swe-lite_vm",
+      "ribbon_sbc_swe-lite_vm_preview",
+      "8_13_2024"
+    ]
+  },
+  {
+    "PublisherName": "axway",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "axway-mailgate-secure-collaboration-standard",
+      "axway-mailgate-secure-collaboration-premium",
+      "axway-mailgate-secure-collaboration-advanced"
+    ]
+  },
+  {
+    "PublisherName": "hewlettpackardenterprise1",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "aruba_cppm_6-14",
+      "aruba_cppm_6-12",
+      "hpenonstopdevenvwin"
+    ]
+  },
+  {
+    "PublisherName": "siemensplmsoftware",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "teamcenter_vm",
+      "simcenter_vm",
+      "insights_hub_vm"
+    ]
+  },
+  {
+    "PublisherName": "mirantis",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mirantis_container_runtime_with_linux",
+      "windows_2022_with_mirantis_container_runtime",
+      "windows_with_mirantis_container_runtime_2019"
+    ]
+  },
+  {
+    "PublisherName": "websoft9inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "w9wordpress",
+      "w9lamp",
+      "w9moodle"
+    ]
+  },
+  {
+    "PublisherName": "jetnexus",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "jetnexus-application-load-balancer",
+      "jetnexus-global-load-balancer",
+      "jetnexus-waf"
+    ]
+  },
+  {
+    "PublisherName": "midasolutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "midarec",
+      "midaaac",
+      "mida-fax"
+    ]
+  },
+  {
+    "PublisherName": "thefreebsdfoundation",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "freebsd-14_3",
+      "freebsd-14_2",
+      "freebsd-13_5"
+    ]
+  },
+  {
+    "PublisherName": "loamics-fr",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vm_offer_elasticsearch",
+      "vm_offer_keycloak",
+      "vm_offer_nifi"
+    ]
+  },
+  {
+    "PublisherName": "brightcomputing",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "bcmni-azure-11-0-free",
+      "bcmni-azure-9-2",
+      "bcmni-azure-9-1"
+    ]
+  },
+  {
+    "PublisherName": "kCloudHub",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress2",
+      "lamp",
+      "mongodb"
+    ]
+  },
+  {
+    "PublisherName": "fortinet",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "fortinet_fortigate-vm",
+      "fortinet-fortimanager",
+      "fortinet-fortianalyzer"
+    ]
+  },
+  {
+    "PublisherName": "keysight",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "keysight-ixnetwork-virtual-edition",
+      "keysight-ixload-virtual-edition",
+      "test"
+    ]
+  },
+  {
+    "PublisherName": "litespeedtechnologies",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "openlitespeed-wordpress",
+      "litespeed",
+      "cyberpanel"
+    ]
+  },
+  {
+    "PublisherName": "opentext",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "opentext-content-server-16",
+      "cs-16-2",
+      "ot-magellan"
+    ]
+  },
+  {
+    "PublisherName": "lynxroute",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nextcloud",
+      "grafana",
+      "postgresql"
+    ]
+  },
+  {
+    "PublisherName": "checkpoint",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "check-point-cg-r82",
+      "check-point-cg-r81",
+      "check-point-vsec-r80"
+    ]
+  },
+  {
+    "PublisherName": "vu-llc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vu-app-server",
+      "vu-fraudanalysis",
+      "vu-facerecogn"
+    ]
+  },
+  {
+    "PublisherName": "cloudriches",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "aigc-sdwebui",
+      "fpc_electric_fence_vm",
+      "hank-vm-01"
+    ]
+  },
+  {
+    "PublisherName": "suse-ltd",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "sles-15-sp6-ltd",
+      "sles-15-sp5-ltd",
+      "sles-16-0-x86-64-ltd"
+    ]
+  },
+  {
+    "PublisherName": "saama",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "fluidanalyticsengine",
+      "insurancefraudanalytics",
+      "realworldevidence"
+    ]
+  },
+  {
+    "PublisherName": "cloudvoult",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-24-04-lts",
+      "windows-server-2025",
+      "almalinux-9-6"
+    ]
+  },
+  {
+    "PublisherName": "citrix",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netscalervpx-141",
+      "netscaler_console",
+      "xenapp-vda-vdi"
+    ]
+  },
+  {
+    "PublisherName": "azure-hpc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-hpc",
+      "azurelinux-hpc",
+      "ubuntu-hpc-test"
+    ]
+  },
+  {
+    "PublisherName": "wmspanel",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nimble-streamer-ubuntu",
+      "nimble-streamer-centos",
+      "nimble-streamer-windows"
+    ]
+  },
+  {
+    "PublisherName": "aviatrix-systems",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "aviatrix-controller",
+      "aviatrix-gateway",
+      "aviatrix-copilot"
+    ]
+  },
+  {
+    "PublisherName": "prime-strategy",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "kusanagi9",
+      "kusanagi-77",
+      "kusanagi-bepe-co-sell"
+    ]
+  },
+  {
+    "PublisherName": "jinaai",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "jina-embeddings-v3-vm",
+      "jina-reranker-v2-base-multilingual-vm",
+      "jina-clip-v2-vm"
+    ]
+  },
+  {
+    "PublisherName": "denodo",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "denodo-9-ent-vm",
+      "denodo-platform-8_0-vm",
+      "denodo-9-vm-auto"
+    ]
+  },
+  {
+    "PublisherName": "zerto",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "zerto-vra",
+      "zerto-cloud-appliance-st",
+      "zerto-vms"
+    ]
+  },
+  {
+    "PublisherName": "help-systems",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "goanywheremftwindows",
+      "goanywheremftubuntulinux",
+      "fortra-vm-appliance"
+    ]
+  },
+  {
+    "PublisherName": "plesk",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "plesk-onyx-linux",
+      "plesk-onyx-windows",
+      "solution-server-wordpress"
+    ]
+  },
+  {
+    "PublisherName": "xilinx",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vitis2022_1_ubuntu2004_development_image",
+      "u250_2022_1_ubuntu2004_deployment_image",
+      "u250_2022_1_ubuntu1804_deployment_image"
+    ]
+  },
+  {
+    "PublisherName": "nvidia",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nvidia-ai-enterprise",
+      "nvidia-gpu-optimized-vmi-a10",
+      "nvidia_hpc_sdk_vmi"
+    ]
+  },
+  {
+    "PublisherName": "alsourillc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-2404-lts-server",
+      "docker-on-ubuntu-2404-lts-minimal",
+      "ngnix-on-ubuntu-2404-lts-minimal"
+    ]
+  },
+  {
+    "PublisherName": "silver-peak-systems",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "silver_peak_edgeconnect",
+      "silver-peak-orchestrator",
+      "silver_peak_vx"
+    ]
+  },
+  {
+    "PublisherName": "mathworks-inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "matlab-production-server-payg",
+      "matlab-parallel-server-ref-arch-vm-offer",
+      "license-manager-ref-arch-linux"
+    ]
+  },
+  {
+    "PublisherName": "lotus_beta_analytics",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "lban_crm",
+      "enterprise_fileshare",
+      "tcdp"
+    ]
+  },
+  {
+    "PublisherName": "mongodb",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "voyage-3-5",
+      "voyage-3-large-virtual-machine",
+      "voyage-code-3-vm"
+    ]
+  },
+  {
+    "PublisherName": "juniper-networks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vsrx-next-generation-firewall-payg",
+      "session-smart-networking-payg",
+      "vmx-services-gateway-byol"
+    ]
+  },
+  {
+    "PublisherName": "codelathe",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "codelathe-filecloud-ubuntu",
+      "codelathe-filecloud-redhat",
+      "filecloud-efss-windows2016"
+    ]
+  },
+  {
+    "PublisherName": "hpe",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "hpestoreoncevsa437",
+      "hpestoreoncevsa436",
+      "hpestoreoncevsa434"
+    ]
+  },
+  {
+    "PublisherName": "pcloudhosting",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress",
+      "apache",
+      "mysql1"
+    ]
+  },
+  {
+    "PublisherName": "thales-vormetric",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vormetric-dsm-6-4-8",
+      "ciphertrust-cckm-190",
+      "ciphertrust-ckm"
+    ]
+  },
+  {
+    "PublisherName": "pulse-secure",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "pulse-connect-secure-vm",
+      "pulse-policy-secure-vm",
+      "pulse-virtual-traffic-manager"
+    ]
+  },
+  {
+    "PublisherName": "forescout",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "eyesight912",
+      "netseccore-byol",
+      "otseccore-byol"
+    ]
+  },
+  {
+    "PublisherName": "redpoint-global",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "redpoint-data-management",
+      "redpoint-interaction",
+      "redpoint-rpdm"
+    ]
+  },
+  {
+    "PublisherName": "ivanti-vadc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ivanti-virtual-traffic-manager-vm2",
+      "ivanti-virtual-traffic-manager-with-waf",
+      "ivanti-virtual-traffic-manager-with-waf2"
+    ]
+  },
+  {
+    "PublisherName": "imperva",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "imperva-waf-v14-lts",
+      "imperva-dam-v15",
+      "securesphere-waf-v14"
+    ]
+  },
+  {
+    "PublisherName": "veripark_solutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "veripark_verichannel_licenseserver",
+      "veripark_veribranch_licenseserver",
+      "veripark_veriloan_licenseserver"
+    ]
+  },
+  {
+    "PublisherName": "komprise_inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "komprise-observer",
+      "komprise-director",
+      "komprise-es-service"
+    ]
+  },
+  {
+    "PublisherName": "aiscaler-cache-control-ddos-and-url-rewriting-",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "aiscaler-traffic-manager-caching",
+      "aiprotect-ddos-firewall",
+      "aimobile-site-acceleration"
+    ]
+  },
+  {
+    "PublisherName": "forcepoint-llc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "forcepoint-ngfw",
+      "forcepoint-email-security-857",
+      "forcepoint-email-security-855"
+    ]
+  },
+  {
+    "PublisherName": "netscout",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netscout_virtual_ngeniusone_with_vscout",
+      "netscout_ngpulse",
+      "netscout_vstream"
+    ]
+  },
+  {
+    "PublisherName": "raincode",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mainframe_modernization",
+      "raincode_metal",
+      "logic_tools_vm"
+    ]
+  },
+  {
+    "PublisherName": "numericalai",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "numericalai-cfd-sandbox-vm",
+      "empirischtech-inference",
+      "ubuntu-desktop-gui"
+    ]
+  },
+  {
+    "PublisherName": "jetware-srl",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "wordpress4_lemp7",
+      "lamp_optimized",
+      "mysql"
+    ]
+  },
+  {
+    "PublisherName": "tunnelbiz",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rocky_linux",
+      "ubuntulinuxwebserver",
+      "tunnelbizerp"
+    ]
+  },
+  {
+    "PublisherName": "blockchain-foundry",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "syscoin-full-node",
+      "syscoin-api",
+      "syscoin-price-peg"
+    ]
+  },
+  {
+    "PublisherName": "diladele",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "websafety",
+      "dnsfilter",
+      "wfp"
+    ]
+  },
+  {
+    "PublisherName": "kelverion",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "runbook_studio_server_vm",
+      "automation_portal_vm",
+      "vm_test_offer"
+    ]
+  },
+  {
+    "PublisherName": "proventeq",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "proventeq-content-suite-vm",
+      "proventeq-content-productivity-suite-vm",
+      "proventeq_pma"
+    ]
+  },
+  {
+    "PublisherName": "baas-techbureau",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mijin-catapult-on-baas-vhd",
+      "mijin-catapult-on-azure-vhd-for-private",
+      "55bb07f1-6bba-4f37-99cb-b271a3e0082f"
+    ]
+  },
+  {
+    "PublisherName": "esri",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "arcgis-enterprise",
+      "arcgis-for-server",
+      "arcgis-desktop"
+    ]
+  },
+  {
+    "PublisherName": "netapp",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netapp-ontap-cloud",
+      "netapp-oncommand-cloud-manager",
+      "cloud-compliance"
+    ]
+  },
+  {
+    "PublisherName": "northbridge-secure",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "netconnect1",
+      "centos7",
+      "centos75"
+    ]
+  },
+  {
+    "PublisherName": "gatlingcorp",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "openjdk17",
+      "openjdk21",
+      "openjdk11"
+    ]
+  },
+  {
+    "PublisherName": "avi-networks",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "avi-vantage-adc",
+      "dev-avi-vantage-adc",
+      "internal-avi-vantage-adc"
+    ]
+  },
+  {
+    "PublisherName": "gottaphish",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "gophishbygottaphish",
+      "keycloak-scim-magiclink-vm",
+      "openbao-secrets-vm"
+    ]
+  },
+  {
+    "PublisherName": "ciq",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rlc-pro",
+      "rocky-lts",
+      "ciq-rocky-linux-hardened"
+    ]
+  },
+  {
+    "PublisherName": "sedetos",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu_24_04",
+      "redhat-9",
+      "almalinux_9"
+    ]
+  },
+  {
+    "PublisherName": "solarwinds",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "solarwinds-database-performance-analyzer",
+      "solarwinds-sqlsentry-vm",
+      "solarwinds-databasemapper-vm"
+    ]
+  },
+  {
+    "PublisherName": "scalearc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "scalearc-for-sql-server-pay-go",
+      "scalearc-for-mysql-paygo",
+      "scalearc_sql_server"
+    ]
+  },
+  {
+    "PublisherName": "trendmicro",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "deep-security-vm-byol",
+      "zero-trust-secure-access-vm",
+      "virtual-network-sensor-byol"
+    ]
+  },
+  {
+    "PublisherName": "postgres-pro",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "postgres-pro-standard-12-vm",
+      "postgres-pro-enterprise-12-vm",
+      "postgres-pro-standard-11"
+    ]
+  },
+  {
+    "PublisherName": "arcblock",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "forge-blockchain-node",
+      "forge-blockchain-node-2",
+      "forge-blockchain-node-3"
+    ]
+  },
+  {
+    "PublisherName": "desertbyte",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-24-nginx",
+      "docker-ubuntu-22-04",
+      "rhel10-enterprise-secure-server"
+    ]
+  },
+  {
+    "PublisherName": "seesharpsolutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "nopcommercewin",
+      "grandnodewin",
+      "nopcommerceubuntu"
+    ]
+  },
+  {
+    "PublisherName": "osirium-ltd",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "osirium_pam",
+      "osirium_pem",
+      "osirium-ppa"
+    ]
+  },
+  {
+    "PublisherName": "harpaitalia",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "yougreen_trial",
+      "mcuboenergy",
+      "yg"
+    ]
+  },
+  {
+    "PublisherName": "MicrosoftVisualStudio",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "visualstudio2022",
+      "visualstudio2019",
+      "VisualStudio"
+    ]
+  },
+  {
+    "PublisherName": "informatica",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "iics-windows-byol",
+      "informatica-1054-server",
+      "iics-linux-rhel"
+    ]
+  },
+  {
+    "PublisherName": "tenable",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "tenablecorenessus",
+      "tenablecorewas",
+      "tenablecore_ot_byol"
+    ]
+  },
+  {
+    "PublisherName": "bitdefendercybersecurity",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "gravityzone_elite_security",
+      "bitdefender_sva_mp",
+      "bitdefender_xdr_nsva"
+    ]
+  },
+  {
+    "PublisherName": "cloud-infrastructure-services",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu-22-04",
+      "wordpress-ubuntu",
+      "docker-ubuntu"
+    ]
+  },
+  {
+    "PublisherName": "azhpc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "azhop-compute",
+      "azhop-desktop",
+      "azurehpc-debian"
+    ]
+  },
+  {
+    "PublisherName": "beyondtrust",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "beyondinsight",
+      "beyondinsight-standard-win2022",
+      "useries-standard-win2022"
+    ]
+  },
+  {
+    "PublisherName": "teradata",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "vantage-teradata-database",
+      "teradata-database-enterprise",
+      "vantage-teradata-viewpoint"
+    ]
+  },
+  {
+    "PublisherName": "aquaforest",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "aquaforest-searchlight-tagger",
+      "aquaforest-searchlight-ocr-tagger-2021-08",
+      "searchlight2ocr"
+    ]
+  },
+  {
+    "PublisherName": "device42inc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "device42",
+      "device42-new",
+      "device42-saas-rc"
+    ]
+  },
+  {
+    "PublisherName": "bluecat",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "bluecat-dns-for-azure",
+      "bluecat-bam-for-azure",
+      "bluecat-edge-service-point-vm-for-azure"
+    ]
+  },
+  {
+    "PublisherName": "syncfusion",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "bold-bi-enterprise-multi-tenant",
+      "bold-reports-enterprise-multi-tenant",
+      "bigdata-platform"
+    ]
+  },
+  {
+    "PublisherName": "jogetinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "joget-dx9-ubuntu-10users",
+      "joget-dx9-windows-10users",
+      "joget-dx8-ubuntu-10users"
+    ]
+  },
+  {
+    "PublisherName": "rsa-security-llc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "rsa-nw-suite-11-7-1-0",
+      "securid8_7",
+      "nw-suite-12-3"
+    ]
+  },
+  {
+    "PublisherName": "velocloud",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "velocloud-virtual-edge",
+      "velocloud-virtual-edge-3x",
+      "vmware_sdwan_in_vwan_with_an"
+    ]
+  },
+  {
+    "PublisherName": "cloudsecurity",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "palcentoslecvmimage",
+      "cloudrndrhellecvmimageindia",
+      "pallecamusaspoc"
+    ]
+  },
+  {
+    "PublisherName": "corent-technology-pvt",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "surpaas-maas",
+      "splendidcrm",
+      "netcrm"
+    ]
+  },
+  {
+    "PublisherName": "miraclelinux",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "miraclelinux-8-6",
+      "miracle-linux-8-4",
+      "miraclelinux-7sp5"
+    ]
+  },
+  {
+    "PublisherName": "certifiedsecuritysolutionsinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "keyfactor_command_testdrive_vm",
+      "keyfactor_control_testdrive_vm",
+      "keyfactor_signserver_testdrive_vm"
+    ]
+  },
+  {
+    "PublisherName": "imaginecommunications",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "selenioflex-live",
+      "cloudxtream-cdvr",
+      "versio-3-0"
+    ]
+  },
+  {
+    "PublisherName": "timextender",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "timextender-app-server",
+      "txbaseimage",
+      "discoveryhubbaseimage"
+    ]
+  },
+  {
+    "PublisherName": "primestrategynewyorkinc",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "kusanagi-se9",
+      "kusanagi-pe9",
+      "kusanagi-be9"
+    ]
+  },
+  {
+    "PublisherName": "cncf-upstream",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "capi",
+      "capi-windows",
+      "test"
+    ]
+  },
+  {
+    "PublisherName": "advantech",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "deviceon_ads_linux_v1",
+      "deviceon_ads_windows_v1",
+      "medical_ai_suite_vm"
+    ]
+  },
+  {
+    "PublisherName": "cloudwhizsolutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "centos-7-9-cw",
+      "centos-8-5-cw",
+      "centos-8-stream-cw"
+    ]
+  },
+  {
+    "PublisherName": "cloudlinux",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "payg-esu96-gen1",
+      "byol-esu96-gen1",
+      "byol-esu92-gen1"
+    ]
+  },
+  {
+    "PublisherName": "stromasys",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "charon-ssp-ve",
+      "charon-par-ve",
+      "charon-ssp-al-v6x-rev01"
+    ]
+  },
+  {
+    "PublisherName": "ipswitch",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "moveit-transfer-vm",
+      "moveit-automation-vm",
+      "mia-test-vm-1"
+    ]
+  },
+  {
+    "PublisherName": "hitachivantara",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "pentaho-data-integration-server-9-5-0-0-42801",
+      "pdi-server-9-5",
+      "vsp_one_sds_block_image"
+    ]
+  },
+  {
+    "PublisherName": "MicrosoftPowerBI",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ssas-2022-gen2",
+      "pbirs",
+      "ssrs-2019"
+    ]
+  },
+  {
+    "PublisherName": "skylarkcloud",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "centos-7-9",
+      "ubuntu-18-04-lts",
+      "centos-8-2"
+    ]
+  },
+  {
+    "PublisherName": "quest",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "kace-sma",
+      "rapid-recovery-core-vm",
+      "quest_netvault_backup"
+    ]
+  },
+  {
+    "PublisherName": "parabole",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "parabole-train",
+      "parabole-train-level1",
+      "parabolehypothesesvalidationvmoffer"
+    ]
+  },
+  {
+    "PublisherName": "kobalt",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "bluespice",
+      "squashtm1170",
+      "graphdesigner"
+    ]
+  },
+  {
+    "PublisherName": "meanio",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "linnovate-wordpress",
+      "linnovate-gitea",
+      "linnovate-grafana"
+    ]
+  },
+  {
+    "PublisherName": "google-cloud-alloydb-omni",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "alloydb-omni",
+      "alloydbomni",
+      "alloydb_omni_trial"
+    ]
+  },
+  {
+    "PublisherName": "maryamsmarket",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "ubuntu",
+      "android-studio",
+      "openai-web-ui"
+    ]
+  },
+  {
+    "PublisherName": "cloudera",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "cdp-7_3_2",
+      "cdp-7_2_18",
+      "cloudera-data-platform-cdp-7_2"
+    ]
+  },
+  {
+    "PublisherName": "globalsolutions",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "mysql2019",
+      "tomcat2022",
+      "wamp2019"
+    ]
+  },
+  {
+    "PublisherName": "adgs",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "tasmofinancial",
+      "tasmolegal",
+      "strokkwebdemo"
+    ]
+  },
+  {
+    "PublisherName": "Oracle",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "oracle-database",
+      "Oracle-Linux",
+      "oracle-database-19-3"
+    ]
+  },
+  {
+    "PublisherName": "sphere3d",
+    "OffersBeforeAI": null,
+    "AIAfter": [
+      "snapcloud-standard",
+      "snapcloud-byol",
+      "glassware"
+    ]
+  }
+]
