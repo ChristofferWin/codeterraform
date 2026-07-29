@@ -1,0 +1,13 @@
+[
+    {
+        "execution": "get-azvmsku -showlocations",
+        "count": 10
+    },
+    {
+        "execution": "get-azvmsku -showvmcategories",
+        "count": 10
+    },
+    {
+        "execution": "get-azvmsku -location swedencentral -PublisherName MicrosoftWindowsServer -Offername WindowsServer -NoInteractive"
+    }
+]

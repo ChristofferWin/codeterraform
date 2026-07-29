@@ -6,6 +6,9 @@ function Select-Choice {
     )
     $MissingResponse = $true
     if($ArrayOfOptions.Count -eq 1){
+        if($ArrayOfOptions[0] -like "*;*") {
+            return $ArrayOfOptions.Split(";")[0]
+        }
         return $ArrayOfOptions[0]
     }
     do {
@@ -13,13 +16,21 @@ function Select-Choice {
         $Choices = @()
         if($ArrayOfOptions.Count -gt 1 -and !$NoInteractive){
             Write-Host -ForegroundColor Blue "###### Please select a specific $ParameterName below ######"
-            foreach($Option in $ArrayOfOptions) {
-                Write-Host "[$i] - $($Option)"
+            foreach($Options in $ArrayOfOptions) {
+                $OptionsSplit = $Options.Split(";")
+                $OptionName = $OptionsSplit[0]
+                $Color = $OptionsSplit[1]
+                if($Color) {
+                    Write-Host "[$i] - $OptionName $($OptionsSplit[2])" -ForegroundColor $Color
+                } else {
+                    Write-Host "[$i] - $OptionName"
+                }
                 $Choices += [PSCustomObject]@{
-                    Name = $Option
+                    Name = $OptionName
                     Choice = $i
                 }
                 $i++
+                
             }
             if($warning) {
                 Write-Warning $warning
@@ -50,7 +61,6 @@ function Select-Choice {
         }
     } while($MissingResponse)
 }
-
 <#
 .SYNOPSIS
     Retrieves information about Azure VM image SKUs, publishers, offers, and available VM sizes, optionally formatted for automation.
@@ -76,7 +86,7 @@ function Select-Choice {
     The name or part-name of the image publisher (Searches in between of a name, so *PublisherName*.
 
 .PARAMETER PublisherNameStartsWith
-    The name or part-name of the image publisher (Searches from the start of a name, so PublisherNameShort*
+    The name or part-name of the image publisher (Searches from the start of a name, so PublisherNameStartsWith*
  
 .PARAMETER OfferName
     The name or part-name of the image offer. Requires -PublisherName or -PublisherNameStartsWith to be set.
@@ -156,7 +166,6 @@ function Select-Choice {
 .NOTES
     - You must be logged in to Azure using `Connect-AzAccount` before using this function.
     - When using -NoInteractive, you must specify parameters to avoid being asked for input.
-    - Over 2,500 publishers are available in Azure; exact names may vary across regions.
  
 .LINK
     https://github.com/ChristofferWin/codeterraform
@@ -182,10 +191,14 @@ function Get-AzVMSku {
         [Parameter(ParameterSetName = "ManualSettings")][switch]$NoVMInformation,
         [Parameter(ParameterSetName = "ManualSettings")][switch]$UnfilteredPublishers
     )
-    Update-AzConfig -DisplayBreakingChangeWarning $false | Out-Null
+    try {
+        Update-AzConfig -DisplayBreakingChangeWarning $false -ErrorAction Stop | Out-Null
+    } catch{}
     $MSVMURL = "https://azure.microsoft.com/en-us/pricing/details/virtual-machines/series/"
+    $HelperFileURL = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/powershell%20projects/modules/Get-AzVMSku/helper-names.json"
     $CategoryObjects = @()
     $LocationObjects = @()
+    $HelperNames = @()
     $FinalOutput = [PSCustomObject]@{
         Context = [PSCustomObject]@{
             SubscriptionID = ""
@@ -205,6 +218,12 @@ function Get-AzVMSku {
 
     if ($PublisherName -and $PublisherNameStartsWith) {
         Write-Warning "Since both PublisherName & PublisherNameStartsWith has been parsed, PublisherName wins and the search for publishers will follow search *$PublisherName*"
+    }
+
+    if($PublisherName) {
+        $ActivePublisherName = $PublisherName
+    } else {
+        $ActivePublisherName = $PublisherNameStartsWith
     }
 
     if(!$PublisherName -and !$ShowLocations -and !$ShowVMCategories -and !$PublisherNameStartsWith){
@@ -244,6 +263,53 @@ function Get-AzVMSku {
         Write-Error "No Azure context found. Please use either Connect-AzAccount or Set-AzAdvancedContext to get one..."
         return
     }
+    $funcName = $MyInvocation.MyCommand.Name
+    try {
+        $LocalModuleVersion = (Get-Module -ListAvailable -ErrorAction Stop -Verbose:$false | ? {$_.Name -eq $funcName}).Version | Sort-Object
+        if($LocalModuleVersion.Count -gt 0) {
+            if($LocalModuleVersion.Count -gt 1) {
+                Write-Warning "More than 1 version of the module $funcName detected... Its recommended to remove all old versions"
+            }   
+            $LocalModuleVersion = $LocalModuleVersion[-1].ToString()
+        }
+    } catch {
+        Write-Verbose "Local module version of $($funcName) not found..."
+    }
+
+    try {
+        $OldVerbosePreference = $VerbosePreference
+        $VerbosePreference = 'SilentlyContinue'
+
+        $RepositoryModuleVersion = (
+            Find-Module -Name $funcName `
+                -Repository PSGallery `
+                -AllVersions `
+                -ErrorAction Stop `
+                -Verbose:$false |
+            Sort-Object { [version]$_.Version }
+        ).Version
+
+        if ($null -ne $RepositoryModuleVersion) {
+            $RepositoryModuleVersion = $RepositoryModuleVersion[-1]
+        }
+    }
+    catch {
+        Write-Verbose "Repository module version of $($funcName) not found..."
+    }
+    finally {
+        $VerbosePreference = $OldVerbosePreference
+    }
+
+    if([version]$RepositoryModuleVersion -gt [version]$LocalModuleVersion) {
+        Write-Warning "Consider upgrading from your current version of $LocalModuleVersion to $RepositoryModuleVersion"
+        Write-Verbose "To upgrade use command Update-Module -Name $($funcName) -RequiredVersion $([version]$RepositoryModuleVersion)"
+    }
+
+    try {
+        $HelperNames = Invoke-RestMethod -Uri $HelperFileURL -ErrorAction Stop
+    } catch {
+        Write-Warning "Was not able to retrieve helper file - This will not affect the resulted Publishers"
+    }
     
     if(!$ShowVMCategories){
         try{
@@ -278,7 +344,7 @@ function Get-AzVMSku {
             $WebsiteContent = (Invoke-WebRequest -UseBasicParsing -Uri $MSVMURL -ErrorAction Stop).Content.Split("`n")
         }
         catch{
-            Write-Warning "Was not able to retrieve required information from Microsoft for the flag 'ShowVMCategories'..."
+            Write-Warning "Was not able to retrieve required information from Microsoft for the switch 'ShowVMCategories'..."
             return
         }
         $CategoryObjects = @()
@@ -292,6 +358,10 @@ function Get-AzVMSku {
                 Category    = [System.Net.WebUtility]::HtmlDecode(($match.Groups['category'].Value -replace '<[^>]+>', '').Trim())
                 Description = [System.Net.WebUtility]::HtmlDecode(($match.Groups['description'].Value -replace '<[^>]+>', '').Trim())
             }
+        }
+        if ($CategoryObjects.Count -le 5) {
+            Write-Warning "Was not able to retrieve required information from Microsoft for the switch 'ShowVMCategories'..."
+            return $null
         }
         return $CategoryObjects
     }
@@ -314,34 +384,60 @@ function Get-AzVMSku {
         return $_
     }
     $AzurePublishers = $AzurePublishers | Sort-Object -Property PublisherName
+    $CapturedPublishers = @()
     if(!$ShowVMCategories){
-        $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName.ToLower() -eq $PublisherName.ToLower()} #MATCH to lower
-        if($CapturedPublishers.Count -eq 0) {
-            Write-Verbose "No exact match found for PublisherName '$PublisherName' trying with wild-cards..."
-            if($PublisherName) {
-                $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName.ToLower() -like "*$($PublisherName.ToLower())*"}
-            } elseif($PublisherNameStartsWith) {
-                $CapturedPublishers = $AzurePublishers | ? {$_.PublisherName -like "$($PublisherNameStartsWith.ToLower())*"}
-            } else {
-                $CapturedPublishers = $AzurePublishers
+        if($PublisherName){
+            $CapturedPublishers += $AzurePublishers | ? {$_.PublisherName -eq "$ActivePublisherName"}
+            if ($CapturedPublishers.Count -eq 0) {
+                 $CapturedPublishers += $AzurePublishers | ? {$_.PublisherName -like "*$ActivePublisherName*"}
             }
-            if($CapturedPublishers.Count -eq 0) {
-                Write-Warning "No Publishers found using PublisherName '$PublisherName' The module searches using wild-cards as *<PublisherName>* Adjust the name and try again..."
-                return
-            } elseif($CapturedPublishers.Count -eq 1){
-                Write-Host -ForegroundColor Green "1 match found for PublisherName '$PublisherName' => $($CapturedPublishers[0].PublisherName)"
-            }
-        } elseif($CapturedPublishers.Count -eq 1){
-            Write-Host -ForegroundColor Green "1 exact match for PublisherName '$($CapturedPublishers[0].PublisherName)' found"
+        } else {
+            $CapturedPublishers += $AzurePublishers | ? {$_.PublisherName -like "$ActivePublisherName*"}
+        }
+        if (-not ($CapturedPublishers | Where-Object { $_ })) {
+            Write-Error "No publishers found for '$ActivePublisher', either change it or remove it entirely"
+            return
         }
         if (!$UnfilteredPublishers -and $CapturedPublishers.Count -gt 1) {
             Write-Verbose "As per default removing any publishers with the string 'test' In it.`nTo include all test publishers, use switch `IncludeTestPublishers"
             $CapturedPublishers = $CapturedPublishers | ? {$_.PublisherName -notmatch '(?i)(test|\.|\d{4,})'}
         }
+        $count = $CapturedPublishers.Count
+        switch ($count) {
+            1 {
+                Write-Host -ForegroundColor Green "1 match found for filter '$ActivePublisherName'"
+                Write-Verbose "Publisher auto-selected as '$ActivePublisherName'"
+            }
+            default {
+                Write-Host -ForegroundColor Green "$count matches of publishers found for filter '$ActivePublisherName'"
+            }
+        }
+
         $MissingValidResponse = $true
         do {
             try {
-                $FinalOutput.Publisher = Select-Choice -ArrayOfOptions $CapturedPublishers.PublisherName -ParameterName "Image Publisher" -ErrorAction Stop
+                $HelperNames = @($HelperNames)
+                for ($x = 0; $x -lt $CapturedPublishers.Count; $x++) {
+                    foreach ($Helper in $HelperNames) {
+                        if ($CapturedPublishers[$x].PublisherName -eq $Helper.PublisherName) {
+                            $CapturedPublishers[$x].PublisherName = "$($CapturedPublishers[$x].PublisherName);green;[Image: $($Helper.AIAfter[0])]"
+                            break
+                        }
+                    }
+                }
+                $CapturedPublishers = $CapturedPublishers | Sort-Object `
+                    @{ Expression = { $_.PublisherName -match '\[Image:' } }, `
+                    @{ Expression = { (($_.PublisherName -replace '^\[\d+\]\s*-\s*', '') -replace '\s*\[Image:.*\]\s*$', '').ToLowerInvariant() } }
+
+                $PublisherDisplayNames = foreach ($Publisher in $CapturedPublishers) {
+                    if ($Publisher.PublisherName -match '^(?<Name>.+?)\s*\[Image:\s*(?<Image>.+?)\]$') {
+                        "{0,-60} [Image: {1}]" -f $Matches.Name.Trim(), $Matches.Image.Trim()
+                    }
+                    else {
+                        $Publisher.PublisherName
+                    }
+                }
+                $FinalOutput.Publisher = Select-Choice -ArrayOfOptions $PublisherDisplayNames -ParameterName "Image Publisher" -ErrorAction Stop
             } catch{
                 Write-Warning "No Publishers found for the given PublisherName $($FinalOutput.Publisher)`nReturning..."
                 Start-Sleep -Seconds 3
@@ -384,9 +480,19 @@ function Get-AzVMSku {
                     } else {
                         $NewListOfOffers = $AzureOffers.Offer
                     }
-                $FinalOutput.Offer = Select-Choice -ArrayOfOptions $NewListOfOffers -ParameterName "Image Offer" -ErrorAction Stop
+                for($x = 0; $x -lt $NewListOfOffers.Count;$x++){
+                    foreach($Helper in $HelperNames.AIAfter) {
+                        if($NewListOfOffers[$x] -eq $Helper){
+                            $NewListOfOffers[$x] = "$Helper;green;"
+                            break
+                        }
+                    }
+                }
+            $FinalOutput.Offer = Select-Choice -ArrayOfOptions $NewListOfOffers -ParameterName "Image Offer" -ErrorAction Stop
             } catch{
                 Write-Warning "No Offer found for the given PublisherName $($FinalOutput.Publisher)`nReturning..."
+                $_
+                Read-Host
                 Start-Sleep -Seconds 3
                 Continue
             }
@@ -394,52 +500,52 @@ function Get-AzVMSku {
             if($FinalOutput.Offer -in $null){
                 return
             }
-        
-            try {
-                $AzureSkus = Get-AzVMImageSku -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer
-            } catch {
-                return $_
-            }
-        
-            if($AzureSkus.Count -eq 0) {
-                Write-Warning "No SKU found for the given offer $($FinalOutput.Offer)`nReturning..."
-                Start-Sleep -Seconds 3
-                Continue
-            }
-        
-            try {
-                if($NewestSKUs){
-                    $FinalOutput.Sku = $AzureSkus[-1].Skus
-                } else {
-                    $FinalOutput.Sku = Select-Choice -ArrayOfOptions $AzureSkus.Skus -ParameterName "Image SKU" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUs" -ErrorAction Stop
+            
+            do {
+                try {
+                    $AzureSkus = Get-AzVMImageSku -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer
+                } catch {
+                     return $_
                 }
-            } catch{
-                Write-Warning "No SKU found for the given offer $($FinalOutput.Offer)`nReturning..."
-                Start-Sleep -Seconds 3
-                Continue
-            }
-    
-            if($FinalOutput.Sku -in $null){
-                return
-            }
-            try {
-                $AzureImages = Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Sku
-            } catch {
-                return $_
-            }
         
-            if($AzureImages.Count -eq 0) {
-                if($NewestSKUs) {
-                    Write-Warning "No images found under selection $($FinalOutput.Offer) using switch -NewestSKUs"
-                    Write-Warning "Either stop the module and run again without switch -NewestSKUs or choose another publisher, then offer"
-                    Start-Sleep 3
+                if($AzureSkus.Count -eq 0) {
+                    Write-Warning "No SKU found for the given offer $($FinalOutput.Offer)`nReturning..."
+                    Start-Sleep -Seconds 3
+                    Continue
                 }
-                else {
-                    Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
+                try {
+                    if($NewestSKUs){
+                        Write-Host "THESE ARE THE SKUS:`n$($AzureSkus[-1].Skus)"
+                        $FinalOutput.Sku = $AzureSkus[-1].Skus
+                    } else {
+                        $FinalOutput.Sku = Select-Choice -ArrayOfOptions $AzureSkus.Skus -ParameterName "Image SKU" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUs" -ErrorAction Stop
+                    }
+                } catch{
+                    Write-Warning "No SKU found for the given offer $($FinalOutput.Offer)`nReturning..."
+                    Start-Sleep -Seconds 3
+                    Continue
                 }
-                Start-Sleep -Seconds 3
-                Continue
-            }
+                if($FinalOutput.Sku -in $null){
+                    return
+                }
+                try {
+                    $AzureImages = Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Sku
+                } catch {
+                    return $_
+                }
+                if($AzureImages.Count -eq 0) {
+                    if($NewestSKUs) {
+                        Write-Warning "No images found under selection $($FinalOutput.Offer) using switch -NewestSKUs"
+                        Write-Warning "Either stop the module and run again without switch -NewestSKUs or choose another publisher, then offer"
+                        Exit
+                    }
+                    else {
+                        Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
+                    }
+                    Start-Sleep -Seconds 3
+                    Continue
+                }
+            } while($true)
             $AzureImages = $AzureImages.Version | Sort-Object { [version]$_ }
             try {
                 if($AllSKUsVersions){
@@ -465,7 +571,15 @@ function Get-AzVMSku {
         try {
             $FinalImage = Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Sku -Version $FinalOutput.Version -ErrorAction Stop
         } catch{
-            return $_
+            try {
+                 $FinalImage = Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Sku -Version "latest" -ErrorAction Stop
+                 #Overwrite version to latest, do avoid any potential issues when used in IaC
+                 $FinalOutput.Version = "latest"
+            }catch{
+                Write-Error "No final image found - This might be due to a bug.`nReport the following to https://github.com/ChristofferWin/codeterraform/issues/new`n`nCURRENT OUTPUT:`n$($FinalOutput | Format-List | Out-String)"
+                return
+            }
+            
         }
         $FinalOutput.URN = "$($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku):$($FinalOutput.Version)"
         if ($FinalImage.PurchasePlan -notin $null){
@@ -488,23 +602,6 @@ function Get-AzVMSku {
                                          
     #######################################
 "@ -ForegroundColor Green
-
-    if(!$NoVMInformation) {
-        Write-Verbose "Retrieving information about Azure Virtual Machines directly from Microsoft, this may take a moment..."
-        try{
-            $WebsiteContent = (Invoke-WebRequest -UseBasicParsing -Uri $MSVMURL -ErrorAction Stop).Content.Split("`n")
-        }
-        catch{
-            Write-Warning "Was not able to retrieve required information from Microsoft for the flag 'ShowVMCategories'..."
-        }
-        $Categories = $WebsiteContent | ? {$_ -like "*h2*series*"}
-        foreach($Category in $Categories){
-            $CategoryObjects += [pscustomobject]@{
-                Title = $Category.Trim().Replace("<h2>", "").Replace("</h2>", "")
-                Description = $WebsiteContent[$WebsiteContent.IndexOf($Category) + 2].Trim() -Replace "<[^>]+>|&#\d+;", ""
-            }
-        }
-    }
 
     do{
         $LocationOK = $false
@@ -645,7 +742,7 @@ function Get-AzVMSku {
 
     if($RawFormat){
         if($VMs.Count -ge 10){
-            Write-Warning "The output is very large, its recommended to pipe the output to a file..."
+            Write-Verbose "The output is very large, its recommended to pipe the output to a file..."
             Start-Sleep -Seconds 2
         }
         $FinalOutput = $FinalOutput | ConvertTo-Json -Depth 50
@@ -752,4 +849,3 @@ function Set-AzVMSku {
         return $VMSku
     }
 }
-Export-ModuleMember Get-AzVMSku, Set-AzVMSku
