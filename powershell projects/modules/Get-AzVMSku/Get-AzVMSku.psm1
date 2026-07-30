@@ -21,7 +21,11 @@ function Select-Choice {
                 $OptionName = $OptionsSplit[0]
                 $Color = $OptionsSplit[1]
                 if($Color) {
-                    Write-Host "[$i] - $OptionName $($OptionsSplit[2])" -ForegroundColor $Color
+                    if($Color.ToLower() -eq "red"){
+                        Write-Host "$($PSStyle.Strikethrough)[$i] - $OptionName $($OptionsSplit[2])$($PSStyle.StrikethroughOff)" -ForegroundColor $Color
+                    } else {
+                        Write-Host "[$i] - $OptionName $($OptionsSplit[2])" -ForegroundColor $Color
+                    }
                 } else {
                     Write-Host "[$i] - $OptionName"
                 }
@@ -500,25 +504,27 @@ function Get-AzVMSku {
             if($FinalOutput.Offer -in $null){
                 return
             }
-            
+            $MissingImageSku = $true
+            $i = -1
             do {
                 try {
-                    $AzureSkus = Get-AzVMImageSku -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer
+                    if($i -eq -1) {
+                        $AzureSkus = (Get-AzVMImageSku -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -ErrorAction Stop).Skus
+                    }
                 } catch {
-                     return $_
                 }
         
                 if($AzureSkus.Count -eq 0) {
-                    Write-Warning "No SKU found for the given offer $($FinalOutput.Offer)`nReturning..."
+                    Write-Warning "No Azure Image SKUs found for publisher: $($FinalOutput.Publisher) and offer: $($FinalOutput.Offer)`nReturning..."
                     Start-Sleep -Seconds 3
-                    Continue
+                    Break
                 }
                 try {
                     if($NewestSKUs){
-                        Write-Host "THESE ARE THE SKUS:`n$($AzureSkus[-1].Skus)"
-                        $FinalOutput.Sku = $AzureSkus[-1].Skus
+                        $FinalOutput.Sku = $AzureSkus[$i].Skus
                     } else {
-                        $FinalOutput.Sku = Select-Choice -ArrayOfOptions $AzureSkus.Skus -ParameterName "Image SKU" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUs" -ErrorAction Stop
+                        Write-Host "$i $AzureSkus"
+                        $FinalOutput.Sku = Select-Choice -ArrayOfOptions $AzureSkus -ParameterName "Image SKU" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUs" -ErrorAction Stop
                     }
                 } catch{
                     Write-Warning "No SKU found for the given offer $($FinalOutput.Offer)`nReturning..."
@@ -526,7 +532,7 @@ function Get-AzVMSku {
                     Continue
                 }
                 if($FinalOutput.Sku -in $null){
-                    return
+                    return #We should not reach
                 }
                 try {
                     $AzureImages = Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Sku
@@ -535,17 +541,27 @@ function Get-AzVMSku {
                 }
                 if($AzureImages.Count -eq 0) {
                     if($NewestSKUs) {
-                        Write-Warning "No images found under selection $($FinalOutput.Offer) using switch -NewestSKUs"
-                        Write-Warning "Either stop the module and run again without switch -NewestSKUs or choose another publisher, then offer"
-                        Exit
+                        Write-Verbose "Auto-selecting Image Sku $($FinalOutput.Sku) failed, trying the next version"
+                        $i--
+                        Continue
                     }
                     else {
                         Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
+                        for($x = 0; $x -lt $AzureSkus.Count;$x++){
+                            if($AzureSkus[$x] -eq $FinalOutput.Sku){
+                                Write-Host "DO WE REACH HERE?"
+                                $AzureSkus[$x] = "$($AzureSkus[$x]);red;"
+                            }
+                        }
+                        Start-Sleep -Seconds 3
+                        Break
                     }
-                    Start-Sleep -Seconds 3
-                    Continue
                 }
-            } while($true)
+                $MissingImageSku = $false
+            } while($MissingImageSku)
+            if($AzureImages.Count -eq 0){
+                Continue #We have to restart the outer do-while also
+            }
             $AzureImages = $AzureImages.Version | Sort-Object { [version]$_ }
             try {
                 if($AllSKUsVersions){
