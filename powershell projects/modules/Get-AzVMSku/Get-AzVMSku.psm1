@@ -66,6 +66,23 @@ function Select-Choice {
         }
     } while($MissingResponse)
 }
+
+function New-CustomError {
+    param (
+        [string]$CustomMessage,
+        [pscustomobject]$CurrentOutput,
+        [System.Management.Automation.ErrorRecord]$ErrorMessage
+    )
+    if($CurrentOutput.Context) {
+         $CurrentOutput.Context = $null
+    }
+    $Message = "$CustomMessage - Report the following issue to https://github.com/ChristofferWin/codeterraform/issues/new`n`nCURRENT OUTPUT:$($CurrentOutput | Format-List | Out-String)`n$(if($ErrorMessage){"INNER ERROR:`n$ErrorMessage"})"
+    if(!$CustomMessage){
+        $Message = $Message.Split("-")[1].Trim()
+    }
+    return $Message
+}
+
 <#
 .SYNOPSIS
     Retrieves information about Azure VM image SKUs, publishers, offers, and available VM sizes, optionally formatted for automation.
@@ -221,6 +238,10 @@ function Get-AzVMSku {
         Agreement = $null
     }
 
+    if($VerbosePreference -ne 'Continue'){
+        Write-Warning "It's always recommended to use `-Verbose` when running this command"
+    }
+
     if ($PublisherName -and $PublisherNameStartsWith) {
         Write-Warning "Since both PublisherName & PublisherNameStartsWith has been parsed, PublisherName wins and the search for publishers will follow search *$PublisherName*"
     }
@@ -261,7 +282,7 @@ function Get-AzVMSku {
         $FinalOutput.Context.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.TenantID}).Name
     }
     catch {
-        Write-Verbose "Was not possible to retrieve the Tenant name, continuing..."
+        Write-Warning "Was not possible to retrieve the Tenant name, continuing..."
     }
     $FinalOutput.Context.SubscriptionID = $Context.Subscription.Id
     if(!$FinalOutput.Context.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
@@ -271,14 +292,7 @@ function Get-AzVMSku {
     $funcName = $MyInvocation.MyCommand.Name
     try {
         $LocalModuleVersion = (Get-Module -ListAvailable -ErrorAction Stop -Verbose:$false | ? {$_.Name -eq $funcName}).Version | Sort-Object
-        if($LocalModuleVersion.Count -gt 0) {
-            if($LocalModuleVersion.Count -gt 1) {
-                Write-Warning "More than 1 version of the module $funcName detected... Its recommended to remove all old versions"
-            }   
-            $LocalModuleVersion = $LocalModuleVersion[-1].ToString()
-        }
     } catch {
-        Write-Verbose "Local module version of $($funcName) not found..."
     }
 
     try {
@@ -305,28 +319,24 @@ function Get-AzVMSku {
         $VerbosePreference = $OldVerbosePreference
     }
 
-    if([version]$RepositoryModuleVersion -gt [version]$LocalModuleVersion) {
+    if([version]$RepositoryModuleVersion -gt [version]$LocalModuleVersion -and $null -notin [version]$LocalModuleVersion) {
         Write-Warning "Consider upgrading from your current version of $LocalModuleVersion to $RepositoryModuleVersion"
         Write-Verbose "To upgrade use command Update-Module -Name $($funcName) -RequiredVersion $([version]$RepositoryModuleVersion)"
     }
 
     try {
-        $HelperNames = Invoke-RestMethod -Uri $HelperFileURL -ErrorAction Stop
+        $HelperNames = Invoke-RestMethod -Uri $HelperFileURL -ErrorAction Stop -Verbose:$false
     } catch {
-        Write-Warning "Was not able to retrieve helper file - This will not affect the resulted Publishers"
-    }
-    
-    if(!$ShowVMCategories){
-        try{
-            $Locations = Get-AzLocation -ErrorAction Stop
-        }
-        catch{
-            Write-Error "An error occured while trying to retrieve all available locations from Azure...`n$_"
-            return
-        }
+        Write-Verbose "Failed to retrieve helper data used by the module... Continuing"
     }
     
     if($ShowLocations){
+        try {
+            $Locations = Get-AzLocation -ErrorAction Stop
+        } catch {
+            Write-Error (New-CustomError -CustomMessage )
+            return
+        }
         try{
             Get-AzVMUsage -Location "abc" -ErrorAction Stop #Made to fail to retrieve exception
         }
@@ -346,7 +356,7 @@ function Get-AzVMSku {
     
     if($ShowVMCategories){
         try{
-            $WebsiteContent = (Invoke-WebRequest -UseBasicParsing -Uri $MSVMURL -ErrorAction Stop).Content.Split("`n")
+            $WebsiteContent = (Invoke-WebRequest -UseBasicParsing -Uri $MSVMURL -ErrorAction Stop -Verbose:$false).Content.Split("`n")
         }
         catch{
             Write-Warning "Was not able to retrieve required information from Microsoft for the switch 'ShowVMCategories'..."
@@ -575,7 +585,11 @@ function Get-AzVMSku {
                     $FinalOutput.Version = Select-Choice -ArrayOfOptions $AzureImages -ParameterName "Image version" -Message "Either remove switch -NoInteractive to allow for user-input OR add switch -NewestSKUsVersion" -ErrorAction Stop
                 } else {
                     Write-Warning "Auto-selected newest SKU version. Use -AllSKUsVersions to choose a specific version"
-                    $FinalOutput.Version = $AzureImages[-1]
+                    if($AzureImages.Count -eq 1) {
+                        $FinalOutput.Version = $AzureImages
+                    } else {
+                        $FinalOutput.Version = $AzureImages[-1]
+                    }
                 }
             } catch{
                 Write-Warning "No Version found for the given SKU $($FinalOutput.Version)`nReturning..."
@@ -584,10 +598,9 @@ function Get-AzVMSku {
             }
             $MissingValidResponse = $false
         }while($MissingValidResponse)
-        
         if($FinalOutput.Version -in $null){
-            $FinalOutput.TenantID = ""; $FinalOutput.TenantName = ""; $FinalOutput.SubscriptionID = ""; $FinalOutput.SubscriptionName = ""
-            Write-Error "No Version was found - This might be due to a bug.`nReport the following to https://github.com/ChristofferWin/codeterraform/issues/new`n`nCURRENT OUTPUT:`n$($FinalOutput | Format-List | Out-String)" 
+            $FinalOutput.Context.TenantID = ""; $FinalOutput.Context.TenantName = ""; $FinalOutput.Context.SubscriptionID = ""; $FinalOutput.Context.SubscriptionName = ""
+            Write-Error (New-CustomError -CustomMessage "No version was found - This is an error inside the Microsoft API" -CurrentOutput $FinalOutput)
             return
         }
     
@@ -599,7 +612,7 @@ function Get-AzVMSku {
                  #Overwrite version to latest, do avoid any potential issues when used in IaC
                  $FinalOutput.Version = "latest"
             }catch{
-                Write-Error "No final image found - This might be due to a bug.`nReport the following to https://github.com/ChristofferWin/codeterraform/issues/new`n`nCURRENT OUTPUT:`n$($FinalOutput | Format-List | Out-String)"
+                Write-Error (New-CustomError -CustomMessage "No final image was found - This is an error inside the Microsoft API" -CurrentOutput $FinalOutput -ErrorMessage $_)
                 return
             }
             
