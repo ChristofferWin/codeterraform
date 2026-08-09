@@ -15,7 +15,7 @@ function Select-Choice {
         $i = 1
         $Choices = @()
         if($ArrayOfOptions.Count -gt 1 -and !$NoInteractive){
-            Write-Host -ForegroundColor Blue "###### Please select a specific $ParameterName below ######"
+            Write-Host -ForegroundColor Blue "############################################################"
             foreach($Options in $ArrayOfOptions) {
                 $OptionsSplit = $Options.Split(";")
                 $OptionName = $OptionsSplit[0]
@@ -40,6 +40,7 @@ function Select-Choice {
                 Write-Warning $warning
                 $warning = $null
             }
+            Write-Host -ForegroundColor Blue "###### ↑ Please select a specific $ParameterName above ↑ ######"
             Write-Host -ForegroundColor Blue -NoNewline 'Your selection...: '
             $UserChoice = Read-Host
             foreach ($Choice in $Choices) {
@@ -99,7 +100,7 @@ function New-CustomError {
     - Output structured data as JSON for programmatic use
  
 .PARAMETER Location
-    The Azure region to use (e.g., 'westeurope'). Required for all operations except -ShowVMCategories.
+    The Azure region to use (e.g., 'westeurope'). Required for all operations except the '-Show' prefixed commands.
  
 .PARAMETER VMPattern
     Optional filter for VM size names (e.g., 'D', 'E', etc.).
@@ -214,7 +215,7 @@ function Get-AzVMSku {
         [Parameter(ParameterSetName = "ManualSettings")][switch]$UnfilteredPublishers
     )
     try {
-        Update-AzConfig -DisplayBreakingChangeWarning $false -ErrorAction Stop | Out-Null
+        Update-AzConfig -DisplayBreakingChangeWarning $false -ErrorAction Stop -Verbose:$false | Out-Null
     } catch{}
     $MSVMURL = "https://azure.microsoft.com/en-us/pricing/details/virtual-machines/series/"
     $HelperFileURL = "https://raw.githubusercontent.com/ChristofferWin/codeterraform/main/powershell%20projects/modules/Get-AzVMSku/helper-names.json"
@@ -530,6 +531,10 @@ function Get-AzVMSku {
                 } catch {
                 }
                 if($AzureSkus.Count -eq 0) {
+                    if($OfferName) {
+                        Write-Warning "No SKUs found using -OfferName value '$($FinalOutput.Offer)' please rerun the module with a new value or ommit the parameter entirely..."
+                        return
+                    }
                     Write-Warning "No Azure Image SKUs found for publisher: $($FinalOutput.Publisher) and offer: $($FinalOutput.Offer)`nReturning..."
                     Start-Sleep -Seconds 3
                     Break
@@ -564,6 +569,7 @@ function Get-AzVMSku {
                     else {
                         $SkusFiltered = @()
                         $MovedSkusWithErrors = @()
+                        $Continue = $false
                         Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
                         foreach($Sku in $AzureSkus) {
                             if($Sku -ne $FinalOutput.Sku) {
@@ -573,10 +579,18 @@ function Get-AzVMSku {
                             }
                         }
                         $AzureSkus = $SkusFiltered + $MovedSkusWithErrors
-                        if($SkusFiltered.Count -eq 0) {
-                            Break
+                        foreach($Sku in $AzureSkus) {
+                            if($Sku -notlike "*red*"){
+                                $Continue = $true
+                                break
+                            }
                         }
-                        Continue
+                        if($Continue) {
+                            Continue
+                        } else {
+                            Start-Sleep -Seconds 2
+                            break
+                        }
                     }
                 }
                 $MissingImageSku = $false
