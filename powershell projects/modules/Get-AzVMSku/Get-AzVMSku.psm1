@@ -279,10 +279,10 @@ function Get-AzVMSku {
     $FinalOutput.Context.TenantID = $Context.Tenant.id
     $FinalOutput.Context.SubscriptionName = $Context.Subscription.Name
     try {
-        $FinalOutput.Context.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.TenantID}).Name
+        $FinalOutput.Context.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.Context.TenantID}).Name
     }
     catch {
-        Write-Warning "Was not possible to retrieve the Tenant name, continuing..."
+        Write-Warning "Was not possible retrieve the Tenant name, continuing..."
     }
     $FinalOutput.Context.SubscriptionID = $Context.Subscription.Id
     if(!$FinalOutput.Context.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
@@ -783,6 +783,7 @@ function Get-AzVMSku {
         }
         $FinalOutput = $FinalOutput | ConvertTo-Json -Depth 50
     }
+    Write-Host "WHERE IS IT? $($FinalOutput.Context.TenantName)"
     return $FinalOutput
 }
 
