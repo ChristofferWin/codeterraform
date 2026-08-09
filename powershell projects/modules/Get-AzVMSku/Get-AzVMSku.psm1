@@ -238,7 +238,7 @@ function Get-AzVMSku {
         Agreement = $null
     }
 
-    if($VerbosePreference -ne 'Continue'){
+    if($VerbosePreference -ne 'Continue' -and !$ShowLocations -and !$ShowVMCategories){
         Write-Warning "It's always recommended to use `-Verbose` when running this command"
     }
 
@@ -334,7 +334,7 @@ function Get-AzVMSku {
         try {
             $Locations = Get-AzLocation -ErrorAction Stop
         } catch {
-            Write-Error (New-CustomError -CustomMessage )
+            Write-Error (New-CustomError -CustomMessage "This is an error inside the Microsoft API" -CurrentOutput $FinalOutput -ErrorMessage $_)
             return
         }
         try{
@@ -359,7 +359,7 @@ function Get-AzVMSku {
             $WebsiteContent = (Invoke-WebRequest -UseBasicParsing -Uri $MSVMURL -ErrorAction Stop -Verbose:$false).Content.Split("`n")
         }
         catch{
-            Write-Warning "Was not able to retrieve required information from Microsoft for the switch 'ShowVMCategories'..."
+            Write-Error (New-CustomError -CustomMessage "Was not able to retrieve required VM information from Microsoft" -CurrentOutput $FinalOutput -ErrorMessage $_)
             return
         }
         $CategoryObjects = @()
@@ -374,9 +374,10 @@ function Get-AzVMSku {
                 Description = [System.Net.WebUtility]::HtmlDecode(($match.Groups['description'].Value -replace '<[^>]+>', '').Trim())
             }
         }
+        $CategoryObjects = $null
         if ($CategoryObjects.Count -le 5) {
-            Write-Warning "Was not able to retrieve required information from Microsoft for the switch 'ShowVMCategories'..."
-            return $null
+            Write-Error (New-CustomError -CustomMessage "Was not able to retrieve required VM information from Microsoft, this is a bug" -CurrentOutput $FinalOutput)
+            return
         }
         return $CategoryObjects
     }
@@ -390,13 +391,14 @@ function Get-AzVMSku {
     }
     
     if(!$AcceptableLocations.Contains($Location)){
-        Write-Error "The location provided '$Location' is not valid...`nPlease provide one of the following locations:`n$AcceptableLocations"
+        Write-Error "The location provided '$Location' is not valid...`nPlease use command 'Get-AzVmSku -ShowLocations' to see all valid Azure locations..."
         return
     }
      try {
         $AzurePublishers = Get-AzVMImagePublisher -Location $Location -ErrorAction Stop
     } catch {
-        return $_
+        Write-Error (New-CustomError -CustomMessage "Was not able to retrive available publishers in Azure - This is an error inside the Microsoft API" -CurrentOutput $FinalOutput -ErrorMessage $_)
+        return
     }
     $AzurePublishers = $AzurePublishers | Sort-Object -Property PublisherName
     $CapturedPublishers = @()
@@ -460,13 +462,15 @@ function Get-AzVMSku {
             }
     
             if($FinalOutput.Publisher -in $null){
+                Write-Error (New-CustomError -CustomMessage "No publisher successfully selected, which is a bug" -CurrentOutput $FinalOutput)
                 return
             }
             
             try {
                 $AzureOffers = Get-AzVMImageOffer -Location $Location -PublisherName $FinalOutput.Publisher -ErrorAction Stop
             } catch{
-                return $_
+                Write-Error (New-CustomError -CustomMessage "This is an error inside the Microsoft API" -CurrentOutput $FinalOutput -ErrorMessage $_)
+                return
             }
         
             if($AzureOffers.Count -eq 0) {
@@ -513,6 +517,7 @@ function Get-AzVMSku {
             }
     
             if($FinalOutput.Offer -in $null){
+                Write-Error (New-CustomError -CustomMessage "No offer successfully selected, which is a bug" -CurrentOutput $FinalOutput)
                 return
             }
             $MissingImageSku = $true
@@ -541,12 +546,14 @@ function Get-AzVMSku {
                     Continue
                 }
                 if($FinalOutput.Sku -in $null){
-                    return #We should not reach
+                    Write-Error (New-CustomError -CustomMessage "No SKU successfully selected, which is a bug" -CurrentOutput $FinalOutput)
+                    return 
                 }
                 try {
                     $AzureImages = Get-AzVMImage -Location $Location -PublisherName $FinalOutput.Publisher -Offer $FinalOutput.Offer -Skus $FinalOutput.Sku
                 } catch {
-                    return $_
+                    Write-Error (New-CustomError -CustomMessage "This is an error inside the Microsoft API" -CurrentOutput $FinalOutput -ErrorMessage $_)
+                    return
                 }
                 if($AzureImages.Count -eq 0) {
                     $i--
@@ -558,7 +565,6 @@ function Get-AzVMSku {
                         $SkusFiltered = @()
                         $MovedSkusWithErrors = @()
                         Write-Warning "No Images found for the given URN: $($FinalOutput.Publisher):$($FinalOutput.Offer):$($FinalOutput.Sku)`nReturning..."
-                        Write-Host "COUNT: $($AzureSkus.Count), $AzureSkus"
                         foreach($Sku in $AzureSkus) {
                             if($Sku -ne $FinalOutput.Sku) {
                                 $SkusFiltered += $Sku
@@ -570,7 +576,6 @@ function Get-AzVMSku {
                         if($SkusFiltered.Count -eq 0) {
                             Break
                         }
-                        Write-Host "COUNT: $($AzureSkus.Count) $AzureSkus, $SkusFiltered, $MovedSkusWithErrors"
                         Continue
                     }
                 }
@@ -639,25 +644,6 @@ function Get-AzVMSku {
     #######################################
 "@ -ForegroundColor Green
 
-    do{
-        $LocationOK = $false
-        if($AcceptableLocations.contains(($Location.Replace(" ", "").ToLower()))){
-            $LocationOK = $true
-            Break
-        }
-        else{
-            if($NoInteractive -or !$ContinueOnError){
-                Write-Error "The location: $Location was not found in the Azure database...`nUse command Get-AzVmSku -ShowLocations to see all valid values"
-                return
-            }
-            else{
-                Write-Warning "The location: $Location was not found in the Azure database..."
-                $Location = Read-Host "Please provide a new location to use... If in any doubt, run this function with the -ShowLocations switch"
-            }
-        }
-    }
-    while(!$LocationOK)
-
     if(!$NoVMInformation) {
         do{
             try{
@@ -680,7 +666,7 @@ function Get-AzVMSku {
                 Write-Verbose "VM sizes successfully retrieved..."
             }
             catch{
-                Write-Error "The following error occured while trying to retrieve vm sizes...:`n$_"
+                Write-Error (New-CustomError -CustomMessage "Was unable to retrieve VM size information from Microsoft - This is an error inside the Microsoft API")
                 return
             }
             $VMs = @()
@@ -703,7 +689,8 @@ function Get-AzVMSku {
             $AzureVmUsuage = Get-AzVMUsage -Location $Location -ErrorAction Stop | ? {$_.Name.LocalizedValue -like "*Standard*Family*"}
         }
         catch{
-            return $_
+            Write-Error (New-CustomError -CustomMessage "Was unable to retrieve Quota information from Microsoft - This is an error inside the Microsoft API" -CurrentOutput $FinalOutput -ErrorMessage $_)
+            return
         }
         
         $QuotasWithVMs = @{}
@@ -783,7 +770,6 @@ function Get-AzVMSku {
         }
         $FinalOutput = $FinalOutput | ConvertTo-Json -Depth 50
     }
-    Write-Host "WHERE IS IT? $($FinalOutput.Context.TenantName)"
     return $FinalOutput
 }
 
