@@ -55,7 +55,7 @@ function Select-Choice {
             if($MissingResponse) {
                 $warning = "The choice of '$UserChoice' Is invalid, please select another Option..."
             }
-        } elseif($ArrayOfOptions.Count -gt 1 && $NoInteractive) {
+        } elseif($ArrayOfOptions.Count -gt 1 -and $NoInteractive) {
             if($Message){
                 Write-Error "The command found multiple results and require user-input to continue. $Message" #In this case - The parameter name is a defined error defined from where the function is called
             } else {
@@ -239,6 +239,12 @@ function Get-AzVMSku {
         Agreement = $null
     }
 
+    if($PSVersionTable.PSEdition -ne "Core") {
+        Write-Warning "Only PowerShell Core is supported by this module, but version $($PSVersionTable["PSVersion"].ToString()) was detected"
+        Write-Verbose "To install PowerShell Core, visit: => https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell"
+        return
+    }
+
     if($VerbosePreference -ne 'Continue' -and !$ShowLocations -and !$ShowVMCategories){
         Write-Warning "It's always recommended to use `-Verbose` when running this command"
     }
@@ -280,10 +286,14 @@ function Get-AzVMSku {
     $FinalOutput.Context.TenantID = $Context.Tenant.id
     $FinalOutput.Context.SubscriptionName = $Context.Subscription.Name
     try {
-        $FinalOutput.Context.TenantName = (Get-AzTenant -ErrorAction Stop | ? {$_.Id -eq $FinalOutput.Context.TenantID}).Name
+        $FinalOutput.Context.TenantName = (Get-AzTenant -ErrorAction Stop -WarningVariable Warnings -WarningAction SilentlyContinue | ? {$_.Id -eq $FinalOutput.Context.TenantID}).Name
     }
     catch {
         Write-Warning "Was not possible retrieve the Tenant name, continuing..."
+    }
+    if($Warnings -like "*acquire token for tenant*") {
+        Write-Error (New-CustomError -CustomMessage "Authentication to Azure failed either due to a misalignment in the token used or connectivity issues. Please use either 'Connect-AzAccount' or 'Set-AzAdvancedContext' to log in to Azure" -CurrentOutput $FinalOutput)
+        return
     }
     $FinalOutput.Context.SubscriptionID = $Context.Subscription.Id
     if(!$FinalOutput.Context.SubscriptionID -and (!$ShowVMCategories -and !$ShowVMOperatingSystems)){
@@ -375,7 +385,6 @@ function Get-AzVMSku {
                 Description = [System.Net.WebUtility]::HtmlDecode(($match.Groups['description'].Value -replace '<[^>]+>', '').Trim())
             }
         }
-        $CategoryObjects = $null
         if ($CategoryObjects.Count -le 5) {
             Write-Error (New-CustomError -CustomMessage "Was not able to retrieve required VM information from Microsoft, this is a bug" -CurrentOutput $FinalOutput)
             return
@@ -427,7 +436,9 @@ function Get-AzVMSku {
                 Write-Verbose "Publisher auto-selected as '$ActivePublisherName'"
             }
             default {
-                Write-Host -ForegroundColor Green "$count matches of publishers found for filter '$ActivePublisherName'"
+                if($ActivePublisherName) {
+                    Write-Host -ForegroundColor Green "$count matches of publishers found for filter '$ActivePublisherName'"
+                }
             }
         }
 
